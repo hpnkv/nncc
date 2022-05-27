@@ -1,16 +1,12 @@
-#include "context.h"
+#include "glfw_utils.h"
+#include "hid.h"
 
-namespace nncc::engine {
-
-bx::DefaultAllocator Context::allocator_;
+namespace nncc::context {
 
 MouseButton translateGlfwMouseButton(int button) {
-    if (button == GLFW_MOUSE_BUTTON_LEFT)
-    {
+    if (button == GLFW_MOUSE_BUTTON_LEFT) {
         return MouseButton::Left;
-    }
-    else if (button == GLFW_MOUSE_BUTTON_RIGHT)
-    {
+    } else if (button == GLFW_MOUSE_BUTTON_RIGHT) {
         return MouseButton::Right;
     }
 

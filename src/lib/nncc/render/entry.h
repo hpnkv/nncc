@@ -11,7 +11,7 @@
 #include <nncc/render/surface.h>
 #include <nncc/render/bgfx/memory.h>
 
-#include <nncc/hid/context.h>
+#include <nncc/context/context.h>
 
 
 nncc::render::Mesh GetPlaneMesh() {
@@ -35,27 +35,14 @@ nncc::render::Mesh GetPlaneMesh() {
     return mesh;
 }
 
-//void updateTextureWithTensor(bgfx::TextureHandle handle, const torch::Tensor& image) {
-//    auto height = image.size(0);
-//    auto width = image.size(1);
-//
-//    bgfx::TextureInfo ti;
-//    bgfx::calcTextureSize(ti, width, height, 1, false, false, 1, bgfx::TextureFormat::RGB8);
-//
-//    const bgfx::Memory* mem = bgfx::alloc(ti.storageSize);
-//    std::memcpy(mem->data, image.data_ptr<uint8_t>(), ti.storageSize);
-//
-//    bgfx::updateTexture2D(handle, 1, 0, 0, 0, width, height, mem);
-//}
-
-bool ProcessEvents(nncc::engine::EventQueue* queue) {
+bool ProcessEvents(nncc::context::EventQueue* queue) {
     auto event = queue->Poll();
 
     if (event == nullptr) {
         return true;
     }
 
-    if (event->type == nncc::engine::EventType::Exit) {
+    if (event->type == nncc::context::EventType::Exit) {
         std::cout << "got exit event" << std::endl;
         return false;
     }
@@ -64,7 +51,7 @@ bool ProcessEvents(nncc::engine::EventQueue* queue) {
 }
 
 int MainThreadFunc(bx::Thread* self, void* args) {
-    auto context = static_cast<nncc::engine::Context*>(args);
+    auto context = static_cast<nncc::context::Context*>(args);
     auto glfw_window = context->GetGlfwWindow(0);
 
     bgfx::Init init;
@@ -85,7 +72,7 @@ int MainThreadFunc(bx::Thread* self, void* args) {
     nncc::render::Renderer renderer {};
     auto time_offset = bx::getHPCounter();
 
-    const auto texture_image = nncc::common::LoadImage("/Users/apankov/Desktop/imgs/000132.png");
+    const auto texture_image = nncc::common::LoadImage("texture.png");
     const auto texture = nncc::engine::TextureFromImage(texture_image);
 
     bx::FileReader reader;
@@ -173,7 +160,7 @@ int MainThreadFunc(bx::Thread* self, void* args) {
 }
 
 int Run() {
-    nncc::engine::Context& context = nncc::engine::Context::Get();
+    nncc::context::Context& context = nncc::context::Context::Get();
     if (!context.Init()) {
         return 1;
     }
@@ -187,7 +174,7 @@ int Run() {
     while (window != nullptr && !glfwWindowShouldClose(window)) {
         glfwWaitEventsTimeout(1. / 120);
         while (auto message = context.GetMessageQueue().pop()) {
-            if (message->type == nncc::engine::GlfwMessageType::Destroy) {
+            if (message->type == nncc::context::GlfwMessageType::Destroy) {
                 glfwDestroyWindow(window);
                 window = nullptr;
             }
@@ -195,8 +182,8 @@ int Run() {
         bgfx::renderFrame();
     }
 
-    std::unique_ptr<nncc::engine::Event> event(new nncc::engine::ExitEvent);
-    event->type = nncc::engine::EventType::Exit;
+    std::unique_ptr<nncc::context::Event> event(new nncc::context::ExitEvent);
+    event->type = nncc::context::EventType::Exit;
     context.GetEventQueue().Push(0, std::move(event));
     std::cout << "posted exit event" << std::endl;
 

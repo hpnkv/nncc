@@ -5,7 +5,10 @@ set(
         nncc/engine/world_math.cpp
         nncc/engine/world_object.cpp
         nncc/engine/camera.cpp
-        nncc/hid/context.cpp
+        nncc/context/context.cpp
+        nncc/context/event.cpp
+        nncc/context/glfw_utils.cpp
+        nncc/context/hid.cpp
 )
 
 set(

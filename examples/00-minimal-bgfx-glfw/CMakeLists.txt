@@ -9,9 +9,6 @@ target_include_directories(00-minimal-bgfx-glfw PRIVATE
         ${Python_INCLUDE_DIRS} ${TORCH_INCLUDE_DIRS} ${pybind11_INCLUDE_DIR}
         )
 
-use_bgfx_shader(${CMAKE_CURRENT_SOURCE_DIR}/shaders/cubes/fs_cubes.sc 00-minimal-bgfx-glfw)
-use_bgfx_shader(${CMAKE_CURRENT_SOURCE_DIR}/shaders/cubes/vs_cubes.sc 00-minimal-bgfx-glfw)
-
 use_bgfx_shader(${PROJECT_SOURCE_DIR}/src/lib/nncc/render/shaders/default_diffuse/fs_default_diffuse.sc 00-minimal-bgfx-glfw)
 use_bgfx_shader(${PROJECT_SOURCE_DIR}/src/lib/nncc/render/shaders/default_diffuse/vs_default_diffuse.sc 00-minimal-bgfx-glfw)
 
