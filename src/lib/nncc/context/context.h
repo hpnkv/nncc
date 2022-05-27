@@ -9,6 +9,7 @@
 #include <bx/thread.h>
 
 #include <nncc/context/event.h>
+#include <nncc/context/hid.h>
 #include <nncc/context/glfw_utils.h>
 
 namespace nncc::context {
@@ -65,6 +66,8 @@ private:
     static void GLFWErrorCallback(int error, const char* description);
 
     static void MouseButtonCallback(GLFWwindow* window, int32_t button, int32_t action, int32_t /* modifiers */);
+
+    static void CursorPositionCallback(GLFWwindow* window, double x_pos, double y_pos);
 };
 
 }
