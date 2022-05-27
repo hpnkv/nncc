@@ -2,3 +2,4 @@ external/
 cmake-build*/
 build/
 pynncc/
+.idea/
