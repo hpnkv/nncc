@@ -1,0 +1,32 @@
+file(GLOB_RECURSE NNCC_COMMON_SOURCES ${NNCC_COMMON_DIR}/*.cpp)
+
+set(
+        NNCC_ENGINE_SOURCES
+        nncc/engine/world_math.cpp
+        nncc/engine/world_object.cpp
+        nncc/engine/camera.cpp
+        nncc/hid/context.cpp
+)
+
+set(
+        NNCC_RENDER_SOURCES
+        nncc/render/renderer.cpp
+        nncc/render/batch_renderer.cpp
+        nncc/render/surface.cpp
+)
+
+set(
+        NNCC_SOURCES
+        ${NNCC_ENGINE_SOURCES}
+        ${NNCC_RENDER_SOURCES}
+)
+
+add_library(nncc-common ${NNCC_SOURCES})
+
+target_link_libraries(nncc-common PUBLIC bgfx bx glfw imgui ${TORCH_LIBRARIES})
+target_include_directories(nncc-common PUBLIC ${BGFX_DIR}/include ${BX_DIR}/include ${BIMG_DIR}/include ${IMGUI_DIR} ${NNCC_COMMON_DIR} ${Python_INCLUDE_DIRS} ${TORCH_INCLUDE_DIRS} ${pybind11_INCLUDE_DIR})
+
+if (APPLE)
+    target_include_directories(nncc-common PUBLIC "-framework Metal" "-framework AppKit" "-framework Foundation" "-framework Quartz")
+endif ()
+

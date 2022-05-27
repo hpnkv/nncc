@@ -1,0 +1,1 @@
+add_subdirectory(00-minimal-bgfx-glfw)

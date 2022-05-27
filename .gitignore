@@ -1,0 +1,4 @@
+external/
+cmake-build*/
+build/
+pynncc/
