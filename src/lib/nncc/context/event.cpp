@@ -9,7 +9,7 @@ std::unique_ptr<Event> EventQueue::Poll() {
     }
     auto event = std::move(events_[raw_pointer]);
     events_.erase(raw_pointer);
-    return event;
+    return std::move(event);
 }
 
 void EventQueue::Push(int16_t window, std::unique_ptr<Event> event) {

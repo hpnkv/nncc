@@ -77,7 +77,7 @@ void Context::CursorPositionCallback(GLFWwindow* window, double x_pos, double y_
             .x = static_cast<int32_t>(x_pos),
             .y = static_cast<int32_t>(y_pos),
     });
-    event->type = EventType::MouseButton;
+    event->type = EventType::MouseMove;
 
     auto window_idx = context.GetWindowIdx(window);
     context.GetEventQueue().Push(window_idx, std::move(event));

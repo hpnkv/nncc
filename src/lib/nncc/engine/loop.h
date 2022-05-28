@@ -7,20 +7,22 @@
 #include <bgfx/platform.h>
 
 #include <nncc/common/image.h>
+#include <nncc/context/context.h>
+
+#include <nncc/engine/camera.h>
+
 #include <nncc/render/renderer.h>
 #include <nncc/render/surface.h>
 #include <nncc/render/bgfx/memory.h>
-
-#include <nncc/context/context.h>
 
 
 nncc::render::Mesh GetPlaneMesh() {
     nncc::render::Mesh mesh;
     mesh.vertices = {
-            {{-1.0f, 1.0f,  0.05f}, {0., 0., 1.},  0., 0.},
-            {{1.0f,  1.0f,  0.05f}, {0., 0., 1.},  1., 0.},
-            {{-1.0f, -1.0f, 0.05f}, {0., 0., 1.},  0., 1.},
-            {{1.0f,  -1.0f, 0.05f}, {0., 0., 1.},  1., 1.},
+            {{-1.0f, 1.0f,  0.05f},  {0., 0., 1.},  0., 0.},
+            {{1.0f,  1.0f,  0.05f},  {0., 0., 1.},  1., 0.},
+            {{-1.0f, -1.0f, 0.05f},  {0., 0., 1.},  0., 1.},
+            {{1.0f,  -1.0f, 0.05f},  {0., 0., 1.},  1., 1.},
             {{-1.0f, 1.0f,  -0.05f}, {0., 0., -1.}, 0., 0.},
             {{1.0f,  1.0f,  -0.05f}, {0., 0., -1.}, 1., 0.},
             {{-1.0f, -1.0f, -0.05f}, {0., 0., -1.}, 0., 1.},
@@ -37,8 +39,9 @@ nncc::render::Mesh GetPlaneMesh() {
 
 namespace nncc::engine {
 
-bool ProcessEvents(context::EventQueue* queue) {
-    auto event = queue->Poll();
+bool ProcessEvents(context::Context* context) {
+    auto queue = &context->GetEventQueue();
+    std::shared_ptr<context::Event> event = queue->Poll();
 
     if (event == nullptr) {
         return true;
@@ -48,10 +51,17 @@ bool ProcessEvents(context::EventQueue* queue) {
         return false;
 
     } else if (event->type == context::EventType::MouseButton) {
+        auto btn_event = std::static_pointer_cast<context::MouseEvent>(event);
 
+        context->mouse_state.x = btn_event->x;
+        context->mouse_state.y = btn_event->y;
+        context->mouse_state.buttons[static_cast<int>(btn_event->button)] = btn_event->down;
 
     } else if (event->type == context::EventType::MouseMove) {
+        auto move_event = std::static_pointer_cast<context::MouseEvent>(event);
 
+        context->mouse_state.x = move_event->x;
+        context->mouse_state.y = move_event->y;
     }
 
     return true;
@@ -78,7 +88,8 @@ int MainThreadFunc(bx::Thread* self, void* args) {
         return 1;
     }
 
-    nncc::render::Renderer renderer {};
+    nncc::engine::Camera camera;
+    nncc::render::Renderer renderer{};
     auto time_offset = bx::getHPCounter();
 
     const auto texture_image = nncc::common::LoadImage("texture.png");
@@ -100,16 +111,22 @@ int MainThreadFunc(bx::Thread* self, void* args) {
     material.d_texture_uniform = texture_uniform;
     material.d_color_uniform = color_uniform;
 
-    while (true) {
-        if (!nncc::engine::ProcessEvents(&context->GetEventQueue())) {
-            break;
+    bool exit = false;
+    while (!exit) {
+        if (!nncc::engine::ProcessEvents(context)) {
+            exit = true;
         }
 
-        bx::Vec3 camera_position(5., 5., -3.5);
-        bx::Quaternion camera_rotation(-0.4254518, 0.4254518, -0.237339, 0.762661);
+        // Time.
+        int64_t now = bx::getHPCounter();
+        static int64_t last = now;
+        const int64_t frame_time = now - last;
+        last = now;
+        const double freq = double(bx::getHPFrequency());
+        const float time = static_cast<float>(now - time_offset) / double(bx::getHPFrequency());
+        const float timedelta = float(frame_time / freq);
 
-        bx::Vec3 up(0, 1, 0);
-        bx::Vec3 forward(0, 0, 1);
+        camera.Update(timedelta, context->mouse_state);
 
         bgfx::setViewClear(0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x303030ff, 1.0f, 0);
         // Set view 0 default viewport.
@@ -119,13 +136,11 @@ int MainThreadFunc(bx::Thread* self, void* args) {
         // if no other draw calls are submitted to view 0.
         bgfx::touch(0);
 
-        auto at = bx::add(camera_position, bx::mul(forward, camera_rotation));
-        renderer.SetViewMatrix(camera_position, at, bx::mul(up, camera_rotation));
+        renderer.SetViewMatrix(camera.GetViewMatrix());
         renderer.SetProjectionMatrix(60, width / height, 0.01f, 1000.0f);
         renderer.SetViewport({0, 0, static_cast<float>(width), static_cast<float>(height)});
         renderer.Prepare(program);
 
-        float time = (float) ((bx::getHPCounter() - time_offset) / double(bx::getHPFrequency()));
         auto transform = nncc::engine::Matrix4::Identity();
         bx::mtxRotateY(*transform, time * 2.3f);
 
@@ -150,6 +165,7 @@ int MainThreadFunc(bx::Thread* self, void* args) {
         bgfx::destroy(nncc::render::Material::default_texture);
     }
 
+    bgfx::shutdown();
     return 0;
 }
 
@@ -179,8 +195,8 @@ int Run() {
     std::unique_ptr<nncc::context::Event> event(new nncc::context::ExitEvent);
     event->type = nncc::context::EventType::Exit;
     context.GetEventQueue().Push(0, std::move(event));
-    std::cout << "posted exit event" << std::endl;
 
+    while (bgfx::RenderFrame::NoContext != bgfx::renderFrame()) {}
     thread->shutdown();
     return thread->getExitCode();
 }

@@ -52,6 +52,8 @@ public:
         return &default_thread_;
     }
 
+    MouseState mouse_state;
+
 private:
     static bx::DefaultAllocator allocator_;
     bx::SpScUnboundedQueueT<GlfwMessage> glfw_message_queue_;

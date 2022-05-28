@@ -15,6 +15,10 @@ void Renderer::Present() {
     viewport_.reset();
 }
 
+void Renderer::SetViewMatrix(const engine::Matrix4& matrix) {
+    view_matrix_ = matrix;
+}
+
 void Renderer::SetViewMatrix(const bx::Vec3& eye, const bx::Vec3& at, const bx::Vec3& up) {
     engine::Matrix4 matrix;
     bx::mtxLookAt(*matrix, eye, at, up);
