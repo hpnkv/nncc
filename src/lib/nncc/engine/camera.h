@@ -9,7 +9,7 @@ namespace nncc::engine {
 
 class Camera {
 public:
-    void Update(float timedelta, const context::MouseState& mouse_state);
+    void Update(float timedelta, const context::MouseState& mouse_state, const context::KeyState& key_state);
 
     Matrix4 GetViewMatrix();
 
@@ -24,9 +24,9 @@ private:
     float yaw = 0.0f;
     float pitch = 0.01f;
 
-    float mouse_speed = 0.0020f;
+    float mouse_speed = 0.005f;
     float gamepad_speed = 0.04f;
-    float move_speed = 30.0f;
+    float move_speed = 5.0f;
 
     bool mouse_down = false;
 };

@@ -16,9 +16,7 @@ namespace nncc::context {
 
 class Context {
 public:
-    Context() : glfw_message_queue_(&allocator_), event_queue_(&allocator_) {
-        initialised = true;
-    }
+    Context() : glfw_message_queue_(&allocator_), event_queue_(&allocator_) {}
 
     static Context& Get() {
         static Context instance;
@@ -55,10 +53,10 @@ public:
         return &default_thread_;
     }
 
+    KeyState key_state;
     MouseState mouse_state;
 
 private:
-    static bool initialised;
 
     static bx::DefaultAllocator allocator_;
     bx::SpScUnboundedQueueT<GlfwMessage> glfw_message_queue_;

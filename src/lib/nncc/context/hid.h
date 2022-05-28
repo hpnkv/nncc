@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <unordered_set>
 
 namespace nncc::context {
 
@@ -139,6 +140,10 @@ struct MouseState {
     int32_t y = 0;
     int32_t z = 0;
     bool buttons[static_cast<int>(MouseButton::Count)] {};
+};
+
+struct KeyState {
+    std::unordered_set<Key> pressed_keys;
 };
 
 }

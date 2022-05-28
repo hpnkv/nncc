@@ -2,7 +2,7 @@
 
 namespace nncc::engine {
 
-void Camera::Update(float timedelta, const context::MouseState& mouse_state) {
+void Camera::Update(float timedelta, const context::MouseState& mouse_state, const context::KeyState& key_state) {
     if (!mouse_down) {
         mouse_last.x = mouse_state.x;
         mouse_last.y = mouse_state.y;
@@ -43,7 +43,21 @@ void Camera::Update(float timedelta, const context::MouseState& mouse_state) {
             bx::cos(yaw - bx::kPiHalf),
     };
 
-    const bx::Vec3 up = bx::cross(right, direction);
+    if (key_state.pressed_keys.contains(context::Key::KeyW)) {
+        eye_ = bx::mad(direction, timedelta * move_speed, eye_);
+    }
+
+    if (key_state.pressed_keys.contains(context::Key::KeyS)) {
+        eye_ = bx::mad(direction, -timedelta * move_speed, eye_);
+    }
+
+    if (key_state.pressed_keys.contains(context::Key::KeyA)) {
+        eye_ = bx::mad(right, timedelta * move_speed, eye_);
+    }
+
+    if (key_state.pressed_keys.contains(context::Key::KeyD)) {
+        eye_ = bx::mad(right, -timedelta * move_speed, eye_);
+    }
 
     eye_ = bx::mad(direction, deltaZ * timedelta * move_speed, eye_);
     at_ = bx::add(eye_, direction);

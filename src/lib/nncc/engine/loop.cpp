@@ -58,7 +58,7 @@ int MainThreadFunc(bx::Thread* self, void* args) {
     auto mesh = GetPlaneMesh();
     nncc::render::Material material{};
     material.diffuse_texture = texture;
-    material.diffuse_color = 0xFFFFFF00;
+    material.diffuse_color = 0xFFFFFFFF;
     material.shader = program;
     material.d_texture_uniform = texture_uniform;
     material.d_color_uniform = color_uniform;
@@ -78,7 +78,7 @@ int MainThreadFunc(bx::Thread* self, void* args) {
         const float time = static_cast<float>(now - time_offset) / double(bx::getHPFrequency());
         const float timedelta = float(frame_time / freq);
 
-        camera.Update(timedelta, context->mouse_state);
+        camera.Update(timedelta, context->mouse_state, context->key_state);
 
         bgfx::setViewClear(0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x303030ff, 1.0f, 0);
         // Set view 0 default viewport.
@@ -89,7 +89,7 @@ int MainThreadFunc(bx::Thread* self, void* args) {
         bgfx::touch(0);
 
         renderer.SetViewMatrix(camera.GetViewMatrix());
-        renderer.SetProjectionMatrix(60, width / height, 0.01f, 1000.0f);
+        renderer.SetProjectionMatrix(30, static_cast<float>(width) / static_cast<float>(height), 0.01f, 1000.0f);
         renderer.SetViewport({0, 0, static_cast<float>(width), static_cast<float>(height)});
         renderer.Prepare(program);
 
@@ -179,7 +179,14 @@ bool nncc::engine::ProcessEvents(nncc::context::Context* context) {
 
     } else if (event->type == context::EventType::Key) {
         auto key_event = std::static_pointer_cast<context::KeyEvent>(event);
-        std::cout << static_cast<int>(key_event->key) << std::endl;
+        auto key = key_event->key;
+        if (key_event->down) {
+            context->key_state.pressed_keys.insert(key);
+        } else {
+            if (context->key_state.pressed_keys.contains(key)) {
+                context->key_state.pressed_keys.erase(key);
+            }
+        }
 
     } else {
         std::cerr << "unknown event type" << std::endl;

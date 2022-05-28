@@ -15,6 +15,7 @@ set(
 
 set(
         NNCC_RENDER_SOURCES
+        nncc/render/bgfx/memory.cpp
         nncc/render/renderer.cpp
         nncc/render/batch_renderer.cpp
         nncc/render/surface.cpp
