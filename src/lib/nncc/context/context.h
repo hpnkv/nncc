@@ -16,13 +16,16 @@ namespace nncc::context {
 
 class Context {
 public:
-    Context() : glfw_message_queue_(&allocator_), event_queue_(&allocator_) {}
+    Context() : glfw_message_queue_(&allocator_), event_queue_(&allocator_) {
+        initialised = true;
+    }
 
     static Context& Get() {
         static Context instance;
         return instance;
     }
 
+    // We don't want occasional copies
     Context(const Context&) = delete;
     void operator=(const Context&) = delete;
 
@@ -55,6 +58,8 @@ public:
     MouseState mouse_state;
 
 private:
+    static bool initialised;
+
     static bx::DefaultAllocator allocator_;
     bx::SpScUnboundedQueueT<GlfwMessage> glfw_message_queue_;
 

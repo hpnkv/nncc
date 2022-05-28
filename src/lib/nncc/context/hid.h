@@ -141,6 +141,4 @@ struct MouseState {
     bool buttons[static_cast<int>(MouseButton::Count)] {};
 };
 
-MouseButton translateGlfwMouseButton(int button);
-
 }

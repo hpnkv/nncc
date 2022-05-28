@@ -71,4 +71,6 @@ uint8_t translateKeyModifiers(int glfw_modifiers);
 
 std::unordered_map<int, Key> GlfwKeyTranslationTable();
 
+MouseButton translateGlfwMouseButton(int button);
+
 }

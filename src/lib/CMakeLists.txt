@@ -5,6 +5,8 @@ set(
         nncc/engine/world_math.cpp
         nncc/engine/world_object.cpp
         nncc/engine/camera.cpp
+        nncc/engine/loop.cpp
+        nncc/common/image.cpp
         nncc/context/context.cpp
         nncc/context/event.cpp
         nncc/context/glfw_utils.cpp

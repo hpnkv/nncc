@@ -5,6 +5,7 @@
 namespace nncc::context {
 
 bx::DefaultAllocator Context::allocator_;
+bool Context::initialised = false;
 
 bool Context::Init() {
     glfwSetErrorCallback(&Context::GLFWErrorCallback);
