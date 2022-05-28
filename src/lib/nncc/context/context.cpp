@@ -35,6 +35,7 @@ int16_t Context::CreateWindow(const WindowParams& params) {
 
     glfwSetMouseButtonCallback(window, &Context::MouseButtonCallback);
     glfwSetCursorPosCallback(window, &Context::CursorPositionCallback);
+    glfwSetKeyCallback(window, &Context::KeyCallback);
 
     int16_t window_idx = static_cast<int16_t>(windows_.size());
     windows_.push_back(GLFWWindowUniquePtr(window));
@@ -78,6 +79,29 @@ void Context::CursorPositionCallback(GLFWwindow* window, double x_pos, double y_
             .y = static_cast<int32_t>(y_pos),
     });
     event->type = EventType::MouseMove;
+
+    auto window_idx = context.GetWindowIdx(window);
+    context.GetEventQueue().Push(window_idx, std::move(event));
+}
+
+const auto glfw_key_translation_table = GlfwKeyTranslationTable();
+
+void Context::KeyCallback(GLFWwindow* window, int32_t glfw_key, int32_t scancode, int32_t action, int32_t modifiers) {
+    auto& context = Context::Get();
+
+    if (glfw_key == GLFW_KEY_UNKNOWN) {
+        return;
+    }
+
+    int mods = translateKeyModifiers(modifiers);
+    auto key = glfw_key_translation_table.at(glfw_key);
+
+    std::unique_ptr<Event> event(new KeyEvent{
+            .key = key,
+            .modifiers = mods,
+            .down = action == GLFW_PRESS || action == GLFW_REPEAT
+    });
+    event->type = EventType::Key;
 
     auto window_idx = context.GetWindowIdx(window);
     context.GetEventQueue().Push(window_idx, std::move(event));

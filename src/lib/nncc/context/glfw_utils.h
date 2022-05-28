@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <unordered_map>
 
 #include <bx/platform.h>
 
@@ -16,6 +17,8 @@
 
 #include <GLFW/glfw3native.h>
 
+#include <nncc/context/hid.h>
+
 namespace nncc::context {
 
 struct WindowParams {
@@ -30,8 +33,8 @@ void* GetNativeDisplayType();
 
 void* GetNativeWindowHandle(GLFWwindow* window);
 
-struct GLFWWindowDeleter{
-    void operator()(GLFWwindow* ptr){
+struct GLFWWindowDeleter {
+    void operator()(GLFWwindow* ptr) {
         glfwDestroyWindow(ptr);
     }
 };
@@ -63,5 +66,9 @@ struct GlfwMessage {
     std::string title;
     int16_t idx;
 };
+
+uint8_t translateKeyModifiers(int glfw_modifiers);
+
+std::unordered_map<int, Key> GlfwKeyTranslationTable();
 
 }

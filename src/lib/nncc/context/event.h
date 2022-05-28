@@ -13,6 +13,7 @@ enum class EventType {
     Exit,
     MouseButton,
     MouseMove,
+    Key,
 
     Count,
     None
@@ -35,6 +36,9 @@ struct MouseEvent : public Event {
 };
 
 struct KeyEvent : public Event {
+    Key key = Key::None;
+    int modifiers = 0;
+    bool down = false;
 };
 
 struct ExitEvent : public Event {

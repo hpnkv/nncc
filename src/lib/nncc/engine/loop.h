@@ -62,6 +62,13 @@ bool ProcessEvents(context::Context* context) {
 
         context->mouse_state.x = move_event->x;
         context->mouse_state.y = move_event->y;
+
+    } else if (event->type == context::EventType::Key) {
+        auto key_event = std::static_pointer_cast<context::KeyEvent>(event);
+        std::cout << static_cast<int>(key_event->key) << std::endl;
+
+    } else {
+        std::cerr << "unknown event type" << std::endl;
     }
 
     return true;
