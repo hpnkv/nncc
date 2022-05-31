@@ -94,6 +94,9 @@ void Context::KeyCallback(GLFWwindow* window, int32_t glfw_key, int32_t scancode
     }
 
     int mods = translateKeyModifiers(modifiers);
+    if (!glfw_key_translation_table.contains(glfw_key)) {
+        return;
+    }
     auto key = glfw_key_translation_table.at(glfw_key);
 
     std::unique_ptr<Event> event(new KeyEvent{

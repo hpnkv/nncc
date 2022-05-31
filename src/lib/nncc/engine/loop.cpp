@@ -1,5 +1,6 @@
 #include "loop.h"
 
+
 nncc::render::Mesh GetPlaneMesh() {
     nncc::render::Mesh mesh;
     mesh.vertices = {
@@ -40,9 +41,9 @@ int MainThreadFunc(bx::Thread* self, void* args) {
         return 1;
     }
 
+    nncc::engine::Timer timer;
     nncc::engine::Camera camera;
     nncc::render::Renderer renderer{};
-    auto time_offset = bx::getHPCounter();
 
     const auto texture_image = nncc::common::LoadImage("texture.png");
     const auto texture = nncc::engine::TextureFromImage(texture_image);
@@ -58,7 +59,7 @@ int MainThreadFunc(bx::Thread* self, void* args) {
     auto mesh = GetPlaneMesh();
     nncc::render::Material material{};
     material.diffuse_texture = texture;
-    material.diffuse_color = 0xFFFFFFFF;
+    material.diffuse_color = 0x00FFFFFF;
     material.shader = program;
     material.d_texture_uniform = texture_uniform;
     material.d_color_uniform = color_uniform;
@@ -70,15 +71,9 @@ int MainThreadFunc(bx::Thread* self, void* args) {
         }
 
         // Time.
-        int64_t now = bx::getHPCounter();
-        static int64_t last = now;
-        const int64_t frame_time = now - last;
-        last = now;
-        const double freq = double(bx::getHPFrequency());
-        const float time = static_cast<float>(now - time_offset) / double(bx::getHPFrequency());
-        const float timedelta = float(frame_time / freq);
+        timer.Update();
 
-        camera.Update(timedelta, context->mouse_state, context->key_state);
+        camera.Update(timer.Timedelta(), context->mouse_state, context->key_state);
 
         bgfx::setViewClear(0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x303030ff, 1.0f, 0);
         // Set view 0 default viewport.
@@ -94,7 +89,7 @@ int MainThreadFunc(bx::Thread* self, void* args) {
         renderer.Prepare(program);
 
         auto transform = nncc::engine::Matrix4::Identity();
-        bx::mtxRotateY(*transform, time * 2.3f);
+        bx::mtxRotateY(*transform, timer.Time() * 2.3f);
 
         renderer.Add(mesh, material, transform);
         renderer.Present();
@@ -112,10 +107,6 @@ int MainThreadFunc(bx::Thread* self, void* args) {
 
     bgfx::destroy(texture_uniform);
     bgfx::destroy(color_uniform);
-
-    if (bgfx::isValid(nncc::render::Material::default_texture)) {
-        bgfx::destroy(nncc::render::Material::default_texture);
-    }
 
     bgfx::shutdown();
     return 0;

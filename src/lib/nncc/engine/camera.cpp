@@ -8,7 +8,7 @@ void Camera::Update(float timedelta, const context::MouseState& mouse_state, con
         mouse_last.y = mouse_state.y;
     }
 
-    mouse_down = mouse_state.buttons[static_cast<int>(context::MouseButton::Right)];
+    mouse_down = mouse_state.buttons[static_cast<int>(context::MouseButton::Left)];
 
     if (mouse_down) {
         mouse_now.x = mouse_state.x;

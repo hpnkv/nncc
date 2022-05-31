@@ -17,7 +17,7 @@ private:
     context::MouseState mouse_last{};
     context::MouseState mouse_now{};
 
-    bx::Vec3 eye_{0., 0., 0.};
+    bx::Vec3 eye_{0., 0., -10.};
     bx::Vec3 up_{0., 0., -1.};
     bx::Vec3 at_{0., 1., 0.};
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <cstring>
 #include <vector>
 
 namespace nncc::engine {

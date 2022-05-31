@@ -44,13 +44,15 @@ struct Material {
 
     static bgfx::TextureHandle GetDefaultTexture() {
         if (default_texture.idx == bgfx::kInvalidHandle) {
-            const uint32_t white = 0xFFFFFFFF;
-            auto texture_memory = bgfx::makeRef(&white, 4);
-            Material::default_texture = bgfx::createTexture2D(1, 1, false, 0, bgfx::TextureFormat::RGBA8, 0, texture_memory);
+            auto texture_memory = bgfx::makeRef(white.data(), sizeof(uint8_t) * 4);
+            Material::default_texture = bgfx::createTexture2D(1, 1, false, 0, bgfx::TextureFormat::RGBA8, 0,
+                                                              texture_memory);
         }
         return Material::default_texture;
     }
+
     static bgfx::TextureHandle default_texture;
+    static constexpr std::array<uint8_t, 4> white{0xFF, 0xFF, 0xFF, 0xFF};
 };
 
 struct Model {

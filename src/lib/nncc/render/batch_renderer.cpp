@@ -1,13 +1,14 @@
 #include "batch_renderer.h"
 
+#include <optional>
+
 #include <bgfx/bgfx.h>
 
 namespace nncc::render {
 
 void BatchRenderer::Add(bgfx::ViewId view_id, const Mesh& mesh, const Material& material, const engine::Matrix4& transform, uint64_t state) {
-    // We can hard code the shader ID & the texture ID for now since we're not using it yet
     BatchData* batch;
-    unsigned int batch_id = 1;
+    BatchId batch_id = {material.shader.idx, material.diffuse_texture.idx};
     if (!batch_groups_.count(batch_id)) {
         BatchData batch_data;
         batch_data.transient_vertex_buffer.content.resize(kMaxTransientVertices);
@@ -110,12 +111,14 @@ void BatchRenderer::Flush() {
                 bgfx::setVertexBuffer(0, &tvb);
                 bgfx::setIndexBuffer(ibh);
                 bgfx::setState(BGFX_STATE_DEFAULT | vertex_winding_direction);
+
                 float color_a = static_cast<float>(command.material.diffuse_color & 0xFF) / 255.;
                 float color_b = static_cast<float>(command.material.diffuse_color >> 8 & 0xFF) / 255.;
                 float color_g = static_cast<float>(command.material.diffuse_color >> 16 & 0xFF) / 255.;
                 float color_r = static_cast<float>(command.material.diffuse_color >> 24 & 0xFF) / 255.;
                 auto color = std::array<float, 4>{color_r, color_g, color_b, color_a};
                 bgfx::setUniform(command.material.d_color_uniform, color.data());
+
                 bgfx::setTexture(0, command.material.d_texture_uniform, command.material.diffuse_texture);
                 bgfx::setTransform(*command.transform);
 
@@ -142,8 +145,7 @@ bool BatchRenderer::CanBatch(nncc::render::BatchCommand* a, nncc::render::BatchC
     return a->state == b->state;
 }
 
-BatchData* BatchRenderer::GetBatchData(uint16_t shader_idx, uint16_t texture_idx) {
-    unsigned int batch_id = shader_idx * texture_idx;
+BatchData* BatchRenderer::GetBatchData(const BatchId& batch_id) {
     if (batch_groups_.count(batch_id)) {
         return &batch_groups_[batch_id];
     }

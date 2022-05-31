@@ -29,7 +29,7 @@ set(
 
 add_library(nncc-common ${NNCC_SOURCES})
 
-target_link_libraries(nncc-common PUBLIC bgfx bx glfw imgui ${TORCH_LIBRARIES})
+target_link_libraries(nncc-common PUBLIC bgfx bx glfw imgui ${TORCH_LIBRARIES} ${Python_LIBRARIES} pybind11::embed)
 target_include_directories(nncc-common PUBLIC ${BGFX_DIR}/include ${BX_DIR}/include ${BIMG_DIR}/include ${IMGUI_DIR} ${NNCC_COMMON_DIR} ${Python_INCLUDE_DIRS} ${TORCH_INCLUDE_DIRS} ${pybind11_INCLUDE_DIR})
 
 if (APPLE)
