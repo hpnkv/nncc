@@ -1,5 +1,14 @@
 #include "loop.h"
 
+#include <pybind11/embed.h>
+#include <torch/torch.h>
+#include <libshm/libshm.h>
+
+#include <3rdparty/bgfx_imgui/imgui/imgui.h>
+
+
+namespace py = pybind11;
+
 
 nncc::render::Mesh GetPlaneMesh() {
     nncc::render::Mesh mesh;
@@ -21,6 +30,119 @@ nncc::render::Mesh GetPlaneMesh() {
     };
     return mesh;
 }
+
+//    const auto texture_image = nncc::common::LoadImage("texture.png");
+//    const auto texture = nncc::engine::TextureFromImage(texture_image);
+
+//    auto data_ptr = THManagedMapAllocator::makeDataPtr(
+//        "/var/folders/5v/0s6hq3gd44z60gsb6nyt01q80000gn/T//torch-shm-dir-NbSNsa/manager.sock",
+//        "/torch_38294_2759594541_3",
+//        at::ALLOCATOR_MAPPED_SHAREDMEM, 1 * 512 * 512 * 4 * sizeof(float)
+//    );
+//    auto tensor = torch::from_blob(data_ptr.get(), {1, 512, 512, 4}, torch::TensorOptions().dtype(torch::kF32));
+
+void showDialog(const char* _errorText) {
+    char temp[1024];
+    bx::snprintf(temp, BX_COUNTOF(temp), "Example: %s", "ImGui support");
+
+    ImGui::SetNextWindowPos(
+            ImVec2(10.0f, 50.0f), ImGuiCond_FirstUseEver
+    );
+    ImGui::SetNextWindowSize(
+            ImVec2(300.0f, 210.0f), ImGuiCond_FirstUseEver
+    );
+
+    ImGui::Begin(temp);
+
+    ImGui::TextWrapped("%s", "Just testing everything together so far");
+
+    bx::StringView url = "https://apankov.net";
+    if (!url.isEmpty()) {
+        ImGui::SameLine();
+        if (ImGui::SmallButton(ICON_FA_LINK)) {
+//            openUrl(url);
+        } else if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("Documentation: %.*s", url.getLength(), url.getPtr());
+        }
+    }
+
+    ImGui::Separator();
+
+    if (NULL != _errorText) {
+        const int64_t now = bx::getHPCounter();
+        const int64_t freq = bx::getHPFrequency();
+        const float time = float(now % freq) / float(freq);
+
+        bool blink = time > 0.5f;
+
+        ImGui::PushStyleColor(ImGuiCol_Text, blink
+                                             ? ImVec4(1.0, 0.0, 0.0, 1.0)
+                                             : ImVec4(1.0, 1.0, 1.0, 1.0)
+        );
+        ImGui::TextWrapped("%s", _errorText);
+        ImGui::Separator();
+        ImGui::PopStyleColor();
+    }
+
+//    {
+//        uint32_t num = entry::getNumApps();
+//        const char** items = (const char**) alloca(num * sizeof(void*));
+//
+//        uint32_t ii = 0;
+//        int32_t current = 0;
+//        for (entry::AppI* app = entry::getFirstApp(); NULL != app; app = app->getNext()) {
+//            if (app == _app) {
+//                current = ii;
+//            }
+//
+//            items[ii++] = app->getName();
+//        }
+//
+//        if (1 < num
+//            && ImGui::Combo("Example", &current, items, num)) {
+//            char command[1024];
+//            bx::snprintf(command, BX_COUNTOF(command), "app restart %s", items[current]);
+//            cmdExec(command);
+//        }
+//
+//        const bgfx::Caps* caps = bgfx::getCaps();
+//        if (0 != (caps->supported & BGFX_CAPS_GRAPHICS_DEBUGGER)) {
+//            ImGui::SameLine();
+//            ImGui::Text(ICON_FA_SNOWFLAKE_O);
+//        }
+//
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(3.0f, 3.0f));
+
+    if (ImGui::Button(ICON_FA_REPEAT " Restart")) {
+//            cmdExec("app restart");
+    }
+
+    if (1 < 1) {
+        ImGui::SameLine();
+        if (ImGui::Button(ICON_KI_PREVIOUS " Prev")) {
+//                cmdExec("app restart prev");
+        }
+
+        ImGui::SameLine();
+        if (ImGui::Button(ICON_KI_NEXT " Next")) {
+//                cmdExec("app restart next");
+        }
+    }
+
+    ImGui::SameLine();
+    if (ImGui::Button(ICON_KI_EXIT " Exit")) {
+//            cmdExec("exit");
+    }
+
+    ImGui::SameLine();
+//        s_showStats ^= ImGui::Button(ICON_FA_BAR_CHART);
+
+    ImGui::PopStyleVar();
+
+    ImGui::End();
+}
+
+namespace nncc::engine {
 
 int MainThreadFunc(bx::Thread* self, void* args) {
     auto context = static_cast<nncc::context::Context*>(args);
@@ -45,8 +167,7 @@ int MainThreadFunc(bx::Thread* self, void* args) {
     nncc::engine::Camera camera;
     nncc::render::Renderer renderer{};
 
-    const auto texture_image = nncc::common::LoadImage("texture.png");
-    const auto texture = nncc::engine::TextureFromImage(texture_image);
+    size_t t_width = 512, t_height = 512, t_channels = 4;
 
     bx::FileReader reader;
     const auto fs = nncc::engine::LoadShader(&reader, "fs_default_diffuse");
@@ -55,14 +176,20 @@ int MainThreadFunc(bx::Thread* self, void* args) {
 
     auto texture_uniform = bgfx::createUniform("diffuseTX", bgfx::UniformType::Sampler, 1);
     auto color_uniform = bgfx::createUniform("diffuseCol", bgfx::UniformType::Vec4, 1);
+    auto texture = bgfx::createTexture2D(t_width, t_height, false, 0, bgfx::TextureFormat::RGBA32F, 0);
+
+    std::vector<float> mock_texture_data;
+    mock_texture_data.resize(t_width * t_height * t_channels);
 
     auto mesh = GetPlaneMesh();
     nncc::render::Material material{};
     material.diffuse_texture = texture;
-    material.diffuse_color = 0x00FFFFFF;
+    material.diffuse_color = 0xFFFFFFFF;
     material.shader = program;
     material.d_texture_uniform = texture_uniform;
     material.d_color_uniform = color_uniform;
+
+    imguiCreate();
 
     bool exit = false;
     while (!exit) {
@@ -70,10 +197,32 @@ int MainThreadFunc(bx::Thread* self, void* args) {
             exit = true;
         }
 
+        uint8_t imgui_pressed_buttons = 0;
+        uint8_t current_button_mask = 1;
+        for (size_t i = 0; i < 3; ++i) {
+            if (context->mouse_state.buttons[i]) {
+                imgui_pressed_buttons |= current_button_mask;
+            }
+            current_button_mask <<= 1;
+        }
+
+        imguiBeginFrame(context->mouse_state.x, context->mouse_state.y, imgui_pressed_buttons, context->mouse_state.z, uint16_t(width),
+                        uint16_t(height)
+        );
+
+        showDialog(nullptr);
+
+        imguiEndFrame();
+
+        auto texture_memory = bgfx::makeRef(mock_texture_data.data(), t_width * t_height * t_channels * 4);
+        bgfx::updateTexture2D(texture, 1, 0, 0, 0, t_width, t_height, texture_memory);
+
         // Time.
         timer.Update();
 
-        camera.Update(timer.Timedelta(), context->mouse_state, context->key_state);
+        if (!ImGui::MouseOverArea()) {
+            camera.Update(timer.Timedelta(), context->mouse_state, context->key_state);
+        }
 
         bgfx::setViewClear(0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x303030ff, 1.0f, 0);
         // Set view 0 default viewport.
@@ -84,7 +233,8 @@ int MainThreadFunc(bx::Thread* self, void* args) {
         bgfx::touch(0);
 
         renderer.SetViewMatrix(camera.GetViewMatrix());
-        renderer.SetProjectionMatrix(30, static_cast<float>(width) / static_cast<float>(height), 0.01f, 1000.0f);
+        renderer.SetProjectionMatrix(30, static_cast<float>(width) / static_cast<float>(height), 0.01f,
+                                     1000.0f);
         renderer.SetViewport({0, 0, static_cast<float>(width), static_cast<float>(height)});
         renderer.Prepare(program);
 
@@ -108,6 +258,7 @@ int MainThreadFunc(bx::Thread* self, void* args) {
     bgfx::destroy(texture_uniform);
     bgfx::destroy(color_uniform);
 
+    imguiDestroy();
     bgfx::shutdown();
     return 0;
 }
@@ -142,6 +293,8 @@ int Run() {
     while (bgfx::RenderFrame::NoContext != bgfx::renderFrame()) {}
     thread->shutdown();
     return thread->getExitCode();
+}
+
 }
 
 bool nncc::engine::ProcessEvents(nncc::context::Context* context) {

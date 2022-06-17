@@ -14,6 +14,16 @@ set(CMAKE_CXX_STANDARD 20)
 list(APPEND CMAKE_PREFIX_PATH "external/torch")
 find_package(Torch REQUIRED)
 
+if(MSVC)
+    set(LIBSHM_SUBDIR libshm_windows)
+else()
+    set(LIBSHM_SUBDIR libshm)
+endif()
+
+set(TORCH_ROOT /Users/apankov/dev/pytorch)
+set(LIBSHM_SRCDIR external/torch/lib/${LIBSHM_SUBDIR})
+add_subdirectory(${LIBSHM_SRCDIR})
+
 find_package(OpenCV REQUIRED)
 find_package(Python COMPONENTS Interpreter Development)
 find_package(pybind11 REQUIRED)

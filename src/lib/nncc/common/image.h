@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#include <nncc/3rdparty/stb_image.h>
+#include <3rdparty/stb/stb_image.h>
 
 namespace nncc::common {
 

@@ -11,6 +11,8 @@ set(
         nncc/context/event.cpp
         nncc/context/glfw_utils.cpp
         nncc/context/hid.cpp
+        3rdparty/bgfx_imgui/imgui/imgui.cpp
+        3rdparty/bgfx_imgui/imgui/imgui_user.inl
 )
 
 set(
@@ -29,8 +31,14 @@ set(
 
 add_library(nncc-common ${NNCC_SOURCES})
 
-target_link_libraries(nncc-common PUBLIC bgfx bx glfw imgui ${TORCH_LIBRARIES} ${Python_LIBRARIES} pybind11::embed)
-target_include_directories(nncc-common PUBLIC ${BGFX_DIR}/include ${BX_DIR}/include ${BIMG_DIR}/include ${IMGUI_DIR} ${NNCC_COMMON_DIR} ${Python_INCLUDE_DIRS} ${TORCH_INCLUDE_DIRS} ${pybind11_INCLUDE_DIR})
+target_link_libraries(nncc-common PUBLIC bgfx bx glfw imgui ${TORCH_LIBRARIES} ${Python_LIBRARIES} pybind11::embed shm)
+target_include_directories(nncc-common PUBLIC
+        ${BGFX_DIR}/include ${BX_DIR}/include ${BIMG_DIR}/include ${IMGUI_WRAPPER_DIR}
+        ${NNCC_COMMON_DIR} ${Python_INCLUDE_DIRS}
+        ${TORCH_INCLUDE_DIRS} ${pybind11_INCLUDE_DIR}
+        ${CMAKE_BINARY_DIR}/aten/src # provides "ATen/TypeExtendedInterface.h" to ATen.h
+        ${TORCH_ROOT}/torch/lib # provides "libshm/libshm.h"
+        )
 
 if (APPLE)
     target_include_directories(nncc-common PUBLIC "-framework Metal" "-framework AppKit" "-framework Foundation" "-framework Quartz")

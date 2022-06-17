@@ -50,8 +50,8 @@ private:
     int64_t offset_ = 0, previous_ = 0, current_ = 0;
 };
 
-}
-
 int MainThreadFunc(bx::Thread* self, void* args);
 
 int Run();
+
+}

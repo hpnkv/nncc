@@ -73,4 +73,5 @@ bgfx::TextureHandle TextureFromImage(const nncc::common::Image& image, bool immu
     bgfx::updateTexture2D(texture, 1, 0, 0, 0, image.width, image.height, texture_memory);
     return texture;
 }
+
 }
