@@ -41,89 +41,29 @@ nncc::render::Mesh GetPlaneMesh() {
 //    );
 //    auto tensor = torch::from_blob(data_ptr.get(), {1, 512, 512, 4}, torch::TensorOptions().dtype(torch::kF32));
 
-void showDialog(const char* _errorText) {
-    char temp[1024];
-    bx::snprintf(temp, BX_COUNTOF(temp), "Example: %s", "ImGui support");
-
-    ImGui::SetNextWindowPos(
-            ImVec2(10.0f, 50.0f), ImGuiCond_FirstUseEver
-    );
-    ImGui::SetNextWindowSize(
-            ImVec2(300.0f, 210.0f), ImGuiCond_FirstUseEver
-    );
-
-    ImGui::Begin(temp);
-
-    ImGui::TextWrapped("%s", "Just testing everything together so far");
-
-    bx::StringView url = "https://apankov.net";
-    if (!url.isEmpty()) {
-        ImGui::SameLine();
-        if (ImGui::SmallButton(ICON_FA_LINK)) {
-//            openUrl(url);
-        } else if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("Documentation: %.*s", url.getLength(), url.getPtr());
-        }
-    }
-
-    ImGui::Separator();
-
-    if (NULL != _errorText) {
-        const int64_t now = bx::getHPCounter();
-        const int64_t freq = bx::getHPFrequency();
-        const float time = float(now % freq) / float(freq);
-
-        bool blink = time > 0.5f;
-
-        ImGui::PushStyleColor(ImGuiCol_Text, blink
-                                             ? ImVec4(1.0, 0.0, 0.0, 1.0)
-                                             : ImVec4(1.0, 1.0, 1.0, 1.0)
-        );
-        ImGui::TextWrapped("%s", _errorText);
-        ImGui::Separator();
-        ImGui::PopStyleColor();
-    }
-
-    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(3.0f, 3.0f));
-
-    if (ImGui::Button(ICON_FA_REPEAT " Restart")) {
-//            cmdExec("app restart");
-    }
-
-    ImGui::SameLine();
-    if (ImGui::Button(ICON_KI_EXIT " Exit")) {
-//        nncc::context::Context::Get().Exit();
-    }
-
-    ImGui::PopStyleVar();
-
-    ImGui::End();
-}
-
 namespace nncc::engine {
 
 int MainThreadFunc(bx::Thread* self, void* args) {
-    auto context = static_cast<nncc::context::Context*>(args);
-    auto glfw_window = context->GetGlfwWindow(0);
+    using namespace nncc;
+
+    auto context = static_cast<context::Context*>(args);
+    auto& window = context->GetWindow(0);
 
     bgfx::Init init;
 
-    nncc::render::PosNormUVVertex::Init();
+    render::PosNormUVVertex::Init();
 
-    int32_t width, height;
-    glfwGetWindowSize(glfw_window, &width, &height);
-
-    init.resolution.width = (uint32_t) width;
-    init.resolution.height = (uint32_t) height;
+    init.resolution.width = (uint32_t) window.width;
+    init.resolution.height = (uint32_t) window.height;
     init.resolution.reset = BGFX_RESET_VSYNC;
 
     if (!bgfx::init(init)) {
         return 1;
     }
 
-    nncc::engine::Timer timer;
-    nncc::engine::Camera camera;
-    nncc::render::Renderer renderer{};
+    engine::Timer timer;
+    engine::Camera camera;
+    render::Renderer renderer{};
 
     size_t t_width = 512, t_height = 512, t_channels = 4;
 
@@ -137,21 +77,26 @@ int MainThreadFunc(bx::Thread* self, void* args) {
     auto texture = bgfx::createTexture2D(t_width, t_height, false, 0, bgfx::TextureFormat::RGBA32F, 0);
 
     std::vector<float> mock_texture_data;
-    mock_texture_data.resize(t_width * t_height * t_channels);
+    mock_texture_data.resize(t_width * t_height * t_channels, 1.);
 
     auto mesh = GetPlaneMesh();
-    nncc::render::Material material{};
+    render::Material material{};
     material.diffuse_texture = texture;
     material.diffuse_color = 0xFFFFFFFF;
     material.shader = program;
     material.d_texture_uniform = texture_uniform;
     material.d_color_uniform = color_uniform;
 
+    std::vector<std::unique_ptr<ImGuiComponent>> gui_components;
+    gui_components.push_back(std::make_unique<TextEdit>("manager", "/", 256));
+    gui_components.push_back(std::make_unique<TextEdit>("filename", "/", 256));
+    gui_components.push_back(std::make_unique<TextEdit>("size (bytes)", "0", 12));
+
     imguiCreate();
 
     bool exit = false;
     while (!exit) {
-        if (!nncc::engine::ProcessEvents(context)) {
+        if (!engine::ProcessEvents(context)) {
             exit = true;
         }
 
@@ -164,12 +109,29 @@ int MainThreadFunc(bx::Thread* self, void* args) {
             current_button_mask <<= 1;
         }
 
-        imguiBeginFrame(context->mouse_state.x, context->mouse_state.y, imgui_pressed_buttons, context->mouse_state.z, uint16_t(width),
-                        uint16_t(height)
+        imguiBeginFrame(context->mouse_state.x, context->mouse_state.y, imgui_pressed_buttons, context->mouse_state.z, uint16_t(window.width),
+                        uint16_t(window.height)
         );
 
-        showDialog(nullptr);
+        ImGui::SetNextWindowPos(ImVec2(10.0f, 50.0f), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(300.0f, 210.0f), ImGuiCond_FirstUseEver);
 
+        ImGui::Begin("Example: ImGui support");
+
+        for (const auto& component : gui_components) {
+            component->Render();
+        }
+
+        ImGui::TextWrapped("%s", "Just testing everything together so far");
+
+        ImGui::SameLine();
+        if (ImGui::SmallButton(ICON_FA_LINK)) {
+//            openUrl(url);
+        } else if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("Documentation: https://apankov.net");
+        }
+
+        ImGui::End();
         imguiEndFrame();
 
         auto texture_memory = bgfx::makeRef(mock_texture_data.data(), t_width * t_height * t_channels * 4);
@@ -184,25 +146,23 @@ int MainThreadFunc(bx::Thread* self, void* args) {
 
         bgfx::setViewClear(0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x303030ff, 1.0f, 0);
         // Set view 0 default viewport.
-        bgfx::setViewRect(0, 0, 0, 1024, 768);
+        bgfx::setViewRect(0, 0, 0, window.width, window.height);
 
         // This dummy draw call is here to make sure that view 0 is cleared
         // if no other draw calls are submitted to view 0.
         bgfx::touch(0);
 
         renderer.SetViewMatrix(camera.GetViewMatrix());
-        renderer.SetProjectionMatrix(30, static_cast<float>(width) / static_cast<float>(height), 0.01f,
+        renderer.SetProjectionMatrix(30, static_cast<float>(window.width) / static_cast<float>(window.height), 0.01f,
                                      1000.0f);
-        renderer.SetViewport({0, 0, static_cast<float>(width), static_cast<float>(height)});
+        renderer.SetViewport({0, 0, static_cast<float>(window.width), static_cast<float>(window.height)});
         renderer.Prepare(program);
 
-        auto transform = nncc::engine::Matrix4::Identity();
+        auto transform = engine::Matrix4::Identity();
         bx::mtxRotateY(*transform, timer.Time() * 2.3f);
 
         renderer.Add(mesh, material, transform);
         renderer.Present();
-
-//        bgfx::setDebug(BGFX_DEBUG_STATS);
 
         // Advance to next frame. Rendering thread will be kicked to
         // process submitted rendering primitives.
@@ -222,23 +182,39 @@ int MainThreadFunc(bx::Thread* self, void* args) {
 }
 
 int Run() {
-    auto& context = nncc::context::Context::Get();
+    using namespace nncc::context;
+
+    auto& context = Context::Get();
     if (!context.Init()) {
         return 1;
     }
     bgfx::renderFrame();
 
-    auto window = context.GetGlfwWindow(0);
+    auto& window = context.GetWindow(0);
+    auto glfw_main_window = context.GetGlfwWindow(0);
 
     auto thread = context.GetDefaultThread();
     thread->init(&MainThreadFunc, &context, 0, "render");
 
-    while (window != nullptr && !glfwWindowShouldClose(window)) {
+    while (glfw_main_window != nullptr && !glfwWindowShouldClose(glfw_main_window)) {
         glfwWaitEventsTimeout(1. / 120);
+
+        // TODO: support multiple windows
+        int width, height;
+        glfwGetWindowSize(glfw_main_window, &width, &height);
+        if (width != window.width || height != window.height) {
+            std::unique_ptr<context::Event> event(new ResizeEvent{
+                    .width = width,
+                    .height = height
+            });
+            event->type = EventType::Resize;
+            context.GetEventQueue().Push(0, std::move(event));
+        }
+
         while (auto message = context.GetMessageQueue().pop()) {
-            if (message->type == nncc::context::GlfwMessageType::Destroy) {
-                glfwDestroyWindow(window);
-                window = nullptr;
+            if (message->type == GlfwMessageType::Destroy) {
+                glfwDestroyWindow(glfw_main_window);
+                glfw_main_window = nullptr;
             }
         }
         bgfx::renderFrame();
@@ -253,34 +229,39 @@ int Run() {
 }
 
 bool nncc::engine::ProcessEvents(nncc::context::Context* context) {
+    using namespace nncc::context;
+
     auto queue = &context->GetEventQueue();
-    std::shared_ptr<context::Event> event = queue->Poll();
+    std::shared_ptr<Event> event = queue->Poll();
 
     if (event == nullptr) {
         return true;
     }
 
-    if (event->type == context::EventType::Exit) {
+    if (event->type == EventType::Exit) {
         return false;
 
-    } else if (event->type == context::EventType::MouseButton) {
-        auto btn_event = std::static_pointer_cast<context::MouseEvent>(event);
+    } else if (event->type == EventType::Resize) {
+        auto resize_event = std::static_pointer_cast<ResizeEvent>(event);
+        context->SetWindowResolution(event->window_idx, resize_event->width, resize_event->height);
+        bgfx::reset(resize_event->width, resize_event->height, BGFX_RESET_VSYNC);
+        bgfx::setViewRect(0, 0, 0, bgfx::BackbufferRatio::Equal);
+
+    } else if (event->type == EventType::MouseButton) {
+        auto btn_event = std::static_pointer_cast<MouseEvent>(event);
 
         context->mouse_state.x = btn_event->x;
         context->mouse_state.y = btn_event->y;
         context->mouse_state.buttons[static_cast<int>(btn_event->button)] = btn_event->down;
 
-    } else if (event->type == context::EventType::MouseMove) {
-        auto move_event = std::static_pointer_cast<context::MouseEvent>(event);
+    } else if (event->type == EventType::MouseMove) {
+        auto move_event = std::static_pointer_cast<MouseEvent>(event);
 
         context->mouse_state.x = move_event->x;
         context->mouse_state.y = move_event->y;
 
-    } else if (event->type == context::EventType::Resize) {
-        auto resize_event = std::static_pointer_cast<context::ResizeEvent>(event);
-
-    } else if (event->type == context::EventType::Key) {
-        auto key_event = std::static_pointer_cast<context::KeyEvent>(event);
+    } else if (event->type == EventType::Key) {
+        auto key_event = std::static_pointer_cast<KeyEvent>(event);
         auto key = key_event->key;
         if (key_event->down) {
             context->key_state.pressed_keys.insert(key);

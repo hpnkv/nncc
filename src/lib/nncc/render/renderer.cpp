@@ -41,10 +41,6 @@ void Renderer::Prepare(bgfx::ProgramHandle program) {
 
     Init();
 
-//    if (!viewport_ || !view_matrix_ || !projection_matrix_) {
-//        throw std::runtime_error("Init view before rendering.");
-//    }
-
     bx::mtxMul(*cached_vp_matrix_, **view_matrix_, **projection_matrix_);
     bx::mtxInverse(*cached_vp_matrix_inv_, *cached_vp_matrix_);
 

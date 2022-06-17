@@ -1,10 +1,4 @@
-/*
- * Copyright 2014-2015 Daniel Collin. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
- */
-
 #include <bgfx/bgfx.h>
-#include <bgfx/embedded_shader.h>
 #include <bx/allocator.h>
 #include <bx/math.h>
 #include <bx/timer.h>
@@ -15,7 +9,6 @@
 #include <nncc/render/bgfx/memory.h>
 
 #include "imgui.h"
-//#include "3rdparty/bgfx_imgui/bgfx_utils.h"
 
 #include "./fonts/roboto_regular.ttf.h"
 #include "./fonts/robotomono_regular.ttf.h"
@@ -51,7 +44,7 @@ static void* memAlloc(size_t _size, void* _userData);
 static void memFree(void* _ptr, void* _userData);
 
 struct OcornutImguiContext {
-    void render(ImDrawData* _drawData) {
+    void render(ImDrawData* _drawData) const {
         // Avoid rendering when minimized, scale coordinates for retina displays (screen coordinates != framebuffer coordinates)
         int fb_width = (int) (_drawData->DisplaySize.x * _drawData->FramebufferScale.x);
         int fb_height = (int) (_drawData->DisplaySize.y * _drawData->FramebufferScale.y);
@@ -107,10 +100,7 @@ struct OcornutImguiContext {
                 if (cmd->UserCallback) {
                     cmd->UserCallback(drawList, cmd);
                 } else if (0 != cmd->ElemCount) {
-                    uint64_t state = 0
-                                     | BGFX_STATE_WRITE_RGB
-                                     | BGFX_STATE_WRITE_A
-                                     | BGFX_STATE_MSAA;
+                    uint64_t state = BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_MSAA;
 
                     bgfx::TextureHandle th = m_texture;
                     bgfx::ProgramHandle program = m_program;
@@ -306,8 +296,6 @@ struct OcornutImguiContext {
         m_keyMap[entry::Key::GamepadThumbR]    = ImGuiKey_GamepadR3;
 #endif // USE_ENTRY
 
-//        bgfx::RendererType::Enum type = bgfx::getRendererType();
-
         bx::FileReader reader;
         m_program = bgfx::createProgram(
                 nncc::engine::LoadShader(&reader, "vs_ocornut_imgui"),
@@ -336,7 +324,6 @@ struct OcornutImguiContext {
             ImFontConfig config;
             config.FontDataOwnedByAtlas = false;
             config.MergeMode = false;
-//			config.MergeGlyphCenterV = true;
 
             const ImWchar* ranges = io.Fonts->GetGlyphRangesCyrillic();
             m_font[ImGui::Font::Regular] = io.Fonts->AddFontFromMemoryTTF((void*) s_robotoRegularTtf,
@@ -363,12 +350,9 @@ struct OcornutImguiContext {
                 (uint16_t) width, (uint16_t) height, false, 1, bgfx::TextureFormat::BGRA8, 0,
                 bgfx::copy(data, width * height * 4)
         );
-
-//        ImGui::InitDockContext();
     }
 
     void destroy() {
-//        ImGui::ShutdownDockContext();
         ImGui::DestroyContext(m_imgui);
 
         bgfx::destroy(s_tex);
@@ -435,8 +419,6 @@ struct OcornutImguiContext {
 #endif // USE_ENTRY
 
         ImGui::NewFrame();
-
-//        ImGuizmo::BeginFrame();
     }
 
     void endFrame() {
@@ -510,20 +492,12 @@ void PopEnabled() {
 } // namespace ImGui
 
 BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4505); // error C4505: '' : unreferenced local function has been removed
-BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC(
-        "-Wunused-function"); // warning: 'int rect_width_compare(const void*, const void*)' defined but not used
-BX_PRAGMA_DIAGNOSTIC_PUSH();
-BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wunknown-pragmas")
-BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC(
-        "-Wtype-limits"); // warning: comparison is always true due to limited range of data type
+
 #define STBTT_malloc(_size, _userData) memAlloc(_size, _userData)
 #define STBTT_free(_ptr, _userData) memFree(_ptr, _userData)
-#define STB_RECT_PACK_IMPLEMENTATION
 
+#define STB_RECT_PACK_IMPLEMENTATION
 #include <3rdparty/stb/stb_rect_pack.h>
 
 #define STB_TRUETYPE_IMPLEMENTATION
-
 #include <3rdparty/stb/stb_truetype.h>
-
-BX_PRAGMA_DIAGNOSTIC_POP();

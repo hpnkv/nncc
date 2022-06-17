@@ -43,8 +43,7 @@ struct KeyEvent : public Event {
 };
 
 struct ResizeEvent : public Event {
-    Key key = Key::None;
-    uint16_t width = 0, height = 0;
+    int width = 0, height = 0;
 };
 
 struct ExitEvent : public Event {

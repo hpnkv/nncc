@@ -46,6 +46,10 @@ public:
         return windows_[window_idx].ptr.get();
     }
 
+    GLFWWindowWrapper& GetWindow(int16_t window_idx) {
+        return windows_[window_idx];
+    }
+
     int16_t GetWindowIdx(GLFWwindow* window) {
         return window_indices_.at(window);
     }
@@ -60,6 +64,11 @@ public:
 
     bx::Thread* GetDefaultThread() {
         return &default_thread_;
+    }
+
+    void SetWindowResolution(int16_t idx, int width, int height) {
+        windows_[idx].width = width;
+        windows_[idx].height = height;
     }
 
     KeyState key_state;
