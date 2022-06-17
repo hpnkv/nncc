@@ -1,7 +1,5 @@
 #include "context.h"
 
-#include <iostream>
-
 namespace nncc::context {
 
 bx::DefaultAllocator Context::allocator_;

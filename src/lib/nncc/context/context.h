@@ -27,6 +27,12 @@ public:
     Context(const Context&) = delete;
     void operator=(const Context&) = delete;
 
+    void Exit() {
+        std::unique_ptr<Event> event(new ExitEvent);
+        event->type = nncc::context::EventType::Exit;
+        Context::Get().GetEventQueue().Push(0, std::move(event));
+    }
+
     bool Init();
 
     int16_t CreateWindow(const WindowParams& params);

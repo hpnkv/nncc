@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.22)
 set(CMAKE_OSX_DEPLOYMENT_TARGET "12.2" CACHE STRING "Minimum OS X deployment version")
 
+message(CMAKE_OSX_SYSROOT ${CMAKE_OSX_SYSROOT})
+
 list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 project(nncc
@@ -12,7 +14,12 @@ project(nncc
 set(CMAKE_CXX_STANDARD 20)
 
 list(APPEND CMAKE_PREFIX_PATH "external/torch")
+list(APPEND CMAKE_PREFIX_PATH "/Users/apankov/dev/nncc/external/folly")
+list(APPEND CMAKE_PREFIX_PATH "/Users/apankov/dev/nncc/external/boost")
+
+find_package(glog CONFIG REQUIRED)
 find_package(Torch REQUIRED)
+find_package(Folly REQUIRED)
 
 if(MSVC)
     set(LIBSHM_SUBDIR libshm_windows)
@@ -35,6 +42,8 @@ set(CMAKE_LINKER_FLAGS -fsanitize=address)
 message("TORCH LIBS ${TORCH_LIBRARIES}")
 message("TORCH INCLUDES ${TORCH_INCLUDE_DIRS}")
 message("PYTHON_INCLUDE_DIRS ${Python_INCLUDE_DIRS}")
+message("FOLLY_LIBRARIES ${FOLLY_LIBRARIES}")
+message("FOLLY_INCLUDE_DIR ${FOLLY_INCLUDE_DIR}")
 
 include(cmake/imgui.cmake)
 add_subdirectory("external/bgfx.cmake")

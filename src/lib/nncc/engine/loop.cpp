@@ -84,58 +84,16 @@ void showDialog(const char* _errorText) {
         ImGui::PopStyleColor();
     }
 
-//    {
-//        uint32_t num = entry::getNumApps();
-//        const char** items = (const char**) alloca(num * sizeof(void*));
-//
-//        uint32_t ii = 0;
-//        int32_t current = 0;
-//        for (entry::AppI* app = entry::getFirstApp(); NULL != app; app = app->getNext()) {
-//            if (app == _app) {
-//                current = ii;
-//            }
-//
-//            items[ii++] = app->getName();
-//        }
-//
-//        if (1 < num
-//            && ImGui::Combo("Example", &current, items, num)) {
-//            char command[1024];
-//            bx::snprintf(command, BX_COUNTOF(command), "app restart %s", items[current]);
-//            cmdExec(command);
-//        }
-//
-//        const bgfx::Caps* caps = bgfx::getCaps();
-//        if (0 != (caps->supported & BGFX_CAPS_GRAPHICS_DEBUGGER)) {
-//            ImGui::SameLine();
-//            ImGui::Text(ICON_FA_SNOWFLAKE_O);
-//        }
-//
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(3.0f, 3.0f));
 
     if (ImGui::Button(ICON_FA_REPEAT " Restart")) {
 //            cmdExec("app restart");
     }
 
-    if (1 < 1) {
-        ImGui::SameLine();
-        if (ImGui::Button(ICON_KI_PREVIOUS " Prev")) {
-//                cmdExec("app restart prev");
-        }
-
-        ImGui::SameLine();
-        if (ImGui::Button(ICON_KI_NEXT " Next")) {
-//                cmdExec("app restart next");
-        }
-    }
-
     ImGui::SameLine();
     if (ImGui::Button(ICON_KI_EXIT " Exit")) {
-//            cmdExec("exit");
+//        nncc::context::Context::Get().Exit();
     }
-
-    ImGui::SameLine();
-//        s_showStats ^= ImGui::Button(ICON_FA_BAR_CHART);
 
     ImGui::PopStyleVar();
 
@@ -286,10 +244,7 @@ int Run() {
         bgfx::renderFrame();
     }
 
-    std::unique_ptr<nncc::context::Event> event(new nncc::context::ExitEvent);
-    event->type = nncc::context::EventType::Exit;
-    context.GetEventQueue().Push(0, std::move(event));
-
+    context.Exit();
     while (bgfx::RenderFrame::NoContext != bgfx::renderFrame()) {}
     thread->shutdown();
     return thread->getExitCode();
