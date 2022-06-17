@@ -35,12 +35,15 @@ public:
 
     bool Init();
 
-    int16_t CreateWindow(const WindowParams& params);
+    bool InitWindowing(GLFWerrorfun error_callback);
+
+    int16_t CreateWindow(uint16_t width, uint16_t height, const std::string& title = "window", GLFWmonitor* monitor = nullptr,
+                         GLFWwindow* share = nullptr);
 
     void DestroyWindow(int16_t idx);
 
     GLFWwindow* GetGlfwWindow(int16_t window_idx) {
-        return windows_[window_idx].get();
+        return windows_[window_idx].ptr.get();
     }
 
     int16_t GetWindowIdx(GLFWwindow* window) {
@@ -69,7 +72,7 @@ private:
 
     EventQueue event_queue_;
 
-    std::vector<GLFWWindowUniquePtr> windows_;
+    std::vector<GLFWWindowWrapper> windows_;
     std::unordered_map<GLFWwindow*, int16_t> window_indices_;
 
     bx::Thread default_thread_;

@@ -22,18 +22,6 @@
 
 namespace nncc::context {
 
-struct WindowParams {
-    int width = 1024;
-    int height = 768;
-    std::string title = "window";
-    GLFWmonitor* monitor = nullptr;
-    GLFWwindow* share = nullptr;
-};
-
-void* GetNativeDisplayType();
-
-void* GetNativeWindowHandle(GLFWwindow* window);
-
 struct GLFWWindowDeleter {
     void operator()(GLFWwindow* ptr) {
         glfwDestroyWindow(ptr);
@@ -41,6 +29,42 @@ struct GLFWWindowDeleter {
 };
 
 using GLFWWindowUniquePtr = std::unique_ptr<GLFWwindow, GLFWWindowDeleter>;
+
+struct GLFWWindowWrapper {
+    GLFWWindowWrapper(uint16_t _width, uint16_t _height, std::string _title, GLFWmonitor* monitor = nullptr,
+                      GLFWwindow* share = nullptr) : title(std::move(_title)), width(_width), height(_height) {
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+        auto window = glfwCreateWindow(
+                width, height, title.c_str(), monitor, share
+        );
+        ptr.reset(window);
+    }
+
+    void* GetNativeDisplayType() {
+#if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
+        return glfwGetX11Display();
+#else
+        return nullptr;
+#endif
+    }
+
+    void* GetNativeHandle() {
+#if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
+        init.platformData.ndt = glfwGetX11Display();
+        return (void*)(uintptr_t)glfwGetX11Window(ptr.get());
+#elif BX_PLATFORM_OSX
+        return glfwGetCocoaWindow(ptr.get());
+#elif BX_PLATFORM_WINDOWS
+        return glfwGetWin32Window(ptr.get());
+#endif
+    }
+
+    GLFWWindowUniquePtr ptr;
+    uint16_t width = 0, height = 0;
+    std::string title = "window";
+
+    // TODO: do we need to save monitor and share?
+};
 
 enum class GlfwMessageType {
     Create,

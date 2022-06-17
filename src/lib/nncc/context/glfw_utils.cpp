@@ -13,25 +13,6 @@ MouseButton translateGlfwMouseButton(int button) {
     return MouseButton::None;
 }
 
-void* GetNativeDisplayType() {
-#if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
-    return glfwGetX11Display();
-#else
-    return nullptr;
-#endif
-}
-
-void* GetNativeWindowHandle(GLFWwindow* window) {
-#if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
-    init.platformData.ndt = glfwGetX11Display();
-        return (void*)(uintptr_t)glfwGetX11Window(window);
-#elif BX_PLATFORM_OSX
-    return glfwGetCocoaWindow(window);
-#elif BX_PLATFORM_WINDOWS
-    return glfwGetWin32Window(window);
-#endif
-}
-
 std::unordered_map<int, Key> GlfwKeyTranslationTable() {
     std::unordered_map<int, Key> table;
     table[GLFW_KEY_ESCAPE]       = Key::Esc;

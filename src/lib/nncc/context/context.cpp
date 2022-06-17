@@ -5,18 +5,11 @@ namespace nncc::context {
 bx::DefaultAllocator Context::allocator_;
 
 bool Context::Init() {
-    glfwSetErrorCallback(&Context::GLFWErrorCallback);
-
-    if (!glfwInit()) {
-        return false;
-    }
-
-    auto window_idx = CreateWindow(WindowParams());
-    auto glfw_window = windows_[window_idx].get();
+    InitWindowing(&Context::GLFWErrorCallback);
 
     bgfx::PlatformData pd;
-    pd.ndt = GetNativeDisplayType();
-    pd.nwh = GetNativeWindowHandle(glfw_window);
+    pd.ndt = windows_[0].GetNativeDisplayType();
+    pd.nwh = windows_[0].GetNativeHandle();
     pd.context = nullptr;
     pd.backBuffer = nullptr;
     pd.backBufferDS = nullptr;
@@ -25,26 +18,35 @@ bool Context::Init() {
     return true;
 }
 
-int16_t Context::CreateWindow(const WindowParams& params) {
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    auto window = glfwCreateWindow(
-            params.width, params.height, params.title.c_str(), params.monitor, params.share
-    );
+bool Context::InitWindowing(GLFWerrorfun error_callback) {
+    glfwSetErrorCallback(error_callback);
+    if (!glfwInit()) {
+        return false;
+    }
 
-    glfwSetMouseButtonCallback(window, &Context::MouseButtonCallback);
-    glfwSetCursorPosCallback(window, &Context::CursorPositionCallback);
-    glfwSetKeyCallback(window, &Context::KeyCallback);
+    CreateWindow(1024, 768, "window");
+    return true;
+}
+
+int16_t Context::CreateWindow(uint16_t width, uint16_t height, const std::string& title, GLFWmonitor* monitor,
+                              GLFWwindow* share) {
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+    auto window = GLFWWindowWrapper(width, height, title, monitor, share);
+
+    glfwSetMouseButtonCallback(window.ptr.get(), &Context::MouseButtonCallback);
+    glfwSetCursorPosCallback(window.ptr.get(), &Context::CursorPositionCallback);
+    glfwSetKeyCallback(window.ptr.get(), &Context::KeyCallback);
 
     int16_t window_idx = static_cast<int16_t>(windows_.size());
-    windows_.push_back(GLFWWindowUniquePtr(window));
-    window_indices_[window] = window_idx;
+    window_indices_[window.ptr.get()] = window_idx;
+    windows_.push_back(std::move(window));
 
     return window_idx;
 }
 
 void Context::DestroyWindow(int16_t idx) {
-    window_indices_.erase(windows_[idx].get());
-    windows_[idx].reset();
+    window_indices_.erase(windows_[idx].ptr.get());
+    windows_[idx].ptr.reset();
 }
 
 void Context::GLFWErrorCallback(int error, const char* description) {

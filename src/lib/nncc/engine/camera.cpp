@@ -3,34 +3,6 @@
 namespace nncc::engine {
 
 void Camera::Update(float timedelta, const context::MouseState& mouse_state, const context::KeyState& key_state) {
-    if (!mouse_down) {
-        mouse_last.x = mouse_state.x;
-        mouse_last.y = mouse_state.y;
-    }
-
-    mouse_down = mouse_state.buttons[static_cast<int>(context::MouseButton::Left)];
-
-    if (mouse_down) {
-        mouse_now.x = mouse_state.x;
-        mouse_now.y = mouse_state.y;
-    }
-
-    mouse_last.z = mouse_now.z;
-    mouse_now.z = mouse_state.z;
-
-    const float deltaZ = float(mouse_now.z - mouse_last.z);
-
-    if (mouse_down) {
-        const int32_t deltaX = mouse_now.x - mouse_last.x;
-        const int32_t deltaY = mouse_now.y - mouse_last.y;
-
-        yaw += mouse_speed * float(deltaX);
-        pitch -= mouse_speed * float(deltaY);
-
-        mouse_last.x = mouse_now.x;
-        mouse_last.y = mouse_now.y;
-    }
-
     const bx::Vec3 direction = {
             bx::cos(pitch) * bx::sin(yaw),
             bx::sin(pitch),
@@ -57,6 +29,34 @@ void Camera::Update(float timedelta, const context::MouseState& mouse_state, con
 
     if (key_state.pressed_keys.contains(context::Key::KeyD)) {
         eye_ = bx::mad(right, -timedelta * move_speed, eye_);
+    }
+
+    if (!mouse_down) {
+        mouse_last.x = mouse_state.x;
+        mouse_last.y = mouse_state.y;
+    }
+
+    mouse_down = mouse_state.buttons[static_cast<int>(context::MouseButton::Left)];
+
+    if (mouse_down) {
+        mouse_now.x = mouse_state.x;
+        mouse_now.y = mouse_state.y;
+    }
+
+    mouse_last.z = mouse_now.z;
+    mouse_now.z = mouse_state.z;
+
+    const float deltaZ = float(mouse_now.z - mouse_last.z);
+
+    if (mouse_down) {
+        const int32_t deltaX = mouse_now.x - mouse_last.x;
+        const int32_t deltaY = mouse_now.y - mouse_last.y;
+
+        yaw += mouse_speed * float(deltaX);
+        pitch -= mouse_speed * float(deltaY);
+
+        mouse_last.x = mouse_now.x;
+        mouse_last.y = mouse_now.y;
     }
 
     eye_ = bx::mad(direction, deltaZ * timedelta * move_speed, eye_);

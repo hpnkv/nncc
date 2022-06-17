@@ -202,7 +202,7 @@ int MainThreadFunc(bx::Thread* self, void* args) {
         renderer.Add(mesh, material, transform);
         renderer.Present();
 
-        bgfx::setDebug(BGFX_DEBUG_STATS);
+//        bgfx::setDebug(BGFX_DEBUG_STATS);
 
         // Advance to next frame. Rendering thread will be kicked to
         // process submitted rendering primitives.
@@ -275,6 +275,9 @@ bool nncc::engine::ProcessEvents(nncc::context::Context* context) {
 
         context->mouse_state.x = move_event->x;
         context->mouse_state.y = move_event->y;
+
+    } else if (event->type == context::EventType::Resize) {
+        auto resize_event = std::static_pointer_cast<context::ResizeEvent>(event);
 
     } else if (event->type == context::EventType::Key) {
         auto key_event = std::static_pointer_cast<context::KeyEvent>(event);

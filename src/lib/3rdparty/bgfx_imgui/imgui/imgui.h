@@ -8,7 +8,6 @@
 
 #include <bgfx/bgfx.h>
 #include <imgui/imgui.h>
-#include <imgui/imgui.h>
 
 #include <3rdparty/iconfontheaders/icons_kenney.h>
 #include <3rdparty/iconfontheaders/icons_font_awesome.h>
@@ -66,7 +65,7 @@ inline uint32_t imguiRGBA(uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a = 255) 
            | (uint32_t(_a) << 24);
 }
 
-namespace bx { struct AllocatorI; }
+//namespace bx { struct AllocatorI; }
 
 void imguiCreate(float _fontSize = 18.0f, bx::AllocatorI* _allocator = NULL);
 
@@ -76,10 +75,6 @@ void imguiBeginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll,
                      int _inputChar = -1, bgfx::ViewId _view = 255);
 
 void imguiEndFrame();
-
-namespace entry { class AppI; }
-
-void showExampleDialog(entry::AppI* _app, const char* _errorText = NULL);
 
 namespace ImGui {
 #define IMGUI_FLAGS_NONE        UINT8_C(0x00)
@@ -140,8 +135,7 @@ inline void NextLine() {
 }
 
 inline bool MouseOverArea() {
-    return false
-           || ImGui::IsAnyItemActive()
+    return ImGui::IsAnyItemActive()
            || ImGui::IsAnyItemHovered()
            || ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow)
 //			|| ImGuizmo::IsOver()
