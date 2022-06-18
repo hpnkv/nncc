@@ -36,6 +36,7 @@ int16_t Context::CreateWindow(uint16_t width, uint16_t height, const std::string
     glfwSetMouseButtonCallback(window.ptr.get(), &Context::MouseButtonCallback);
     glfwSetCursorPosCallback(window.ptr.get(), &Context::CursorPositionCallback);
     glfwSetKeyCallback(window.ptr.get(), &Context::KeyCallback);
+    glfwSetCharCallback(window.ptr.get(), &Context::CharacterCallback);
 
     int16_t window_idx = static_cast<int16_t>(windows_.size());
     window_indices_[window.ptr.get()] = window_idx;
@@ -54,32 +55,26 @@ void Context::GLFWErrorCallback(int error, const char* description) {
 }
 
 void Context::MouseButtonCallback(GLFWwindow* window, int32_t button, int32_t action, int32_t) {
-    auto& context = Context::Get();
-
     double x_pos, y_pos;
     glfwGetCursorPos(window, &x_pos, &y_pos);
 
-    std::unique_ptr<Event> event(new MouseEvent{
-            .x = static_cast<int32_t>(x_pos),
-            .y = static_cast<int32_t>(y_pos),
-            .button = translateGlfwMouseButton(button),
-            .down = action == GLFW_PRESS
-    });
-    event->type = EventType::MouseButton;
+    auto event = std::make_unique<MouseEvent>(EventType::MouseButton);
+    event->x = static_cast<int32_t>(x_pos);
+    event->y = static_cast<int32_t>(y_pos);
+    event->button = translateGlfwMouseButton(button);
+    event->down = action == GLFW_PRESS;
 
+    auto& context = Context::Get();
     auto window_idx = context.GetWindowIdx(window);
     context.GetEventQueue().Push(window_idx, std::move(event));
 }
 
 void Context::CursorPositionCallback(GLFWwindow* window, double x_pos, double y_pos) {
+    auto event = std::make_unique<MouseEvent>(EventType::MouseMove);
+    event->x = static_cast<int32_t>(x_pos);
+    event->y = static_cast<int32_t>(y_pos);
+
     auto& context = Context::Get();
-
-    std::unique_ptr<Event> event(new MouseEvent{
-            .x = static_cast<int32_t>(x_pos),
-            .y = static_cast<int32_t>(y_pos),
-    });
-    event->type = EventType::MouseMove;
-
     auto window_idx = context.GetWindowIdx(window);
     context.GetEventQueue().Push(window_idx, std::move(event));
 }
@@ -87,8 +82,6 @@ void Context::CursorPositionCallback(GLFWwindow* window, double x_pos, double y_
 const auto glfw_key_translation_table = GlfwKeyTranslationTable();
 
 void Context::KeyCallback(GLFWwindow* window, int32_t glfw_key, int32_t scancode, int32_t action, int32_t modifiers) {
-    auto& context = Context::Get();
-
     if (glfw_key == GLFW_KEY_UNKNOWN) {
         return;
     }
@@ -99,13 +92,21 @@ void Context::KeyCallback(GLFWwindow* window, int32_t glfw_key, int32_t scancode
     }
     auto key = glfw_key_translation_table.at(glfw_key);
 
-    std::unique_ptr<Event> event(new KeyEvent{
-            .key = key,
-            .modifiers = mods,
-            .down = action == GLFW_PRESS || action == GLFW_REPEAT
-    });
-    event->type = EventType::Key;
+    auto event = std::make_unique<KeyEvent>();
+    event->key = key;
+    event->modifiers = mods;
+    event->down = action == GLFW_PRESS || action == GLFW_REPEAT;
 
+    auto& context = Context::Get();
+    auto window_idx = context.GetWindowIdx(window);
+    context.GetEventQueue().Push(window_idx, std::move(event));
+}
+
+void Context::CharacterCallback(GLFWwindow* window, unsigned int codepoint) {
+    auto event = std::make_unique<CharEvent>();
+    event->codepoint = codepoint;
+
+    auto& context = Context::Get();
     auto window_idx = context.GetWindowIdx(window);
     context.GetEventQueue().Push(window_idx, std::move(event));
 }

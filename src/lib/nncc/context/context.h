@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <unordered_map>
+#include <deque>
 #include <vector>
 
 #include <bgfx/bgfx.h>
@@ -71,6 +72,7 @@ public:
         windows_[idx].height = height;
     }
 
+    std::deque<unsigned int> input_characters;
     KeyState key_state;
     MouseState mouse_state;
 
@@ -89,6 +91,8 @@ private:
     static void GLFWErrorCallback(int error, const char* description);
 
     static void MouseButtonCallback(GLFWwindow* window, int32_t button, int32_t action, int32_t /* modifiers */);
+
+    static void CharacterCallback(GLFWwindow* window, unsigned int codepoint);
 
     static void CursorPositionCallback(GLFWwindow* window, double x_pos, double y_pos);
 

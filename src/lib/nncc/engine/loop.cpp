@@ -87,12 +87,12 @@ int MainThreadFunc(bx::Thread* self, void* args) {
     material.d_texture_uniform = texture_uniform;
     material.d_color_uniform = color_uniform;
 
-    std::vector<std::unique_ptr<ImGuiComponent>> gui_components;
-    gui_components.push_back(std::make_unique<TextEdit>("manager", "/", 256));
-    gui_components.push_back(std::make_unique<TextEdit>("filename", "/", 256));
-    gui_components.push_back(std::make_unique<TextEdit>("size (bytes)", "0", 12));
-
     imguiCreate();
+
+    std::vector<std::unique_ptr<ImGuiComponent>> gui_components;
+    gui_components.push_back(std::make_unique<TextEdit>("manager", "some text"));
+    gui_components.push_back(std::make_unique<TextEdit>("filename", "/"));
+    gui_components.push_back(std::make_unique<TextEdit>("size (bytes)", "0"));
 
     bool exit = false;
     while (!exit) {
@@ -116,7 +116,7 @@ int MainThreadFunc(bx::Thread* self, void* args) {
         ImGui::SetNextWindowPos(ImVec2(10.0f, 50.0f), ImGuiCond_FirstUseEver);
         ImGui::SetNextWindowSize(ImVec2(300.0f, 210.0f), ImGuiCond_FirstUseEver);
 
-        ImGui::Begin("Example: ImGui support");
+        ImGui::Begin("Example: PyTorch shared memory tensors");
 
         for (const auto& component : gui_components) {
             component->Render();
@@ -164,6 +164,9 @@ int MainThreadFunc(bx::Thread* self, void* args) {
         renderer.Add(mesh, material, transform);
         renderer.Present();
 
+        // TODO: make this a subsystem's job
+        context->input_characters.clear();
+
         // Advance to next frame. Rendering thread will be kicked to
         // process submitted rendering primitives.
         bgfx::frame();
@@ -203,11 +206,10 @@ int Run() {
         int width, height;
         glfwGetWindowSize(glfw_main_window, &width, &height);
         if (width != window.width || height != window.height) {
-            std::unique_ptr<context::Event> event(new ResizeEvent{
-                    .width = width,
-                    .height = height
-            });
-            event->type = EventType::Resize;
+            auto event = std::make_unique<ResizeEvent>();
+            event->width = width;
+            event->height = height;
+
             context.GetEventQueue().Push(0, std::move(event));
         }
 
@@ -234,45 +236,49 @@ bool nncc::engine::ProcessEvents(nncc::context::Context* context) {
     auto queue = &context->GetEventQueue();
     std::shared_ptr<Event> event = queue->Poll();
 
-    if (event == nullptr) {
-        return true;
-    }
+    while (event != nullptr) {
+        if (event->type == EventType::Exit) {
+            return false;
 
-    if (event->type == EventType::Exit) {
-        return false;
+        } else if (event->type == EventType::Resize) {
+            auto resize_event = std::dynamic_pointer_cast<ResizeEvent>(event);
+            context->SetWindowResolution(event->window_idx, resize_event->width, resize_event->height);
+            bgfx::reset(resize_event->width, resize_event->height, BGFX_RESET_VSYNC);
+            bgfx::setViewRect(0, 0, 0, bgfx::BackbufferRatio::Equal);
 
-    } else if (event->type == EventType::Resize) {
-        auto resize_event = std::static_pointer_cast<ResizeEvent>(event);
-        context->SetWindowResolution(event->window_idx, resize_event->width, resize_event->height);
-        bgfx::reset(resize_event->width, resize_event->height, BGFX_RESET_VSYNC);
-        bgfx::setViewRect(0, 0, 0, bgfx::BackbufferRatio::Equal);
+        } else if (event->type == EventType::MouseButton) {
+            auto btn_event = std::dynamic_pointer_cast<MouseEvent>(event);
 
-    } else if (event->type == EventType::MouseButton) {
-        auto btn_event = std::static_pointer_cast<MouseEvent>(event);
+            context->mouse_state.x = btn_event->x;
+            context->mouse_state.y = btn_event->y;
+            context->mouse_state.buttons[static_cast<int>(btn_event->button)] = btn_event->down;
 
-        context->mouse_state.x = btn_event->x;
-        context->mouse_state.y = btn_event->y;
-        context->mouse_state.buttons[static_cast<int>(btn_event->button)] = btn_event->down;
+        } else if (event->type == EventType::MouseMove) {
+            auto move_event = std::dynamic_pointer_cast<MouseEvent>(event);
 
-    } else if (event->type == EventType::MouseMove) {
-        auto move_event = std::static_pointer_cast<MouseEvent>(event);
+            context->mouse_state.x = move_event->x;
+            context->mouse_state.y = move_event->y;
 
-        context->mouse_state.x = move_event->x;
-        context->mouse_state.y = move_event->y;
+        } else if (event->type == EventType::Key) {
+            auto key_event = std::dynamic_pointer_cast<KeyEvent>(event);
+            context->key_state.modifiers = key_event->modifiers;
 
-    } else if (event->type == EventType::Key) {
-        auto key_event = std::static_pointer_cast<KeyEvent>(event);
-        auto key = key_event->key;
-        if (key_event->down) {
-            context->key_state.pressed_keys.insert(key);
-        } else {
-            if (context->key_state.pressed_keys.contains(key)) {
+            auto key = key_event->key;
+            if (key_event->down) {
+                context->key_state.pressed_keys.insert(key);
+            } else if (context->key_state.pressed_keys.contains(key)) {
                 context->key_state.pressed_keys.erase(key);
             }
+
+        } else if (event->type == EventType::Char) {
+            auto char_event = std::dynamic_pointer_cast<CharEvent>(event);
+            context->input_characters.push_back(char_event->codepoint);
+
+        } else {
+            std::cerr << "unknown event type " << static_cast<int>(event->type) << std::endl;
         }
 
-    } else {
-        std::cerr << "unknown event type" << std::endl;
+        event = queue->Poll();
     }
 
     return true;

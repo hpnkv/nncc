@@ -15,17 +15,23 @@ enum class EventType {
     MouseMove,
     Key,
     Resize,
+    Char,
 
     Count,
     None
 };
 
 struct Event {
+    explicit Event(const EventType& _type = EventType::None) : type(_type) {}
+    virtual ~Event() = default;
+
     int16_t window_idx = 0;
-    EventType type = EventType::None;
+    EventType type;
 };
 
 struct MouseEvent : public Event {
+    explicit MouseEvent(const EventType& _type = EventType::MouseMove) : Event(_type) {}
+
     int32_t x = 0;
     int32_t y = 0;
     int32_t scroll = 0;
@@ -37,16 +43,27 @@ struct MouseEvent : public Event {
 };
 
 struct KeyEvent : public Event {
+    KeyEvent() : Event(EventType::Key) {}
+
     Key key = Key::None;
     int modifiers = 0;
     bool down = false;
 };
 
+struct CharEvent : public Event {
+    CharEvent() : Event(EventType::Char) {}
+
+    unsigned int codepoint = 0;
+};
+
 struct ResizeEvent : public Event {
+    ResizeEvent() : Event(EventType::Resize) {}
+
     int width = 0, height = 0;
 };
 
 struct ExitEvent : public Event {
+    ExitEvent() : Event(EventType::Exit) {}
 };
 
 class EventQueue {

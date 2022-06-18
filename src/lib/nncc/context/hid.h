@@ -147,6 +147,7 @@ struct MouseState {
 };
 
 struct KeyState {
+    int modifiers;
     std::unordered_set<Key> pressed_keys;
 };
 

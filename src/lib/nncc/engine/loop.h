@@ -64,19 +64,14 @@ private:
 
 class TextEdit : public ImGuiComponent {
 public:
-    TextEdit(const std::string& label, const std::string& placeholder, size_t buffer_size) : label_(label),
-                                                                                             content_(placeholder),
-                                                                                             buffer_size_(buffer_size) {
-        content_.resize(buffer_size);
-    }
+    TextEdit(const std::string& label, const std::string& placeholder) : label_(label), content_(placeholder) {}
 
     void Render() {
-        ImGui::InputText(label_.c_str(), content_.data(), buffer_size_);
+        ImGui::InputText(label_.c_str(), &content_);
     }
 
 private:
     std::string label_, content_;
-    size_t buffer_size_;
 };
 
 int MainThreadFunc(bx::Thread* self, void* args);

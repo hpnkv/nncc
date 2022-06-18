@@ -11,8 +11,8 @@ set(
         nncc/context/event.cpp
         nncc/context/glfw_utils.cpp
         nncc/context/hid.cpp
+        3rdparty/imgui_stdlib.cpp
         3rdparty/bgfx_imgui/imgui/imgui.cpp
-        3rdparty/bgfx_imgui/imgui/imgui_user.inl
 )
 
 set(
