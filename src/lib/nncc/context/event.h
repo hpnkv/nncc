@@ -1,6 +1,6 @@
 #pragma once
 
-#include <unordered_map>
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -90,7 +90,7 @@ public:
 
 private:
     bx::SpScUnboundedQueueT<Event> queue_;
-    std::unordered_map<void*, std::unique_ptr<Event>> events_;
+    std::map<void*, std::unique_ptr<Event>> events_;
 };
 
 }

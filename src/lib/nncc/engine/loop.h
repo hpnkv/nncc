@@ -17,9 +17,6 @@
 
 #include <3rdparty/bgfx_imgui/imgui/imgui.h>
 
-
-nncc::render::Mesh GetPlaneMesh();
-
 namespace nncc::engine {
 
 bool ProcessEvents(context::Context* context);

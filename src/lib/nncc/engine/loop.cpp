@@ -1,128 +1,11 @@
 #include "loop.h"
 
-#include <pybind11/embed.h>
-#include <torch/torch.h>
+#include <cpp_redis/cpp_redis>
 #include <libshm/libshm.h>
 
 #include <3rdparty/bgfx_imgui/imgui/imgui.h>
-
-#include <cpp_redis/cpp_redis>
-
-
-namespace py = pybind11;
-
-
-nncc::render::Mesh GetPlaneMesh() {
-    nncc::render::Mesh mesh;
-    mesh.vertices = {
-            {{-1.0f, 1.0f,  0.05f},  {0., 0., 1.},  0., 0.},
-            {{1.0f,  1.0f,  0.05f},  {0., 0., 1.},  1., 0.},
-            {{-1.0f, -1.0f, 0.05f},  {0., 0., 1.},  0., 1.},
-            {{1.0f,  -1.0f, 0.05f},  {0., 0., 1.},  1., 1.},
-            {{-1.0f, 1.0f,  -0.05f}, {0., 0., -1.}, 0., 0.},
-            {{1.0f,  1.0f,  -0.05f}, {0., 0., -1.}, 1., 0.},
-            {{-1.0f, -1.0f, -0.05f}, {0., 0., -1.}, 0., 1.},
-            {{1.0f,  -1.0f, -0.05f}, {0., 0., -1.}, 1., 1.},
-    };
-    mesh.indices = {
-            0, 2, 1,
-            1, 2, 3,
-            1, 3, 2,
-            0, 1, 2
-    };
-    return mesh;
-}
-
-const auto kPlaneMesh = GetPlaneMesh();
-
-namespace nncc {
-
-bgfx::TextureFormat::Enum GetTextureFormatFromChannelsAndDtype(int64_t channels, const torch::Dtype& dtype) {
-    if (channels == 3 && dtype == torch::kUInt8) {
-        return bgfx::TextureFormat::RGB8;
-    } else if (channels == 4 && dtype == torch::kFloat32) {
-        return bgfx::TextureFormat::RGBA32F;
-    } else if (channels == 4 && dtype == torch::kUInt8) {
-        return bgfx::TextureFormat::RGBA8;
-    } else {
-        throw std::runtime_error("Can only visualise uint8 or float32 tensors with 3 or 4 channels (RGB or RGBA).");
-    }
-}
-
-class TensorPlane {
-public:
-    TensorPlane(
-            const std::string& manager_handle,
-            const std::string& filename,
-            torch::Dtype dtype,
-            const std::vector<int64_t>& dims
-    ) {
-        size_t total_bytes = (
-            torch::elementSize(dtype)
-            * std::accumulate(dims.begin(), dims.end(), 1, std::multiplies<size_t>())
-        );
-
-        data_ptr_ = THManagedMapAllocator::makeDataPtr(
-                manager_handle.c_str(),
-                filename.c_str(),
-                at::ALLOCATOR_MAPPED_SHAREDMEM,
-                total_bytes
-        );
-        tensor_ = torch::from_blob(data_ptr_.get(), torch::ArrayRef(dims));
-
-        // Set up material for this tensor (default shader, custom texture, own uniforms)
-
-        auto& context = context::Context::Get();
-        material_.shader = context.shader_programs["default_diffuse"];
-
-        auto height = dims[0], width = dims[1], channels = dims[2];
-        auto texture_format = GetTextureFormatFromChannelsAndDtype(channels, dtype);
-        material_.diffuse_texture = bgfx::createTexture2D(width, height, false, 0, texture_format, 0);
-
-        material_.d_texture_uniform = bgfx::createUniform("diffuseTX", bgfx::UniformType::Sampler, 1);
-        material_.d_color_uniform = bgfx::createUniform("diffuseCol", bgfx::UniformType::Vec4, 1);
-    }
-
-    TensorPlane(TensorPlane&& other) noexcept {
-        data_ptr_ = std::move(other.data_ptr_);
-        tensor_ = std::move(other.tensor_);
-
-        material_ = other.material_;
-        transform_ = other.transform_;
-    }
-
-    void Update() {
-        auto texture_memory = bgfx::makeRef(tensor_.data_ptr(), tensor_.storage().nbytes());
-        bgfx::updateTexture2D(material_.diffuse_texture, 1, 0, 0, 0, tensor_.size(1), tensor_.size(0), texture_memory);
-    }
-
-    void Render(render::Renderer* renderer, float time) const {
-        renderer->Prepare(material_.shader);
-        renderer->Add(kPlaneMesh, material_, transform_);
-    };
-
-    void SetTransform(const engine::Matrix4& transform) {
-        transform_ = transform;
-    }
-
-    ~TensorPlane() {
-//        if (!resources_moved_) {
-//            bgfx::destroy(material_.diffuse_texture);
-//            bgfx::destroy(material_.d_texture_uniform);
-//            bgfx::destroy(material_.d_color_uniform);
-//        }
-    }
-
-private:
-    at::DataPtr data_ptr_;
-    torch::Tensor tensor_;
-
-    render::Material material_;
-
-    engine::Matrix4 transform_ = engine::Matrix4::Identity();
-};
-
-}
+#include <nncc/python/shm_communication.h>
+#include <nncc/python/tensor_plane.h>
 
 namespace nncc::engine {
 
@@ -220,6 +103,8 @@ int Loop(context::Context* context) {
         // TODO: make this a subsystem's job
         context->input_characters.clear();
 
+        bgfx::setDebug(BGFX_DEBUG_STATS);
+
         bgfx::frame();
 
         // Time.
@@ -233,77 +118,8 @@ int Loop(context::Context* context) {
     return 0;
 }
 
-std::vector<std::string> SplitString(const std::string& string, const std::string& delimiter = "::") {
-    std::vector<std::string> parts;
-
-    size_t start = 0, end;
-    while ((end = string.find(delimiter, start)) != std::string::npos) {
-        parts.push_back(string.substr(start, end - start));
-        start = end + delimiter.size();
-    }
-
-    parts.push_back(string.substr(start, string.size()));
-
-    return parts;
-}
-
 int RedisListenerThread(bx::Thread* self, void* args) {
-    using namespace nncc;
-
-    auto context = static_cast<context::Context*>(args);
-
-    cpp_redis::client redis;
-    redis.connect();
-    redis.del({"nncc_tensors"});
-    redis.sync_commit();
-    bool done = false;
-
-    std::cout << "Spawned a redis listener" << std::endl;
-
-    while (!done) {
-        std::cout << "before blocking pop" << std::endl;
-
-        redis.blpop({"nncc_tensors"}, 0, [&done, &context] (cpp_redis::reply& reply) {
-            auto encoded_handle = reply.as_array()[1].as_string();
-
-            if (encoded_handle == "::done::") {
-                done = true;
-                return;
-            }
-            auto parts = SplitString(encoded_handle, "::");
-
-            auto name = parts[0];
-            auto manager_handle = parts[1];
-            auto filename = parts[2];
-            auto dtype_string = parts[3];
-            auto dims_string = parts[4];
-
-            torch::Dtype dtype;
-            std::vector<int64_t> dims;
-
-            if (dtype_string == "uint8") {
-                dtype = torch::kUInt8;
-            } else if (dtype_string == "float32") {
-                dtype = torch::kFloat32;
-            }
-
-            for (const auto& dim : SplitString(dims_string, ",")) {
-                dims.push_back(stoi(dim));
-            }
-
-            auto event = std::make_unique<context::SharedTensorEvent>();
-            event->name = name;
-            event->manager_handle = manager_handle;
-            event->filename = filename;
-            event->dtype = dtype;
-            event->dims = dims;
-            context->GetEventQueue().Push(0, std::move(event));
-        });
-
-        std::cout << "before sync_commit" << std::endl;
-        redis.sync_commit();
-    }
-
+    nncc::python::ListenToRedisSharedTensors(static_cast<nncc::context::Context*>(args));
     return 0;
 }
 

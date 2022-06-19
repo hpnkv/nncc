@@ -16,13 +16,6 @@
 #include "./fonts/icons_kenney.ttf.h"
 #include "./fonts/icons_font_awesome.ttf.h"
 
-/// Returns true if both internal transient index and vertex buffer have
-/// enough space.
-///
-/// @param[in] _numVertices Number of vertices.
-/// @param[in] _layout Vertex layout.
-/// @param[in] _numIndices Number of indices.
-///
 inline bool checkAvailTransientBuffers(uint32_t _numVertices, const bgfx::VertexLayout& _layout, uint32_t _numIndices) {
     return _numVertices == bgfx::getAvailTransientVertexBuffer(_numVertices, _layout)
            && (0 == _numIndices || _numIndices == bgfx::getAvailTransientIndexBuffer(_numIndices));
