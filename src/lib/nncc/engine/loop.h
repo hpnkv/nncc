@@ -70,6 +70,10 @@ public:
         ImGui::InputText(label_.c_str(), &content_);
     }
 
+    const std::string& Value() const {
+        return content_;
+    }
+
 private:
     std::string label_, content_;
 };

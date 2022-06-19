@@ -31,7 +31,14 @@ set(
 
 add_library(nncc-common ${NNCC_SOURCES})
 
-target_link_libraries(nncc-common PUBLIC bgfx bx glfw imgui ${TORCH_LIBRARIES} ${Python_LIBRARIES} pybind11::embed shm ${FOLLY_LIBRARIES})
+target_link_libraries(nncc-common PUBLIC
+        bgfx bx
+        glfw
+        imgui
+        ${TORCH_LIBRARIES} ${Python_LIBRARIES} pybind11::embed shm
+        ${FOLLY_LIBRARIES}
+        ${CPP_REDIS_DIR}/lib/libcpp_redis.a ${CPP_REDIS_DIR}/lib/libtacopie.a
+        )
 target_include_directories(nncc-common PUBLIC
         ${BGFX_DIR}/include ${BX_DIR}/include ${BIMG_DIR}/include ${IMGUI_WRAPPER_DIR}
         ${NNCC_COMMON_DIR} ${Python_INCLUDE_DIRS}
@@ -39,6 +46,7 @@ target_include_directories(nncc-common PUBLIC
         ${FOLLY_INCLUDE_DIR}
         ${CMAKE_BINARY_DIR}/aten/src # provides "ATen/TypeExtendedInterface.h" to ATen.h
         ${TORCH_ROOT}/torch/lib # provides "libshm/libshm.h"
+        ${CPP_REDIS_DIR}/include
         )
 
 if (APPLE)

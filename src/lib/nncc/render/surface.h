@@ -38,8 +38,8 @@ public:
 struct Material {
     bgfx::ProgramHandle shader;
 
-    uint32_t diffuse_color;
-    bgfx::TextureHandle diffuse_texture;
+    uint32_t diffuse_color = 0xFFFFFFFF;
+    bgfx::TextureHandle diffuse_texture = Material::GetDefaultTexture();
     bgfx::UniformHandle d_color_uniform, d_texture_uniform;
 
     static bgfx::TextureHandle GetDefaultTexture() {

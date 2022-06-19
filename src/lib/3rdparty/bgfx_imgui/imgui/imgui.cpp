@@ -157,6 +157,17 @@ static void* memAlloc(size_t _size, void* _userData);
 
 static void memFree(void* _ptr, void* _userData);
 
+// Functions
+static const char* ImGui_ImplGlfw_GetClipboardText(void* user_data)
+{
+    return glfwGetClipboardString((GLFWwindow*)user_data);
+}
+
+static void ImGui_ImplGlfw_SetClipboardText(void* user_data, const char* text)
+{
+    glfwSetClipboardString((GLFWwindow*)user_data, text);
+}
+
 struct OcornutImguiContext {
     void render(ImDrawData* _drawData) const {
         // Avoid rendering when minimized, scale coordinates for retina displays (screen coordinates != framebuffer coordinates)
@@ -288,6 +299,9 @@ struct OcornutImguiContext {
         m_imgui = ImGui::CreateContext();
 
         ImGuiIO& io = ImGui::GetIO();
+
+        io.SetClipboardTextFn = ImGui_ImplGlfw_SetClipboardText;
+        io.GetClipboardTextFn = ImGui_ImplGlfw_GetClipboardText;
 
         io.DisplaySize = ImVec2(1280.0f, 720.0f);
         io.DeltaTime = 1.0f / 60.0f;

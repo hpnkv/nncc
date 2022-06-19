@@ -31,73 +31,152 @@ nncc::render::Mesh GetPlaneMesh() {
     return mesh;
 }
 
-//    const auto texture_image = nncc::common::LoadImage("texture.png");
-//    const auto texture = nncc::engine::TextureFromImage(texture_image);
+const auto kPlaneMesh = GetPlaneMesh();
 
-//    auto data_ptr = THManagedMapAllocator::makeDataPtr(
-//        "/var/folders/5v/0s6hq3gd44z60gsb6nyt01q80000gn/T//torch-shm-dir-NbSNsa/manager.sock",
-//        "/torch_38294_2759594541_3",
-//        at::ALLOCATOR_MAPPED_SHAREDMEM, 1 * 512 * 512 * 4 * sizeof(float)
-//    );
-//    auto tensor = torch::from_blob(data_ptr.get(), {1, 512, 512, 4}, torch::TensorOptions().dtype(torch::kF32));
+namespace nncc {
+
+bgfx::TextureFormat::Enum GetTextureFormatFromChannelsAndDtype(int64_t channels, const torch::Dtype& dtype) {
+    if (channels == 3 && dtype == torch::kUInt8) {
+        return bgfx::TextureFormat::RGB8;
+    } else if (channels == 4 && dtype == torch::kFloat32) {
+        return bgfx::TextureFormat::RGBA32F;
+    } else if (channels == 4 && dtype == torch::kUInt8) {
+        return bgfx::TextureFormat::RGBA8;
+    } else {
+        throw std::runtime_error("Can only visualise uint8 or float32 tensors with 3 or 4 channels (RGB or RGBA).");
+    }
+}
+
+class TensorPlane {
+public:
+    TensorPlane(
+            const std::string& manager_handle,
+            const std::string& filename,
+            torch::Dtype dtype,
+            std::vector<int64_t> dims
+    ) {
+        size_t total_bytes = (
+            torch::elementSize(dtype)
+            * std::accumulate(dims.begin(), dims.end(), 1, std::multiplies<size_t>())
+        );
+
+        data_ptr_ = THManagedMapAllocator::makeDataPtr(
+                manager_handle.c_str(),
+                filename.c_str(),
+                at::ALLOCATOR_MAPPED_SHAREDMEM,
+                total_bytes
+        );
+        tensor_ = torch::from_blob(data_ptr_.get(), torch::ArrayRef(dims));
+
+        // Set up material for this tensor (default shader, custom texture, own uniforms)
+
+        auto& context = context::Context::Get();
+        material_.shader = context.shader_programs["default_diffuse"];
+
+        auto height = dims[0], width = dims[1], channels = dims[2];
+        auto texture_format = GetTextureFormatFromChannelsAndDtype(channels, dtype);
+        material_.diffuse_texture = bgfx::createTexture2D(width, height, false, 0, texture_format, 0);
+
+        material_.d_texture_uniform = bgfx::createUniform("diffuseTX", bgfx::UniformType::Sampler, 1);
+        material_.d_color_uniform = bgfx::createUniform("diffuseCol", bgfx::UniformType::Vec4, 1);
+    }
+
+    TensorPlane(TensorPlane&& other) noexcept {
+        data_ptr_ = std::move(other.data_ptr_);
+        tensor_ = std::move(other.tensor_);
+
+        material_ = other.material_;
+        transform_ = other.transform_;
+    }
+
+    void Update() {
+        auto texture_memory = bgfx::makeRef(tensor_.data_ptr(), tensor_.storage().nbytes());
+        bgfx::updateTexture2D(material_.diffuse_texture, 1, 0, 0, 0, tensor_.size(1), tensor_.size(0), texture_memory);
+    }
+
+    void Render(render::Renderer* renderer, float time) const {
+        renderer->Prepare(material_.shader);
+        renderer->Add(kPlaneMesh, material_, transform_);
+    };
+
+    void SetTransform(const engine::Matrix4& transform) {
+        transform_ = transform;
+    }
+
+    ~TensorPlane() {
+//        if (!resources_moved_) {
+//            bgfx::destroy(material_.diffuse_texture);
+//            bgfx::destroy(material_.d_texture_uniform);
+//            bgfx::destroy(material_.d_color_uniform);
+//        }
+    }
+
+private:
+    at::DataPtr data_ptr_;
+    torch::Tensor tensor_;
+
+    render::Material material_;
+
+    engine::Matrix4 transform_ = engine::Matrix4::Identity();
+};
+
+}
 
 namespace nncc::engine {
 
-int MainThreadFunc(bx::Thread* self, void* args) {
-    using namespace nncc;
-
-    auto context = static_cast<context::Context*>(args);
+int Loop(context::Context* context) {
     auto& window = context->GetWindow(0);
 
-    bgfx::Init init;
-
     render::PosNormUVVertex::Init();
-
-    init.resolution.width = (uint32_t) window.width;
-    init.resolution.height = (uint32_t) window.height;
-    init.resolution.reset = BGFX_RESET_VSYNC;
-
-    if (!bgfx::init(init)) {
-        return 1;
-    }
 
     engine::Timer timer;
     engine::Camera camera;
     render::Renderer renderer{};
 
-    size_t t_width = 512, t_height = 512, t_channels = 4;
-
     bx::FileReader reader;
     const auto fs = nncc::engine::LoadShader(&reader, "fs_default_diffuse");
     const auto vs = nncc::engine::LoadShader(&reader, "vs_default_diffuse");
     auto program = bgfx::createProgram(vs, fs, true);
-
-    auto texture_uniform = bgfx::createUniform("diffuseTX", bgfx::UniformType::Sampler, 1);
-    auto color_uniform = bgfx::createUniform("diffuseCol", bgfx::UniformType::Vec4, 1);
-    auto texture = bgfx::createTexture2D(t_width, t_height, false, 0, bgfx::TextureFormat::RGBA32F, 0);
-
-    std::vector<float> mock_texture_data;
-    mock_texture_data.resize(t_width * t_height * t_channels, 1.);
-
-    auto mesh = GetPlaneMesh();
-    render::Material material{};
-    material.diffuse_texture = texture;
-    material.diffuse_color = 0xFFFFFFFF;
-    material.shader = program;
-    material.d_texture_uniform = texture_uniform;
-    material.d_color_uniform = color_uniform;
+    context->shader_programs["default_diffuse"] = program;
 
     imguiCreate();
 
-    std::vector<std::unique_ptr<ImGuiComponent>> gui_components;
-    gui_components.push_back(std::make_unique<TextEdit>("manager", "some text"));
-    gui_components.push_back(std::make_unique<TextEdit>("filename", "/"));
-    gui_components.push_back(std::make_unique<TextEdit>("size (bytes)", "0"));
+    std::unordered_map<std::string, TensorPlane> tensor_planes;
 
-    bool exit = false;
-    while (!exit) {
+    auto tensor_plane_1 = TensorPlane(
+            "/var/folders/5v/0s6hq3gd44z60gsb6nyt01q80000gn/T//torch-shm-dir-aUXF2B/manager.sock",
+            "/torch_42854_1773087314_3",
+            torch::kU8,
+            {512, 512, 4}
+    );
+
+    auto tensor_plane_2 = TensorPlane(
+            "/var/folders/5v/0s6hq3gd44z60gsb6nyt01q80000gn/T//torch-shm-dir-aUXF2B/manager.sock",
+            "/torch_42854_1066532770_5",
+            torch::kU8,
+            {512, 512, 4}
+    );
+
+    auto identity = engine::Matrix4::Identity();
+
+    Matrix4 x_translation;
+    bx::mtxTranslate(*x_translation, 2.1, 0., 0.);
+
+    Matrix4 position_2;
+    bx::mtxMul(*position_2, *identity, *x_translation);
+
+    tensor_plane_2.SetTransform(position_2);
+
+    tensor_planes.insert({"stylegan", std::move(tensor_plane_1)});
+    tensor_planes.insert({"random", std::move(tensor_plane_2)});
+
+    std::string selected_tensor;
+
+    while (true) {
         if (!engine::ProcessEvents(context)) {
-            exit = true;
+            bgfx::touch(0);
+            bgfx::frame();
+            break;
         }
 
         uint8_t imgui_pressed_buttons = 0;
@@ -109,22 +188,36 @@ int MainThreadFunc(bx::Thread* self, void* args) {
             current_button_mask <<= 1;
         }
 
-        imguiBeginFrame(context->mouse_state.x, context->mouse_state.y, imgui_pressed_buttons, context->mouse_state.z, uint16_t(window.width),
+        if (!ImGui::MouseOverArea()) {
+            camera.Update(timer.Timedelta(), context->mouse_state, context->key_state);
+        }
+
+        for (auto& [key, tensor_plane] : tensor_planes) {
+            tensor_plane.Update();
+        }
+
+        bgfx::touch(0);
+
+        imguiBeginFrame(context->mouse_state.x, context->mouse_state.y, imgui_pressed_buttons, context->mouse_state.z,
+                        uint16_t(window.width),
                         uint16_t(window.height)
         );
 
-        ImGui::SetNextWindowPos(ImVec2(10.0f, 50.0f), ImGuiCond_FirstUseEver);
-        ImGui::SetNextWindowSize(ImVec2(300.0f, 210.0f), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowPos(ImVec2(20.0f, 50.0f), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(240.0f, 300.0f), ImGuiCond_FirstUseEver);
 
         ImGui::Begin("Example: PyTorch shared memory tensors");
 
-        for (const auto& component : gui_components) {
-            component->Render();
+        ImGui::Text("Shared tensors");
+        ImGui::BeginListBox("##label");
+        for (const auto& [name, tensor_plane] : tensor_planes) {
+            auto selected = name == selected_tensor;
+            if (ImGui::Selectable(name.c_str(), selected)) {
+                selected_tensor = name;
+            }
         }
+        ImGui::EndListBox();
 
-        ImGui::TextWrapped("%s", "Just testing everything together so far");
-
-        ImGui::SameLine();
         if (ImGui::SmallButton(ICON_FA_LINK)) {
 //            openUrl(url);
         } else if (ImGui::IsItemHovered()) {
@@ -134,54 +227,55 @@ int MainThreadFunc(bx::Thread* self, void* args) {
         ImGui::End();
         imguiEndFrame();
 
-        auto texture_memory = bgfx::makeRef(mock_texture_data.data(), t_width * t_height * t_channels * 4);
-        bgfx::updateTexture2D(texture, 1, 0, 0, 0, t_width, t_height, texture_memory);
-
-        // Time.
-        timer.Update();
-
-        if (!ImGui::MouseOverArea()) {
-            camera.Update(timer.Timedelta(), context->mouse_state, context->key_state);
-        }
-
         bgfx::setViewClear(0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x303030ff, 1.0f, 0);
-        // Set view 0 default viewport.
         bgfx::setViewRect(0, 0, 0, window.width, window.height);
-
-        // This dummy draw call is here to make sure that view 0 is cleared
-        // if no other draw calls are submitted to view 0.
-        bgfx::touch(0);
 
         renderer.SetViewMatrix(camera.GetViewMatrix());
         renderer.SetProjectionMatrix(30, static_cast<float>(window.width) / static_cast<float>(window.height), 0.01f,
                                      1000.0f);
         renderer.SetViewport({0, 0, static_cast<float>(window.width), static_cast<float>(window.height)});
-        renderer.Prepare(program);
 
-        auto transform = engine::Matrix4::Identity();
-        bx::mtxRotateY(*transform, timer.Time() * 2.3f);
+        for (const auto& [key, tensor_plane] : tensor_planes) {
+            tensor_plane.Render(&renderer, timer.Time());
+        }
 
-        renderer.Add(mesh, material, transform);
         renderer.Present();
 
         // TODO: make this a subsystem's job
         context->input_characters.clear();
 
-        // Advance to next frame. Rendering thread will be kicked to
-        // process submitted rendering primitives.
         bgfx::frame();
+
+        // Time.
+        timer.Update();
     }
 
-    // finalise
-    bgfx::destroy(program);
-    bgfx::destroy(texture);
-
-    bgfx::destroy(texture_uniform);
-    bgfx::destroy(color_uniform);
-
     imguiDestroy();
-    bgfx::shutdown();
+
+    bgfx::destroy(nncc::render::Material::default_texture);
+
     return 0;
+}
+
+int MainThreadFunc(bx::Thread* self, void* args) {
+    using namespace nncc;
+
+    auto context = static_cast<context::Context*>(args);
+    auto& window = context->GetWindow(0);
+
+    bgfx::Init init;
+    init.resolution.width = (uint32_t) window.width;
+    init.resolution.height = (uint32_t) window.height;
+    init.resolution.reset = BGFX_RESET_VSYNC;
+    if (!bgfx::init(init)) {
+        return 1;
+    }
+
+    int result = Loop(context);
+    context->Destroy();
+
+    bgfx::shutdown();
+    return result;
 }
 
 int Run() {
@@ -223,7 +317,7 @@ int Run() {
     }
 
     context.Exit();
-    while (bgfx::RenderFrame::NoContext != bgfx::renderFrame()) {}
+    while (bgfx::renderFrame() != bgfx::RenderFrame::NoContext) {}
     thread->shutdown();
     return thread->getExitCode();
 }

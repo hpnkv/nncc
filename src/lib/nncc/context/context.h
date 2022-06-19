@@ -28,9 +28,14 @@ public:
     Context(const Context&) = delete;
     void operator=(const Context&) = delete;
 
+    void Destroy() {
+        for (const auto& [name, handle] : shader_programs) {
+            bgfx::destroy(handle);
+        }
+    }
+
     void Exit() {
         std::unique_ptr<Event> event(new ExitEvent);
-        event->type = nncc::context::EventType::Exit;
         Context::Get().GetEventQueue().Push(0, std::move(event));
     }
 
@@ -75,6 +80,8 @@ public:
     std::deque<unsigned int> input_characters;
     KeyState key_state;
     MouseState mouse_state;
+
+    std::unordered_map<std::string, bgfx::ProgramHandle> shader_programs;
 
 private:
 

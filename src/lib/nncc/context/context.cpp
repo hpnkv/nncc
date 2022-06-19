@@ -24,7 +24,7 @@ bool Context::InitWindowing(GLFWerrorfun error_callback) {
         return false;
     }
 
-    CreateWindow(1024, 768, "window");
+    CreateWindow(1600, 1000, "window");
     return true;
 }
 

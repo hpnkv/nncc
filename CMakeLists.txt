@@ -14,8 +14,10 @@ project(nncc
 set(CMAKE_CXX_STANDARD 20)
 
 list(APPEND CMAKE_PREFIX_PATH "external/torch")
-list(APPEND CMAKE_PREFIX_PATH "/Users/apankov/dev/nncc/external/folly")
-list(APPEND CMAKE_PREFIX_PATH "/Users/apankov/dev/nncc/external/boost")
+list(APPEND CMAKE_PREFIX_PATH "external/folly")
+list(APPEND CMAKE_PREFIX_PATH "external/boost")
+list(APPEND CMAKE_PREFIX_PATH "external/cpp_redis")
+set(CPP_REDIS_DIR "${PROJECT_SOURCE_DIR}/external/cpp_redis")
 
 find_package(glog CONFIG REQUIRED)
 find_package(Torch REQUIRED)
