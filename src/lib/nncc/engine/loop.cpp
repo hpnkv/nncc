@@ -6,6 +6,8 @@
 
 #include <3rdparty/bgfx_imgui/imgui/imgui.h>
 
+#include <cpp_redis/cpp_redis>
+
 
 namespace py = pybind11;
 
@@ -53,7 +55,7 @@ public:
             const std::string& manager_handle,
             const std::string& filename,
             torch::Dtype dtype,
-            std::vector<int64_t> dims
+            const std::vector<int64_t>& dims
     ) {
         size_t total_bytes = (
             torch::elementSize(dtype)
@@ -142,33 +144,7 @@ int Loop(context::Context* context) {
     imguiCreate();
 
     std::unordered_map<std::string, TensorPlane> tensor_planes;
-
-    auto tensor_plane_1 = TensorPlane(
-            "/var/folders/5v/0s6hq3gd44z60gsb6nyt01q80000gn/T//torch-shm-dir-aUXF2B/manager.sock",
-            "/torch_42854_1773087314_3",
-            torch::kU8,
-            {512, 512, 4}
-    );
-
-    auto tensor_plane_2 = TensorPlane(
-            "/var/folders/5v/0s6hq3gd44z60gsb6nyt01q80000gn/T//torch-shm-dir-aUXF2B/manager.sock",
-            "/torch_42854_1066532770_5",
-            torch::kU8,
-            {512, 512, 4}
-    );
-
-    auto identity = engine::Matrix4::Identity();
-
-    Matrix4 x_translation;
-    bx::mtxTranslate(*x_translation, 2.1, 0., 0.);
-
-    Matrix4 position_2;
-    bx::mtxMul(*position_2, *identity, *x_translation);
-
-    tensor_plane_2.SetTransform(position_2);
-
-    tensor_planes.insert({"stylegan", std::move(tensor_plane_1)});
-    tensor_planes.insert({"random", std::move(tensor_plane_2)});
+    context->user_storages["tensor_planes"] = static_cast<void*>(&tensor_planes);
 
     std::string selected_tensor;
 
@@ -257,6 +233,80 @@ int Loop(context::Context* context) {
     return 0;
 }
 
+std::vector<std::string> SplitString(const std::string& string, const std::string& delimiter = "::") {
+    std::vector<std::string> parts;
+
+    size_t start = 0, end;
+    while ((end = string.find(delimiter, start)) != std::string::npos) {
+        parts.push_back(string.substr(start, end - start));
+        start = end + delimiter.size();
+    }
+
+    parts.push_back(string.substr(start, string.size()));
+
+    return parts;
+}
+
+int RedisListenerThread(bx::Thread* self, void* args) {
+    using namespace nncc;
+
+    auto context = static_cast<context::Context*>(args);
+
+    cpp_redis::client redis;
+    redis.connect();
+    redis.del({"nncc_tensors"});
+    redis.sync_commit();
+    bool done = false;
+
+    std::cout << "Spawned a redis listener" << std::endl;
+
+    while (!done) {
+        std::cout << "before blocking pop" << std::endl;
+
+        redis.blpop({"nncc_tensors"}, 0, [&done, &context] (cpp_redis::reply& reply) {
+            auto encoded_handle = reply.as_array()[1].as_string();
+
+            if (encoded_handle == "::done::") {
+                done = true;
+                return;
+            }
+            auto parts = SplitString(encoded_handle, "::");
+
+            auto name = parts[0];
+            auto manager_handle = parts[1];
+            auto filename = parts[2];
+            auto dtype_string = parts[3];
+            auto dims_string = parts[4];
+
+            torch::Dtype dtype;
+            std::vector<int64_t> dims;
+
+            if (dtype_string == "uint8") {
+                dtype = torch::kUInt8;
+            } else if (dtype_string == "float32") {
+                dtype = torch::kFloat32;
+            }
+
+            for (const auto& dim : SplitString(dims_string, ",")) {
+                dims.push_back(stoi(dim));
+            }
+
+            auto event = std::make_unique<context::SharedTensorEvent>();
+            event->name = name;
+            event->manager_handle = manager_handle;
+            event->filename = filename;
+            event->dtype = dtype;
+            event->dims = dims;
+            context->GetEventQueue().Push(0, std::move(event));
+        });
+
+        std::cout << "before sync_commit" << std::endl;
+        redis.sync_commit();
+    }
+
+    return 0;
+}
+
 int MainThreadFunc(bx::Thread* self, void* args) {
     using namespace nncc;
 
@@ -271,10 +321,15 @@ int MainThreadFunc(bx::Thread* self, void* args) {
         return 1;
     }
 
+    bx::Thread redis_thread;
+    redis_thread.init(&RedisListenerThread, context, 0, "redis");
+
     int result = Loop(context);
     context->Destroy();
 
     bgfx::shutdown();
+
+    redis_thread.shutdown();
     return result;
 }
 
@@ -367,6 +422,28 @@ bool nncc::engine::ProcessEvents(nncc::context::Context* context) {
         } else if (event->type == EventType::Char) {
             auto char_event = std::dynamic_pointer_cast<CharEvent>(event);
             context->input_characters.push_back(char_event->codepoint);
+
+        } else if (event->type == EventType::SharedTensor) {
+            std::cout << "tensor event" << std::endl;
+            auto tensor_event = std::dynamic_pointer_cast<SharedTensorEvent>(event);
+            auto plane = TensorPlane(
+                    tensor_event->manager_handle,
+                    tensor_event->filename,
+                    tensor_event->dtype,
+                    tensor_event->dims
+            );
+
+            auto planes = static_cast<std::unordered_map<std::string, TensorPlane>*>(context->user_storages["tensor_planes"]);
+
+            auto identity = engine::Matrix4::Identity();
+
+            Matrix4 x_translation;
+            bx::mtxTranslate(*x_translation, 2.1f * planes->size(), 0., 0.);
+            Matrix4 position_2;
+            bx::mtxMul(*position_2, *identity, *x_translation);
+            plane.SetTransform(position_2);
+
+            planes->insert({tensor_event->name, std::move(plane)});
 
         } else {
             std::cerr << "unknown event type " << static_cast<int>(event->type) << std::endl;

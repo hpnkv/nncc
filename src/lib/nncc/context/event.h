@@ -2,7 +2,10 @@
 
 #include <unordered_map>
 #include <memory>
+#include <string>
+#include <vector>
 
+#include <torch/torch.h>
 #include <bx/thread.h>
 
 #include <nncc/context/hid.h>
@@ -16,6 +19,7 @@ enum class EventType {
     Key,
     Resize,
     Char,
+    SharedTensor,
 
     Count,
     None
@@ -40,6 +44,16 @@ struct MouseEvent : public Event {
 
     bool down = false;
     bool move = false;
+};
+
+struct SharedTensorEvent : public Event {
+    explicit SharedTensorEvent(const EventType& _type = EventType::SharedTensor) : Event(_type) {}
+
+    std::string name;
+    std::string manager_handle;
+    std::string filename;
+    torch::Dtype dtype;
+    std::vector<int64_t> dims;
 };
 
 struct KeyEvent : public Event {

@@ -77,6 +77,7 @@ public:
         windows_[idx].height = height;
     }
 
+    std::unordered_map<std::string, void*> user_storages;
     std::deque<unsigned int> input_characters;
     KeyState key_state;
     MouseState mouse_state;
