@@ -1,12 +1,12 @@
 #pragma once
 
 #include <memory>
-#include <string>
 #include <unordered_map>
 
 #include <bx/platform.h>
-
 #include <GLFW/glfw3.h>
+
+#include <nncc/common/types.h>
 
 #if BX_PLATFORM_LINUX
 #define GLFW_EXPOSE_NATIVE_X11
@@ -31,7 +31,7 @@ struct GLFWWindowDeleter {
 using GLFWWindowUniquePtr = std::unique_ptr<GLFWwindow, GLFWWindowDeleter>;
 
 struct GLFWWindowWrapper {
-    GLFWWindowWrapper(uint16_t _width, uint16_t _height, std::string _title, GLFWmonitor* monitor = nullptr,
+    GLFWWindowWrapper(uint16_t _width, uint16_t _height, nncc::string _title, GLFWmonitor* monitor = nullptr,
                       GLFWwindow* share = nullptr) : title(std::move(_title)), width(_width), height(_height) {
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         auto window = glfwCreateWindow(
@@ -61,7 +61,7 @@ struct GLFWWindowWrapper {
 
     GLFWWindowUniquePtr ptr;
     uint16_t width = 0, height = 0;
-    std::string title = "window";
+    nncc::string title = "window";
 
     // TODO: do we need to save monitor and share?
 };
@@ -88,7 +88,7 @@ struct GlfwMessage {
     uint32_t flags;
     bool value;
 
-    std::string title;
+    nncc::string title;
     int16_t idx;
 };
 

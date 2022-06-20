@@ -1,12 +1,12 @@
 #pragma once
 
 #include <numeric>
-#include <string>
 
 #include <bgfx/bgfx.h>
 #include <torch/torch.h>
 #include <libshm/libshm.h>
 
+#include <nncc/common/types.h>
 #include <nncc/context/context.h>
 #include <nncc/render/renderer.h>
 #include <nncc/render/primitives.h>
@@ -28,10 +28,10 @@ bgfx::TextureFormat::Enum GetTextureFormatFromChannelsAndDtype(int64_t channels,
 class TensorPlane {
 public:
     TensorPlane(
-            const std::string& manager_handle,
-            const std::string& filename,
+            const nncc::string& manager_handle,
+            const nncc::string& filename,
             torch::Dtype dtype,
-            const std::vector<int64_t>& dims
+            const nncc::vector<int64_t>& dims
     ) {
         size_t total_bytes = (
                 torch::elementSize(dtype)
@@ -44,7 +44,8 @@ public:
                 at::ALLOCATOR_MAPPED_SHAREDMEM,
                 total_bytes
         );
-        tensor_ = torch::from_blob(data_ptr_.get(), torch::ArrayRef(dims));
+
+        tensor_ = torch::from_blob(data_ptr_.get(), {dims[0], dims[1], dims[2]});
 
         // Set up material for this tensor (default shader, custom texture, own uniforms)
 

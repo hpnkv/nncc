@@ -1,8 +1,8 @@
 #include "context.h"
 
-namespace nncc::context {
+#include <nncc/python/shm_communication.h>
 
-bx::DefaultAllocator Context::allocator_;
+namespace nncc::context {
 
 bool Context::Init() {
     InitWindowing(&Context::GLFWErrorCallback);
@@ -28,7 +28,7 @@ bool Context::InitWindowing(GLFWerrorfun error_callback) {
     return true;
 }
 
-int16_t Context::CreateWindow(uint16_t width, uint16_t height, const std::string& title, GLFWmonitor* monitor,
+int16_t Context::CreateWindow(uint16_t width, uint16_t height, const nncc::string& title, GLFWmonitor* monitor,
                               GLFWwindow* share) {
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     auto window = GLFWWindowWrapper(width, height, title, monitor, share);
@@ -109,6 +109,12 @@ void Context::CharacterCallback(GLFWwindow* window, unsigned int codepoint) {
     auto& context = Context::Get();
     auto window_idx = context.GetWindowIdx(window);
     context.GetEventQueue().Push(window_idx, std::move(event));
+}
+
+void Context::Exit() {
+    nncc::python::StopCommunicatorThread();
+    std::unique_ptr<Event> event(new ExitEvent);
+    Context::Get().GetEventQueue().Push(0, std::move(event));
 }
 
 }

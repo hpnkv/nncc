@@ -2,12 +2,11 @@
 
 #include <map>
 #include <memory>
-#include <string>
-#include <vector>
 
 #include <torch/torch.h>
-#include <bx/thread.h>
+#include <folly/ProducerConsumerQueue.h>
 
+#include <nncc/common/types.h>
 #include <nncc/context/hid.h>
 
 namespace nncc::context {
@@ -49,11 +48,11 @@ struct MouseEvent : public Event {
 struct SharedTensorEvent : public Event {
     explicit SharedTensorEvent(const EventType& _type = EventType::SharedTensor) : Event(_type) {}
 
-    std::string name;
-    std::string manager_handle;
-    std::string filename;
+    nncc::string name;
+    nncc::string manager_handle;
+    nncc::string filename;
     torch::Dtype dtype;
-    std::vector<int64_t> dims;
+    nncc::vector<int64_t> dims;
 };
 
 struct KeyEvent : public Event {
@@ -82,15 +81,14 @@ struct ExitEvent : public Event {
 
 class EventQueue {
 public:
-    explicit EventQueue(bx::AllocatorI* allocator) : queue_(allocator) {}
+    EventQueue() = default;
 
     std::unique_ptr<Event> Poll();
 
     void Push(int16_t window, std::unique_ptr<Event> event);
 
 private:
-    bx::SpScUnboundedQueueT<Event> queue_;
-    std::map<void*, std::unique_ptr<Event>> events_;
+    folly::ProducerConsumerQueue<std::unique_ptr<Event>> queue_{128};
 };
 
 }

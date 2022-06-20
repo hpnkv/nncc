@@ -17,7 +17,7 @@ namespace nncc::context {
 
 class Context {
 public:
-    Context() : glfw_message_queue_(&allocator_), event_queue_(&allocator_) {}
+    Context() = default;
 
     static Context& Get() {
         static Context instance;
@@ -34,16 +34,13 @@ public:
         }
     }
 
-    void Exit() {
-        std::unique_ptr<Event> event(new ExitEvent);
-        Context::Get().GetEventQueue().Push(0, std::move(event));
-    }
+    void Exit();
 
     bool Init();
 
     bool InitWindowing(GLFWerrorfun error_callback);
 
-    int16_t CreateWindow(uint16_t width, uint16_t height, const std::string& title = "window", GLFWmonitor* monitor = nullptr,
+    int16_t CreateWindow(uint16_t width, uint16_t height, const nncc::string& title = "window", GLFWmonitor* monitor = nullptr,
                          GLFWwindow* share = nullptr);
 
     void DestroyWindow(int16_t idx);
@@ -60,7 +57,7 @@ public:
         return window_indices_.at(window);
     }
 
-    bx::SpScUnboundedQueueT<GlfwMessage>& GetMessageQueue() {
+    folly::ProducerConsumerQueue<GlfwMessage>& GetMessageQueue() {
         return glfw_message_queue_;
     }
 
@@ -77,21 +74,18 @@ public:
         windows_[idx].height = height;
     }
 
-    std::unordered_map<std::string, void*> user_storages;
+    std::unordered_map<nncc::string, void*> user_storages;
     std::deque<unsigned int> input_characters;
     KeyState key_state;
     MouseState mouse_state;
 
-    std::unordered_map<std::string, bgfx::ProgramHandle> shader_programs;
+    std::unordered_map<nncc::string, bgfx::ProgramHandle> shader_programs;
 
 private:
-
-    static bx::DefaultAllocator allocator_;
-    bx::SpScUnboundedQueueT<GlfwMessage> glfw_message_queue_;
-
+    folly::ProducerConsumerQueue<GlfwMessage> glfw_message_queue_{64};
     EventQueue event_queue_;
 
-    std::vector<GLFWWindowWrapper> windows_;
+    nncc::vector<GLFWWindowWrapper> windows_;
     std::unordered_map<GLFWwindow*, int16_t> window_indices_;
 
     bx::Thread default_thread_;

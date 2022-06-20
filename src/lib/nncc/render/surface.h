@@ -7,6 +7,7 @@
 #include <map>
 #include <vector>
 
+#include <nncc/common/types.h>
 #include <nncc/engine/world_math.h>
 
 namespace nncc::render {
@@ -26,8 +27,8 @@ struct PosNormUVVertex {
 };
 
 template<class T>
-using VertexBuffer = std::vector<T>;
-using VertexBufferIndices = std::vector<uint16_t>;
+using VertexBuffer = nncc::vector<T>;
+using VertexBufferIndices = nncc::vector<uint16_t>;
 
 struct Mesh {
 public:
@@ -56,8 +57,8 @@ struct Material {
 };
 
 struct Model {
-    std::vector<Mesh> meshes;
-    std::vector<Material> materials;
+    nncc::vector<Mesh> meshes;
+    nncc::vector<Material> materials;
     std::map<size_t, size_t> mesh_material;
     engine::Matrix4 transform;
 };

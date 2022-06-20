@@ -6,9 +6,10 @@
 #include <map>
 #include <tuple>
 #include <queue>
-#include <vector>
 
 #include <bgfx/bgfx.h>
+
+#include <nncc/common/types.h>
 
 namespace nncc::render {
 
@@ -34,7 +35,7 @@ auto operator<(const Lhs& lhs, const Rhs& rhs)
 
 template<class T>
 struct Buffer {
-    std::vector<T> content;
+    nncc::vector<T> content;
     size_t numel = 0;
 };
 

@@ -4,7 +4,7 @@
 
 namespace nncc::engine {
 
-const bgfx::Memory* LoadMemory(bx::FileReaderI* reader, const std::string& path) {
+const bgfx::Memory* LoadMemory(bx::FileReaderI* reader, const nncc::string& path) {
     if (bx::open(reader, path.c_str())) {
         auto size = static_cast<uint32_t>(bx::getSize(reader));
         const auto mem = bgfx::alloc(size + 1);
@@ -17,7 +17,7 @@ const bgfx::Memory* LoadMemory(bx::FileReaderI* reader, const std::string& path)
     return nullptr;
 }
 
-bgfx::ShaderHandle LoadShader(bx::FileReaderI* reader, const std::string& name) {
+bgfx::ShaderHandle LoadShader(bx::FileReaderI* reader, const nncc::string& name) {
     std::ostringstream shader_path;
 
     switch (bgfx::getRendererType()) {
@@ -64,7 +64,7 @@ bgfx::ShaderHandle LoadShader(bx::FileReaderI* reader, const std::string& name) 
 
 bgfx::TextureHandle TextureFromImage(const nncc::common::Image& image, bool immutable) {
     auto texture_memory = bgfx::makeRef(image.buffer.data(), image.Size());
-    std::vector<uint8_t> source_texture = image.buffer;
+    nncc::vector<uint8_t> source_texture = image.buffer;
     if (immutable) {
         return bgfx::createTexture2D(image.width, image.height, false, 0, bgfx::TextureFormat::RGB8, 0, texture_memory);
     }

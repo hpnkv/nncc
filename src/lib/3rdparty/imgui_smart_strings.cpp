@@ -7,6 +7,8 @@
 #include <imgui/imgui.h>
 #include <imgui/misc/cpp/imgui_stdlib.h>
 
+#include "imgui_folly.h"
+
 struct InputTextCallback_UserData {
     std::string* Str;
     ImGuiInputTextCallback ChainCallback;
@@ -66,4 +68,42 @@ bool ImGui::InputTextWithHint(const char* label, const char* hint, std::string* 
     cb_user_data.ChainCallbackUserData = user_data;
     return InputTextWithHint(label, hint, (char*) str->c_str(), str->capacity() + 1, flags, InputTextCallback,
                              &cb_user_data);
+}
+
+bool ImGui::InputTextMultiline(const char* label, nncc::string* str, const ImVec2& size, ImGuiInputTextFlags flags,
+                               ImGuiInputTextCallback callback, void* user_data) {
+    IM_ASSERT((flags & ImGuiInputTextFlags_CallbackResize) == 0);
+    flags |= ImGuiInputTextFlags_CallbackResize;
+
+    InputTextCallback_UserData_Folly cb_user_data;
+    cb_user_data.Str = str;
+    cb_user_data.ChainCallback = callback;
+    cb_user_data.ChainCallbackUserData = user_data;
+    return InputTextMultiline(label, (char*) str->c_str(), str->capacity() + 1, size, flags, InputTextCallbackFolly,
+                              &cb_user_data);
+}
+
+bool ImGui::InputTextWithHint(const char* label, const char* hint, nncc::string* str, ImGuiInputTextFlags flags,
+                              ImGuiInputTextCallback callback, void* user_data) {
+    IM_ASSERT((flags & ImGuiInputTextFlags_CallbackResize) == 0);
+    flags |= ImGuiInputTextFlags_CallbackResize;
+
+    InputTextCallback_UserData_Folly cb_user_data;
+    cb_user_data.Str = str;
+    cb_user_data.ChainCallback = callback;
+    cb_user_data.ChainCallbackUserData = user_data;
+    return InputTextWithHint(label, hint, (char*) str->c_str(), str->capacity() + 1, flags, InputTextCallbackFolly,
+                             &cb_user_data);
+}
+
+bool ImGui::InputText(const char* label, nncc::string* str, ImGuiInputTextFlags flags, ImGuiInputTextCallback callback,
+                      void* user_data) {
+    IM_ASSERT((flags & ImGuiInputTextFlags_CallbackResize) == 0);
+    flags |= ImGuiInputTextFlags_CallbackResize;
+
+    InputTextCallback_UserData_Folly cb_user_data;
+    cb_user_data.Str = str;
+    cb_user_data.ChainCallback = callback;
+    cb_user_data.ChainCallbackUserData = user_data;
+    return InputText(label, (char*) str->c_str(), str->capacity() + 1, flags, InputTextCallbackFolly, &cb_user_data);
 }

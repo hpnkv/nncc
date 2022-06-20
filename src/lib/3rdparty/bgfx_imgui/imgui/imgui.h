@@ -4,6 +4,7 @@
 #include <bgfx/bgfx.h>
 #include <imgui/imgui.h>
 #include <imgui/misc/cpp/imgui_stdlib.h>
+#include <3rdparty/imgui_folly.h>
 
 #include <3rdparty/iconfontheaders/icons_kenney.h>
 #include <3rdparty/iconfontheaders/icons_font_awesome.h>

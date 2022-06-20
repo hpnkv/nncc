@@ -61,18 +61,18 @@ private:
 
 class TextEdit : public ImGuiComponent {
 public:
-    TextEdit(const std::string& label, const std::string& placeholder) : label_(label), content_(placeholder) {}
+    TextEdit(const nncc::string& label, const nncc::string& placeholder) : label_(label), content_(placeholder) {}
 
     void Render() {
         ImGui::InputText(label_.c_str(), &content_);
     }
 
-    const std::string& Value() const {
+    const nncc::string& Value() const {
         return content_;
     }
 
 private:
-    std::string label_, content_;
+    nncc::string label_, content_;
 };
 
 int MainThreadFunc(bx::Thread* self, void* args);

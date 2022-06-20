@@ -1,8 +1,8 @@
 #pragma once
 
 #include <memory>
-#include <string>
-#include <vector>
+
+#include <nncc/common/types.h>
 
 #include <3rdparty/stb/stb_image.h>
 
@@ -20,10 +20,10 @@ struct Image {
     }
 
     int width = 0, height = 0, channels = 0;
-    std::vector<uint8_t> buffer;
+    nncc::vector<uint8_t> buffer;
 };
 
-Image LoadImage(const std::string& filename);
+Image LoadImage(const nncc::string& filename);
 
 }
 

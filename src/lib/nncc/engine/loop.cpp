@@ -26,10 +26,10 @@ int Loop(context::Context* context) {
 
     imguiCreate();
 
-    std::unordered_map<std::string, TensorPlane> tensor_planes;
+    std::unordered_map<nncc::string, TensorPlane> tensor_planes;
     context->user_storages["tensor_planes"] = static_cast<void*>(&tensor_planes);
 
-    std::string selected_tensor;
+    nncc::string selected_tensor;
 
     while (true) {
         if (!engine::ProcessEvents(context)) {
@@ -178,8 +178,9 @@ int Run() {
             context.GetEventQueue().Push(0, std::move(event));
         }
 
-        while (auto message = context.GetMessageQueue().pop()) {
-            if (message->type == GlfwMessageType::Destroy) {
+        GlfwMessage message;
+        while (context.GetMessageQueue().read(message)) {
+            if (message.type == GlfwMessageType::Destroy) {
                 glfwDestroyWindow(glfw_main_window);
                 glfw_main_window = nullptr;
             }
@@ -249,7 +250,7 @@ bool nncc::engine::ProcessEvents(nncc::context::Context* context) {
                     tensor_event->dims
             );
 
-            auto planes = static_cast<std::unordered_map<std::string, TensorPlane>*>(context->user_storages["tensor_planes"]);
+            auto planes = static_cast<std::unordered_map<nncc::string, TensorPlane>*>(context->user_storages["tensor_planes"]);
 
             auto identity = engine::Matrix4::Identity();
 
@@ -259,7 +260,7 @@ bool nncc::engine::ProcessEvents(nncc::context::Context* context) {
             bx::mtxMul(*position_2, *identity, *x_translation);
             plane.SetTransform(position_2);
 
-            planes->insert({tensor_event->name, std::move(plane)});
+            planes->emplace(tensor_event->name, std::move(plane));
 
         } else {
             std::cerr << "unknown event type " << static_cast<int>(event->type) << std::endl;

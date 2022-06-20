@@ -11,7 +11,8 @@ set(
         nncc/context/event.cpp
         nncc/context/glfw_utils.cpp
         nncc/context/hid.cpp
-        3rdparty/imgui_stdlib.cpp
+        nncc/python/shm_communication.cpp
+        3rdparty/imgui_smart_strings.cpp
         3rdparty/bgfx_imgui/imgui/imgui.cpp
 )
 
