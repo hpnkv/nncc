@@ -79,6 +79,9 @@ public:
     KeyState key_state;
     MouseState mouse_state;
 
+    at::DataPtr weights_ptr;
+    std::optional<torch::Tensor> weights;
+
     std::unordered_map<nncc::string, bgfx::ProgramHandle> shader_programs;
 
 private:

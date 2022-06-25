@@ -24,12 +24,24 @@ int Loop(context::Context* context) {
     auto program = bgfx::createProgram(vs, fs, true);
     context->shader_programs["default_diffuse"] = program;
 
+    cpp_redis::client redis;
+    redis.connect();
+
     imguiCreate();
 
     std::unordered_map<nncc::string, TensorPlane> tensor_planes;
     context->user_storages["tensor_planes"] = static_cast<void*>(&tensor_planes);
 
     nncc::string selected_tensor;
+
+    redis.set("nncc_submit_random", "true");
+    redis.set("nncc_submit_circles", "true");
+    redis.set("nncc_update_blend", "true");
+    redis.sync_commit();
+
+    bool update_periodic = false;
+    bool update_circles = false;
+    bool update_blend = false;
 
     while (true) {
         if (!engine::ProcessEvents(context)) {
@@ -51,9 +63,9 @@ int Loop(context::Context* context) {
             camera.Update(timer.Timedelta(), context->mouse_state, context->key_state);
         }
 
-        for (auto& [key, tensor_plane] : tensor_planes) {
-            tensor_plane.Update();
-        }
+//        for (auto& [key, tensor_plane] : tensor_planes) {
+//            tensor_plane.Update();
+//        }
 
         bgfx::touch(0);
 
@@ -62,20 +74,61 @@ int Loop(context::Context* context) {
                         uint16_t(window.height)
         );
 
-        ImGui::SetNextWindowPos(ImVec2(20.0f, 50.0f), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowPos(ImVec2(50.0f, 600.0f), ImGuiCond_FirstUseEver);
         ImGui::SetNextWindowSize(ImVec2(240.0f, 300.0f), ImGuiCond_FirstUseEver);
 
-        ImGui::Begin("Example: PyTorch shared memory tensors");
+        ImGui::Begin("Example: weight blending");
 
-        ImGui::Text("Shared tensors");
-        ImGui::BeginListBox("##label");
-        for (const auto& [name, tensor_plane] : tensor_planes) {
-            auto selected = name == selected_tensor;
-            if (ImGui::Selectable(name.c_str(), selected)) {
-                selected_tensor = name;
+        bool weights_changed = false;
+        if (context->weights) {
+            auto weight_accessor = context->weights->accessor<float, 1>();
+            for (auto i = 0; i < 7; ++i) {
+                if (ImGui::InputFloat(fmt::format("weight {}", i + 1).c_str(), &weight_accessor[i], 0.05f, 0.01f)) {
+                    weights_changed = true;
+                }
             }
         }
-        ImGui::EndListBox();
+        update_blend = weights_changed;
+
+//        ImGui::Text("Shared tensors");
+//        ImGui::BeginListBox("##label");
+//        for (const auto& [name, tensor_plane] : tensor_planes) {
+//            auto selected = name == selected_tensor;
+//            if (ImGui::Selectable(name.c_str(), selected)) {
+//                selected_tensor = name;
+//            }
+//        }
+//        ImGui::EndListBox();
+
+//        if (ImGui::Button("Periodic")) {
+//            update_periodic = !update_periodic;
+//        }
+//
+//        if (ImGui::Button("Start/stop")) {
+//            update_blend = !update_blend;
+//        }
+
+        auto submit_random = redis.get("nncc_submit_random");
+        auto submit_circles = redis.get("nncc_submit_circles");
+        auto submit_blend = redis.get("nncc_update_blend");
+        redis.sync_commit();
+
+        if (update_periodic && submit_random.get().as_string() == "true") {
+            redis.set("nncc_submit_random", "false");
+            redis.lpush("nncc_requests", {"submit_random"});
+        }
+
+        if (update_circles && submit_circles.get().as_string() == "true") {
+            redis.set("nncc_submit_circles", "false");
+            redis.lpush("nncc_requests", {"submit_circles"});
+        }
+
+        if (update_blend && submit_blend.get().as_string() == "true") {
+            redis.set("nncc_update_blend", "false");
+            redis.lpush("nncc_requests", {"update_blend"});
+        }
+
+        redis.sync_commit();
 
         if (ImGui::SmallButton(ICON_FA_LINK)) {
 //            openUrl(url);
@@ -132,7 +185,7 @@ int MainThreadFunc(bx::Thread* self, void* args) {
     bgfx::Init init;
     init.resolution.width = (uint32_t) window.width;
     init.resolution.height = (uint32_t) window.height;
-    init.resolution.reset = BGFX_RESET_VSYNC;
+    init.resolution.reset = 0;
     if (!bgfx::init(init)) {
         return 1;
     }
@@ -209,7 +262,7 @@ bool nncc::engine::ProcessEvents(nncc::context::Context* context) {
         } else if (event->type == EventType::Resize) {
             auto resize_event = std::dynamic_pointer_cast<ResizeEvent>(event);
             context->SetWindowResolution(event->window_idx, resize_event->width, resize_event->height);
-            bgfx::reset(resize_event->width, resize_event->height, BGFX_RESET_VSYNC);
+            bgfx::reset(resize_event->width, resize_event->height, 0);
             bgfx::setViewRect(0, 0, 0, bgfx::BackbufferRatio::Equal);
 
         } else if (event->type == EventType::MouseButton) {
@@ -241,26 +294,46 @@ bool nncc::engine::ProcessEvents(nncc::context::Context* context) {
             context->input_characters.push_back(char_event->codepoint);
 
         } else if (event->type == EventType::SharedTensor) {
-            std::cout << "tensor event" << std::endl;
             auto tensor_event = std::dynamic_pointer_cast<SharedTensorEvent>(event);
-            auto plane = TensorPlane(
-                    tensor_event->manager_handle,
-                    tensor_event->filename,
-                    tensor_event->dtype,
-                    tensor_event->dims
-            );
-
             auto planes = static_cast<std::unordered_map<nncc::string, TensorPlane>*>(context->user_storages["tensor_planes"]);
 
-            auto identity = engine::Matrix4::Identity();
+            if (tensor_event->name == "weights") {
+                size_t total_bytes = (
+                        torch::elementSize(tensor_event->dtype)
+                        * std::accumulate(tensor_event->dims.begin(), tensor_event->dims.end(), 1, std::multiplies<size_t>())
+                );
+                auto data_ptr = THManagedMapAllocator::makeDataPtr(
+                        tensor_event->manager_handle.c_str(),
+                        tensor_event->filename.c_str(),
+                        at::ALLOCATOR_MAPPED_SHAREDMEM,
+                        total_bytes
+                );
+                context->weights_ptr = std::move(data_ptr);
+                context->weights = torch::from_blob(data_ptr.get(), {tensor_event->dims[0]});
+                event = queue->Poll();
+                continue;
+            }
 
-            Matrix4 x_translation;
-            bx::mtxTranslate(*x_translation, 2.1f * planes->size(), 0., 0.);
-            Matrix4 position_2;
-            bx::mtxMul(*position_2, *identity, *x_translation);
-            plane.SetTransform(position_2);
+            if (!planes->contains(tensor_event->name)) {
+                auto plane = TensorPlane(
+                        tensor_event->manager_handle,
+                        tensor_event->filename,
+                        tensor_event->dtype,
+                        tensor_event->dims
+                );
 
-            planes->emplace(tensor_event->name, std::move(plane));
+                auto identity = engine::Matrix4::Identity();
+
+                Matrix4 x_translation;
+                bx::mtxTranslate(*x_translation, 2.1f * planes->size(), 0., 0.);
+                Matrix4 position_2;
+                bx::mtxMul(*position_2, *identity, *x_translation);
+                plane.SetTransform(position_2);
+
+                planes->emplace(tensor_event->name, std::move(plane));
+            }
+
+            planes->at(tensor_event->name).Update();
 
         } else {
             std::cerr << "unknown event type " << static_cast<int>(event->type) << std::endl;

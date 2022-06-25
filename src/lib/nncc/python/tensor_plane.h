@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 #include <numeric>
 
 #include <bgfx/bgfx.h>
@@ -14,6 +15,7 @@
 namespace nncc {
 
 bgfx::TextureFormat::Enum GetTextureFormatFromChannelsAndDtype(int64_t channels, const torch::Dtype& dtype) {
+    std::cout << channels << " " << dtype << std::endl;
     if (channels == 3 && dtype == torch::kUInt8) {
         return bgfx::TextureFormat::RGB8;
     } else if (channels == 4 && dtype == torch::kFloat32) {

@@ -10,6 +10,7 @@ void ListenToRedisSharedTensors(context::Context* context, const nncc::string& q
     cpp_redis::client redis;
     redis.connect();
     redis.del({queue_name.toStdString()});
+    redis.del({"nncc_requests"});
     redis.sync_commit();
     bool done = false;
 
@@ -31,15 +32,15 @@ void ListenToRedisSharedTensors(context::Context* context, const nncc::string& q
                 dtype = torch::kFloat32;
             }
 
-            int64_t height, width, channels;
-            folly::split(",", dims_string, height, width, channels);
+            nncc::vector<int64_t> dims;
+            folly::split(",", dims_string, dims);
 
             auto event = std::make_unique<context::SharedTensorEvent>();
             event->name = name;
             event->manager_handle = manager_handle;
             event->filename = filename;
             event->dtype = dtype;
-            event->dims = {height, width, channels};
+            event->dims = dims;
             context->GetEventQueue().Push(0, std::move(event));
         });
 
