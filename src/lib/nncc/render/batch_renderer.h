@@ -50,7 +50,7 @@ struct BatchCommand {
     uint64_t state;
 
     Material material;
-    nncc::engine::Matrix4 transform;
+    nncc::engine::Transform transform;
 };
 
 struct BatchData {
@@ -63,7 +63,7 @@ class BatchRenderer {
 public:
     explicit BatchRenderer(const bgfx::RendererType::Enum& type = bgfx::RendererType::Noop) : type_(type) {}
 
-    void Add(bgfx::ViewId view_id, const Mesh& mesh, const Material& material, const engine::Matrix4& transform,
+    void Add(bgfx::ViewId view_id, const Mesh& mesh, const Material& material, const engine::Transform& transform,
              uint64_t state);
 
     void Init(bgfx::ProgramHandle shader_program);

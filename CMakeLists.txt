@@ -19,6 +19,7 @@ list(APPEND CMAKE_PREFIX_PATH "external/torch")
 list(APPEND CMAKE_PREFIX_PATH "external/folly")
 list(APPEND CMAKE_PREFIX_PATH "external/boost")
 list(APPEND CMAKE_PREFIX_PATH "external/cpp_redis")
+list(APPEND CMAKE_PREFIX_PATH "/opt/homebrew/Cellar/entt/3.10.1")
 set(CPP_REDIS_DIR "${PROJECT_SOURCE_DIR}/external/cpp_redis")
 
 find_package(glog CONFIG REQUIRED)
@@ -31,11 +32,11 @@ else()
     set(LIBSHM_SUBDIR libshm)
 endif()
 
-set(TORCH_ROOT /Users/apankov/dev/pytorch)
+set(TORCH_ROOT /Users/apankov/Snapchat/dev/pytorch)
 set(LIBSHM_SRCDIR external/torch/lib/${LIBSHM_SUBDIR})
 add_subdirectory(${LIBSHM_SRCDIR})
 
-find_package(OpenCV REQUIRED)
+#find_package(OpenCV REQUIRED)
 find_package(Python COMPONENTS Interpreter Development)
 find_package(pybind11 REQUIRED)
 

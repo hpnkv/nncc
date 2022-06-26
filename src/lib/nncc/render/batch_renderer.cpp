@@ -6,7 +6,7 @@
 
 namespace nncc::render {
 
-void BatchRenderer::Add(bgfx::ViewId view_id, const Mesh& mesh, const Material& material, const engine::Matrix4& transform, uint64_t state) {
+void BatchRenderer::Add(bgfx::ViewId view_id, const Mesh& mesh, const Material& material, const engine::Transform& transform, uint64_t state) {
     BatchData* batch;
     BatchId batch_id = {material.shader.idx, material.diffuse_texture.idx};
     if (!batch_groups_.count(batch_id)) {

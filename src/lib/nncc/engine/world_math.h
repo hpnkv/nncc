@@ -59,4 +59,8 @@ struct Vec3 {
     float x = 0, y = 0, z = 0;
 };
 
+using Transform = Matrix4;
+using Position = Vec3;
+using Direction = Vec3;
+
 }

@@ -60,7 +60,7 @@ struct Model {
     nncc::vector<Mesh> meshes;
     nncc::vector<Material> materials;
     std::map<size_t, size_t> mesh_material;
-    engine::Matrix4 transform;
+    engine::Transform transform;
 };
 
 }

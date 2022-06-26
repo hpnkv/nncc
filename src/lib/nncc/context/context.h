@@ -9,6 +9,9 @@
 #include <bgfx/platform.h>
 #include <bx/thread.h>
 
+#define ENTT_USE_ATOMIC
+#include <entt/entt.hpp>
+
 #include <nncc/context/event.h>
 #include <nncc/context/hid.h>
 #include <nncc/context/glfw_utils.h>
@@ -74,7 +77,7 @@ public:
         windows_[idx].height = height;
     }
 
-    std::unordered_map<nncc::string, void*> user_storages;
+    std::unordered_map<nncc::string, entt::entity> tensors;
     std::deque<unsigned int> input_characters;
     KeyState key_state;
     MouseState mouse_state;
@@ -83,6 +86,8 @@ public:
     std::optional<torch::Tensor> weights;
 
     std::unordered_map<nncc::string, bgfx::ProgramHandle> shader_programs;
+
+    entt::registry registry;
 
 private:
     folly::ProducerConsumerQueue<GlfwMessage> glfw_message_queue_{64};

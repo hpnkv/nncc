@@ -15,7 +15,7 @@ namespace nncc::render {
 
 class Renderer {
 public:
-    void Add(const Mesh& mesh, const Material& material, const engine::Matrix4& transform);
+    void Add(const Mesh& mesh, const Material& material, const engine::Transform& transform);
 
     void Present();
 

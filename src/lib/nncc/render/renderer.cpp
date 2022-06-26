@@ -2,7 +2,7 @@
 
 namespace nncc::render {
 
-void Renderer::Add(const Mesh& mesh, const Material& material, const engine::Matrix4& transform) {
+void Renderer::Add(const Mesh& mesh, const Material& material, const engine::Transform& transform) {
     batch_renderer_ctx_.Add(view_id_, mesh, material, transform, 0);
 }
 

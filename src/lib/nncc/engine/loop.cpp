@@ -9,6 +9,42 @@
 
 namespace nncc::engine {
 
+class TensorContainer {
+public:
+    TensorContainer(
+        const nncc::string& manager_handle,
+        const nncc::string& filename,
+        torch::Dtype dtype,
+        const nncc::vector<int64_t>& dims
+    ) {
+        size_t total_bytes = (
+            torch::elementSize(dtype)
+            * std::accumulate(dims.begin(), dims.end(), 1, std::multiplies<size_t>())
+        );
+
+        data_ptr_ = THManagedMapAllocator::makeDataPtr(
+                manager_handle.c_str(),
+                filename.c_str(),
+                at::ALLOCATOR_MAPPED_SHAREDMEM,
+                total_bytes
+        );
+        tensor_ = torch::from_blob(data_ptr_.get(), at::IntArrayRef(dims.data(), dims.size()));
+    }
+
+    const torch::Tensor& operator*() const {
+        return tensor_;
+    }
+
+    torch::Tensor& operator*() {
+        return const_cast<torch::Tensor&>(const_cast<const TensorContainer*>(this)->operator*());
+    }
+
+private:
+    at::DataPtr data_ptr_;
+    torch::Tensor tensor_;
+};
+
+
 int Loop(context::Context* context) {
     auto& window = context->GetWindow(0);
 
@@ -29,18 +65,9 @@ int Loop(context::Context* context) {
 
     imguiCreate();
 
-    std::unordered_map<nncc::string, TensorPlane> tensor_planes;
-    context->user_storages["tensor_planes"] = static_cast<void*>(&tensor_planes);
-
-    nncc::string selected_tensor;
-
-    redis.set("nncc_submit_random", "true");
-    redis.set("nncc_submit_circles", "true");
     redis.set("nncc_update_blend", "true");
     redis.sync_commit();
 
-    bool update_periodic = false;
-    bool update_circles = false;
     bool update_blend = false;
 
     while (true) {
@@ -59,20 +86,16 @@ int Loop(context::Context* context) {
             current_button_mask <<= 1;
         }
 
-        if (!ImGui::MouseOverArea()) {
-            camera.Update(timer.Timedelta(), context->mouse_state, context->key_state);
-        }
-
-//        for (auto& [key, tensor_plane] : tensor_planes) {
-//            tensor_plane.Update();
-//        }
-
-        bgfx::touch(0);
-
         imguiBeginFrame(context->mouse_state.x, context->mouse_state.y, imgui_pressed_buttons, context->mouse_state.z,
                         uint16_t(window.width),
                         uint16_t(window.height)
         );
+
+        if (!ImGui::MouseOverArea()) {
+            camera.Update(timer.Timedelta(), context->mouse_state, context->key_state);
+        }
+
+        bgfx::touch(0);
 
         ImGui::SetNextWindowPos(ImVec2(50.0f, 600.0f), ImGuiCond_FirstUseEver);
         ImGui::SetNextWindowSize(ImVec2(240.0f, 300.0f), ImGuiCond_FirstUseEver);
@@ -90,38 +113,12 @@ int Loop(context::Context* context) {
         }
         update_blend = weights_changed;
 
-//        ImGui::Text("Shared tensors");
-//        ImGui::BeginListBox("##label");
-//        for (const auto& [name, tensor_plane] : tensor_planes) {
-//            auto selected = name == selected_tensor;
-//            if (ImGui::Selectable(name.c_str(), selected)) {
-//                selected_tensor = name;
-//            }
-//        }
-//        ImGui::EndListBox();
+        ImGui::Text("Shared tensors");
+        ImGui::BeginListBox("##label");
+        ImGui::EndListBox();
 
-//        if (ImGui::Button("Periodic")) {
-//            update_periodic = !update_periodic;
-//        }
-//
-//        if (ImGui::Button("Start/stop")) {
-//            update_blend = !update_blend;
-//        }
-
-        auto submit_random = redis.get("nncc_submit_random");
-        auto submit_circles = redis.get("nncc_submit_circles");
         auto submit_blend = redis.get("nncc_update_blend");
         redis.sync_commit();
-
-        if (update_periodic && submit_random.get().as_string() == "true") {
-            redis.set("nncc_submit_random", "false");
-            redis.lpush("nncc_requests", {"submit_random"});
-        }
-
-        if (update_circles && submit_circles.get().as_string() == "true") {
-            redis.set("nncc_submit_circles", "false");
-            redis.lpush("nncc_requests", {"submit_circles"});
-        }
 
         if (update_blend && submit_blend.get().as_string() == "true") {
             redis.set("nncc_update_blend", "false");
@@ -129,12 +126,6 @@ int Loop(context::Context* context) {
         }
 
         redis.sync_commit();
-
-        if (ImGui::SmallButton(ICON_FA_LINK)) {
-//            openUrl(url);
-        } else if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("Documentation: https://apankov.net");
-        }
 
         ImGui::End();
         imguiEndFrame();
@@ -147,16 +138,18 @@ int Loop(context::Context* context) {
                                      1000.0f);
         renderer.SetViewport({0, 0, static_cast<float>(window.width), static_cast<float>(window.height)});
 
-        for (const auto& [key, tensor_plane] : tensor_planes) {
-            tensor_plane.Render(&renderer, timer.Time());
+        const auto& cregistry = context->registry;
+        auto view = cregistry.view<render::Material, render::Mesh, engine::Transform>();
+        for (auto entity : view) {
+            const auto& [material, mesh, transform] = view.get(entity);
+            renderer.Prepare(material.shader);
+            renderer.Add(mesh, material, transform);
         }
 
         renderer.Present();
 
         // TODO: make this a subsystem's job
         context->input_characters.clear();
-
-        bgfx::setDebug(BGFX_DEBUG_STATS);
 
         bgfx::frame();
 
@@ -253,9 +246,14 @@ bool nncc::engine::ProcessEvents(nncc::context::Context* context) {
     using namespace nncc::context;
 
     auto queue = &context->GetEventQueue();
-    std::shared_ptr<Event> event = queue->Poll();
+    std::shared_ptr<Event> event;
 
-    while (event != nullptr) {
+    do {
+        event = queue->Poll();
+        if (event == nullptr) {
+            break;
+        }
+
         if (event->type == EventType::Exit) {
             return false;
 
@@ -295,52 +293,53 @@ bool nncc::engine::ProcessEvents(nncc::context::Context* context) {
 
         } else if (event->type == EventType::SharedTensor) {
             auto tensor_event = std::dynamic_pointer_cast<SharedTensorEvent>(event);
-            auto planes = static_cast<std::unordered_map<nncc::string, TensorPlane>*>(context->user_storages["tensor_planes"]);
+            auto& registry = context->registry;
 
-            if (tensor_event->name == "weights") {
-                size_t total_bytes = (
-                        torch::elementSize(tensor_event->dtype)
-                        * std::accumulate(tensor_event->dims.begin(), tensor_event->dims.end(), 1, std::multiplies<size_t>())
-                );
-                auto data_ptr = THManagedMapAllocator::makeDataPtr(
-                        tensor_event->manager_handle.c_str(),
-                        tensor_event->filename.c_str(),
-                        at::ALLOCATOR_MAPPED_SHAREDMEM,
-                        total_bytes
-                );
-                context->weights_ptr = std::move(data_ptr);
-                context->weights = torch::from_blob(data_ptr.get(), {tensor_event->dims[0]});
-                event = queue->Poll();
-                continue;
+            entt::entity entity;
+            if (!context->tensors.contains(tensor_event->name)) {
+                entity = registry.create();
+                registry.emplace<TensorContainer>(entity, tensor_event->manager_handle, tensor_event->filename, tensor_event->dtype, tensor_event->dims);
+                context->tensors[tensor_event->name] = entity;
+            } else {
+                entity = context->tensors.at(tensor_event->name);
             }
 
-            if (!planes->contains(tensor_event->name)) {
-                auto plane = TensorPlane(
-                        tensor_event->manager_handle,
-                        tensor_event->filename,
-                        tensor_event->dtype,
-                        tensor_event->dims
-                );
+            if (tensor_event->dims.size() == 3) {
+                if (!registry.all_of<render::Mesh>(entity)) {
+                    registry.emplace<render::Mesh>(entity, render::GetPlaneMesh());
+                }
 
-                auto identity = engine::Matrix4::Identity();
+                auto& transform = registry.emplace_or_replace<Transform>(entity);
+                Matrix4 x_translation, identity = Matrix4::Identity();
+                // TODO: make size correct
+                bx::mtxTranslate(*x_translation, 2.1f * context->tensors.size(), 0., 0.);
+                bx::mtxMul(*transform, *identity, *x_translation);
 
-                Matrix4 x_translation;
-                bx::mtxTranslate(*x_translation, 2.1f * planes->size(), 0., 0.);
-                Matrix4 position_2;
-                bx::mtxMul(*position_2, *identity, *x_translation);
-                plane.SetTransform(position_2);
+                // TODO: texture resource https://github.com/skypjack/entt/wiki/Crash-Course:-resource-management
+                render::Material* material;
+                if (!registry.all_of<render::Material>(entity)) {
+                    auto& _material = registry.emplace<render::Material>(entity);
+                    _material.shader = context->shader_programs["default_diffuse"];
+                    auto height = tensor_event->dims[0], width = tensor_event->dims[1], channels = tensor_event->dims[2];
+                    auto texture_format = GetTextureFormatFromChannelsAndDtype(channels, tensor_event->dtype);
+                    _material.diffuse_texture = bgfx::createTexture2D(width, height, false, 0, texture_format, 0);
+                    _material.d_texture_uniform = bgfx::createUniform("diffuseTX", bgfx::UniformType::Sampler, 1);
+                    _material.d_color_uniform = bgfx::createUniform("diffuseCol", bgfx::UniformType::Vec4, 1);
+                    material = &_material;
+                } else {
+                    material = &registry.get<render::Material>(entity);
+                }
 
-                planes->emplace(tensor_event->name, std::move(plane));
+                auto& tensor = *registry.get<TensorContainer>(entity);
+                auto texture_memory = bgfx::makeRef(tensor.data_ptr(), tensor.storage().nbytes());
+                bgfx::updateTexture2D(material->diffuse_texture, 1, 0, 0, 0, tensor.size(1), tensor.size(0), texture_memory);
             }
-
-            planes->at(tensor_event->name).Update();
 
         } else {
             std::cerr << "unknown event type " << static_cast<int>(event->type) << std::endl;
         }
 
-        event = queue->Poll();
-    }
+    } while (event != nullptr);
 
     return true;
 }
