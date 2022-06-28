@@ -6,7 +6,7 @@
 namespace nncc::context {
 
 bool Context::InitInMainThread() {
-    InitWindowing(&Context::GLFWErrorCallback);
+    InitWindowing(&GlfwWindowingImpl::GLFWErrorCallback);
 
     // this init happens prior to RenderingSystem.InitInMainThread() to indicate BGFX that
     // we will use a separate rendering thread.
@@ -37,10 +37,10 @@ int16_t Context::CreateWindow(uint16_t width, uint16_t height, const nncc::strin
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     auto window = GLFWWindowWrapper(width, height, title, monitor, share);
 
-    glfwSetMouseButtonCallback(window.ptr.get(), &Context::MouseButtonCallback);
-    glfwSetCursorPosCallback(window.ptr.get(), &Context::CursorPositionCallback);
-    glfwSetKeyCallback(window.ptr.get(), &Context::KeyCallback);
-    glfwSetCharCallback(window.ptr.get(), &Context::CharacterCallback);
+    glfwSetMouseButtonCallback(window.ptr.get(), &GlfwWindowingImpl::MouseButtonCallback);
+    glfwSetCursorPosCallback(window.ptr.get(), &GlfwWindowingImpl::CursorPositionCallback);
+    glfwSetKeyCallback(window.ptr.get(), &GlfwWindowingImpl::KeyCallback);
+    glfwSetCharCallback(window.ptr.get(), &GlfwWindowingImpl::CharacterCallback);
 
     int16_t window_idx = static_cast<int16_t>(windows_.size());
     window_indices_[window.ptr.get()] = window_idx;
@@ -54,11 +54,11 @@ void Context::DestroyWindow(int16_t idx) {
     windows_[idx].ptr.reset();
 }
 
-void Context::GLFWErrorCallback(int error, const char* description) {
+void GlfwWindowingImpl::GLFWErrorCallback(int error, const char* description) {
     fprintf(stderr, "GLFW error %d: %s\n", error, description);
 }
 
-void Context::MouseButtonCallback(GLFWwindow* window, int32_t button, int32_t action, int32_t) {
+void GlfwWindowingImpl::MouseButtonCallback(GLFWwindow* window, int32_t button, int32_t action, int32_t) {
     double x_pos, y_pos;
     glfwGetCursorPos(window, &x_pos, &y_pos);
 
@@ -73,7 +73,7 @@ void Context::MouseButtonCallback(GLFWwindow* window, int32_t button, int32_t ac
     context.input.queue.Push(window_idx, std::move(event));
 }
 
-void Context::CursorPositionCallback(GLFWwindow* window, double x_pos, double y_pos) {
+void GlfwWindowingImpl::CursorPositionCallback(GLFWwindow* window, double x_pos, double y_pos) {
     auto event = std::make_unique<input::MouseEvent>(input::EventType::MouseMove);
     event->x = static_cast<int32_t>(x_pos);
     event->y = static_cast<int32_t>(y_pos);
@@ -85,7 +85,7 @@ void Context::CursorPositionCallback(GLFWwindow* window, double x_pos, double y_
 
 const auto glfw_key_translation_table = input::GlfwKeyTranslationTable();
 
-void Context::KeyCallback(GLFWwindow* window, int32_t glfw_key, int32_t scancode, int32_t action, int32_t modifiers) {
+void GlfwWindowingImpl::KeyCallback(GLFWwindow* window, int32_t glfw_key, int32_t scancode, int32_t action, int32_t modifiers) {
     if (glfw_key == GLFW_KEY_UNKNOWN) {
         return;
     }
@@ -106,7 +106,7 @@ void Context::KeyCallback(GLFWwindow* window, int32_t glfw_key, int32_t scancode
     context.input.queue.Push(window_idx, std::move(event));
 }
 
-void Context::CharacterCallback(GLFWwindow* window, unsigned int codepoint) {
+void GlfwWindowingImpl::CharacterCallback(GLFWwindow* window, unsigned int codepoint) {
     auto event = std::make_unique<input::CharEvent>();
     event->codepoint = codepoint;
 

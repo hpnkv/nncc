@@ -32,10 +32,21 @@ set(
 )
 
 set(
+        IMGUIZMO_SOURCES
+        3rdparty/imguizmo/GraphEditor.cpp
+        3rdparty/imguizmo/ImCurveEdit.cpp
+        3rdparty/imguizmo/ImGradient.cpp
+        3rdparty/imguizmo/ImGuizmo.cpp
+        3rdparty/imguizmo/ImSequencer.cpp
+        3rdparty/imguizmo/ImZoomSlider.h
+)
+
+set(
         NNCC_SOURCES
         ${NNCC_INPUT_SOURCES}
         ${NNCC_ENGINE_SOURCES}
         ${NNCC_RENDER_SOURCES}
+        ${IMGUIZMO_SOURCES}
 )
 
 add_library(nncc-common ${NNCC_SOURCES})

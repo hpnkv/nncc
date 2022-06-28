@@ -9,7 +9,7 @@ namespace nncc::engine {
 
 class Camera {
 public:
-    void Update(float timedelta, const input::MouseState& mouse_state, const input::KeyState& key_state);
+    void Update(float timedelta, const input::MouseState& mouse_state, const input::KeyState& key_state, bool mouse_over_gui = false);
 
     Matrix4 GetViewMatrix();
 

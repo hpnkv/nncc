@@ -134,6 +134,10 @@ public:
                 engine::Matrix4 x_translation, identity = engine::Matrix4::Identity();
                 bx::mtxTranslate(*x_translation, 2.1f * drawable_.size(), 0., 0.);
                 bx::mtxMul(*transform, *identity, *x_translation);
+
+                auto scale = identity;
+                bx::mtxScale(*scale, static_cast<float>(event.dims[1]) / static_cast<float>(event.dims[0]), 1.0f, 1.0f);
+                bx::mtxMul(*transform, *transform, *scale);
             }
 
             // TODO: texture resource https://github.com/skypjack/entt/wiki/Crash-Course:-resource-management

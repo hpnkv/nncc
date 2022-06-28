@@ -17,6 +17,30 @@
 
 namespace nncc::context {
 
+class GlfwWindowingImpl {
+public:
+    GlfwWindowingImpl() = default;
+
+    static GlfwWindowingImpl& Get() {
+        static GlfwWindowingImpl instance;
+        return instance;
+    }
+
+    // We don't want occasional copies
+    GlfwWindowingImpl(const GlfwWindowingImpl&) = delete;
+    void operator=(const GlfwWindowingImpl&) = delete;
+
+    static void GLFWErrorCallback(int error, const char* description);
+
+    static void MouseButtonCallback(GLFWwindow* window, int32_t button, int32_t action, int32_t /* modifiers */);
+
+    static void CharacterCallback(GLFWwindow* window, unsigned int codepoint);
+
+    static void CursorPositionCallback(GLFWwindow* window, double x_pos, double y_pos);
+
+    static void KeyCallback(GLFWwindow* window, int32_t key, int32_t scancode, int32_t action, int32_t modifiers);
+};
+
 class Context {
 public:
     Context() = default;
@@ -30,8 +54,7 @@ public:
     Context(const Context&) = delete;
     void operator=(const Context&) = delete;
 
-    void Destroy() {
-    }
+    void Destroy() {};
 
     void Exit();
 
@@ -84,16 +107,6 @@ private:
     std::unordered_map<GLFWwindow*, int16_t> window_indices_;
 
     bx::Thread default_thread_;
-
-    static void GLFWErrorCallback(int error, const char* description);
-
-    static void MouseButtonCallback(GLFWwindow* window, int32_t button, int32_t action, int32_t /* modifiers */);
-
-    static void CharacterCallback(GLFWwindow* window, unsigned int codepoint);
-
-    static void CursorPositionCallback(GLFWwindow* window, double x_pos, double y_pos);
-
-    static void KeyCallback(GLFWwindow* window, int32_t key, int32_t scancode, int32_t action, int32_t modifiers);
 };
 
 }

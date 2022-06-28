@@ -3,6 +3,7 @@
 #include <libshm/libshm.h>
 
 #include <3rdparty/bgfx_imgui/imgui/imgui.h>
+#include <3rdparty/imguizmo/ImGuizmo.h>
 #include <nncc/python/shm_communication.h>
 #include <nncc/python/tensor_registry.h>
 
@@ -56,9 +57,7 @@ int Loop() {
                         uint16_t(window.height)
         );
 
-        if (!ImGui::MouseOverArea()) {
-            camera.Update(timer.Timedelta(), context.input.mouse_state, context.input.key_state);
-        }
+        camera.Update(timer.Timedelta(), context.input.mouse_state, context.input.key_state, ImGui::MouseOverArea());
 
         bgfx::touch(0);
 
@@ -67,6 +66,7 @@ int Loop() {
 
         ImGui::Begin("Example: weight blending");
         ImGui::Text("Shared tensors");
+
         ImGui::BeginListBox("##label");
         auto named_tensors = cregistry.view<Name, TensorWithPointer>();
         for (auto entity : named_tensors) {
@@ -109,6 +109,21 @@ int Loop() {
         imguiEndFrame();
 
         context.rendering.Update(context, camera.GetViewMatrix(), window.width, window.height);
+
+        imguiBeginFrame(context.input.mouse_state.x,
+                        context.input.mouse_state.y,
+                        imgui_pressed_buttons,
+                        context.input.mouse_state.z,
+                        uint16_t(window.width),
+                        uint16_t(window.height), -1, 1
+        );
+        ImGuizmo::BeginFrame();
+        ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, window.width, window.height);
+        engine::Matrix4 projection, view = camera.GetViewMatrix();
+        bx::mtxProj(*projection, 30, static_cast<float>(window.width) / static_cast<float>(window.height), 0.01f, 1000.f, bgfx::getCaps()->homogeneousDepth);
+        auto identity = engine::Matrix4::Identity();
+        ImGuizmo::DrawGrid(*view, *projection, *identity, 100.f);
+        imguiEndFrame();
 
         // TODO: make this a subsystem's job
         context.input.input_characters.clear();
