@@ -28,14 +28,16 @@ struct GLFWWindowDeleter {
     }
 };
 
+
 using GLFWWindowUniquePtr = std::unique_ptr<GLFWwindow, GLFWWindowDeleter>;
+
 
 struct GLFWWindowWrapper {
     GLFWWindowWrapper(uint16_t _width, uint16_t _height, nncc::string _title, GLFWmonitor* monitor = nullptr,
                       GLFWwindow* share = nullptr) : title(std::move(_title)), width(_width), height(_height) {
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         auto window = glfwCreateWindow(
-                width, height, title.c_str(), monitor, share
+            width, height, title.c_str(), monitor, share
         );
         ptr.reset(window);
     }
@@ -66,6 +68,7 @@ struct GLFWWindowWrapper {
     // TODO: do we need to save monitor and share?
 };
 
+
 enum class GlfwMessageType {
     Create,
     Destroy,
@@ -92,10 +95,14 @@ struct GlfwMessage {
     int16_t idx;
 };
 
+}
+
+namespace nncc::input {
+
 uint8_t translateKeyModifiers(int glfw_modifiers);
 
-std::unordered_map<int, Key> GlfwKeyTranslationTable();
+std::unordered_map<int, input::Key> GlfwKeyTranslationTable();
 
-MouseButton translateGlfwMouseButton(int button);
+input::MouseButton translateGlfwMouseButton(int button);
 
 }

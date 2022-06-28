@@ -10,7 +10,7 @@ namespace nncc::python {
 const nncc::string kRedisQueueName = "nncc_tensors";
 const nncc::string kRedisStopString = "::done::";
 
-void ListenToRedisSharedTensors(context::Context* context, const nncc::string& queue_name = kRedisQueueName);
+void ListenToRedisSharedTensors(entt::dispatcher* dispatcher, const nncc::string& queue_name = kRedisQueueName);
 
 void StopCommunicatorThread(const nncc::string& queue_name = kRedisQueueName);
 

@@ -19,8 +19,6 @@
 
 namespace nncc::engine {
 
-bool ProcessEvents(context::Context* context);
-
 class Timer {
 public:
     Timer() {

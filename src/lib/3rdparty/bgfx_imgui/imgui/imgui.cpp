@@ -21,8 +21,8 @@ inline bool checkAvailTransientBuffers(uint32_t _numVertices, const bgfx::Vertex
            && (0 == _numIndices || _numIndices == bgfx::getAvailTransientIndexBuffer(_numIndices));
 }
 
-std::unordered_map<nncc::context::Key, ImGuiKey_> MakeKeyTranslationTable() {
-    using namespace nncc::context;
+std::unordered_map<nncc::input::Key, ImGuiKey_> MakeKeyTranslationTable() {
+    using namespace nncc::input;
 
     std::unordered_map<Key, ImGuiKey_> map;
     map[Key::Esc] = ImGuiKey_Escape;
@@ -392,7 +392,7 @@ struct OcornutImguiContext {
             int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, int _width, int _height, int _inputChar,
             bgfx::ViewId _viewId
     ) {
-        using namespace nncc::context;
+        using namespace nncc::input;
 
         m_viewId = _viewId;
 
@@ -416,7 +416,7 @@ struct OcornutImguiContext {
         io.AddMouseWheelEvent(0.0f, (float) (_scroll - m_lastScroll));
         m_lastScroll = _scroll;
 
-        const auto& key_state = nncc::context::Context::Get().key_state;
+        const auto& key_state = nncc::context::Context::Get().input.key_state;
 
         auto modifiers = key_state.modifiers;
         io.AddKeyEvent(ImGuiKey_ModShift, 0 != (modifiers & (Modifier::LeftShift | Modifier::RightShift)));
@@ -436,7 +436,7 @@ struct OcornutImguiContext {
         }
         previous_pressed_keys = key_state.pressed_keys;
 
-        for (const auto& codepoint : nncc::context::Context::Get().input_characters) {
+        for (const auto& codepoint : nncc::context::Context::Get().input.input_characters) {
             io.AddInputCharacter(codepoint);
         }
 
@@ -462,8 +462,8 @@ struct OcornutImguiContext {
     bgfx::ViewId m_viewId;
 
     // TODO: I need to pass key-up events properly, this needs a refactoring of key_state
-    std::unordered_set<nncc::context::Key> previous_pressed_keys;
-    std::unordered_map<nncc::context::Key, ImGuiKey_> key_table = MakeKeyTranslationTable();
+    std::unordered_set<nncc::input::Key> previous_pressed_keys;
+    std::unordered_map<nncc::input::Key, ImGuiKey_> key_table = MakeKeyTranslationTable();
 };
 
 static OcornutImguiContext context;

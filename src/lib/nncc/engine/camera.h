@@ -9,13 +9,13 @@ namespace nncc::engine {
 
 class Camera {
 public:
-    void Update(float timedelta, const context::MouseState& mouse_state, const context::KeyState& key_state);
+    void Update(float timedelta, const input::MouseState& mouse_state, const input::KeyState& key_state);
 
     Matrix4 GetViewMatrix();
 
 private:
-    context::MouseState mouse_last{};
-    context::MouseState mouse_now{};
+    input::MouseState mouse_last{};
+    input::MouseState mouse_now{};
 
     bx::Vec3 eye_{2., 0., -10.};
     bx::Vec3 up_{0., 0., -1.};

@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <unordered_set>
 
-namespace nncc::context {
+namespace nncc::input {
 
 struct Modifier {
     enum Enum {

@@ -1,16 +1,4 @@
-#pragma once
-
-#include <iostream>
-#include <numeric>
-
-#include <bgfx/bgfx.h>
-#include <torch/torch.h>
-#include <libshm/libshm.h>
-
-#include <nncc/common/types.h>
-#include <nncc/context/context.h>
-#include <nncc/render/renderer.h>
-#include <nncc/render/primitives.h>
+#include "tensor_registry.h"
 
 namespace nncc {
 
@@ -27,4 +15,3 @@ bgfx::TextureFormat::Enum GetTextureFormatFromChannelsAndDtype(int64_t channels,
 }
 
 }
-

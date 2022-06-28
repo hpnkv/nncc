@@ -15,6 +15,21 @@
 #include <nncc/context/event.h>
 #include <nncc/context/hid.h>
 #include <nncc/context/glfw_utils.h>
+#include <nncc/render/system.h>
+
+namespace nncc::input {
+
+struct InputSystem {
+    EventQueue queue;
+
+    std::deque<unsigned int> input_characters;
+    KeyState key_state;
+    MouseState mouse_state;
+
+    bool ProcessEvents();
+};
+
+}
 
 namespace nncc::context {
 
@@ -32,9 +47,6 @@ public:
     void operator=(const Context&) = delete;
 
     void Destroy() {
-        for (const auto& [name, handle] : shader_programs) {
-            bgfx::destroy(handle);
-        }
     }
 
     void Exit();
@@ -64,10 +76,6 @@ public:
         return glfw_message_queue_;
     }
 
-    EventQueue& GetEventQueue() {
-        return event_queue_;
-    }
-
     bx::Thread* GetDefaultThread() {
         return &default_thread_;
     }
@@ -77,21 +85,13 @@ public:
         windows_[idx].height = height;
     }
 
-    std::unordered_map<nncc::string, entt::entity> tensors;
-    std::deque<unsigned int> input_characters;
-    KeyState key_state;
-    MouseState mouse_state;
-
-    at::DataPtr weights_ptr;
-    std::optional<torch::Tensor> weights;
-
-    std::unordered_map<nncc::string, bgfx::ProgramHandle> shader_programs;
-
     entt::registry registry;
+    entt::dispatcher dispatcher;
+    input::InputSystem input;
+    render::RenderingSystem rendering;
 
 private:
     folly::ProducerConsumerQueue<GlfwMessage> glfw_message_queue_{64};
-    EventQueue event_queue_;
 
     nncc::vector<GLFWWindowWrapper> windows_;
     std::unordered_map<GLFWwindow*, int16_t> window_indices_;

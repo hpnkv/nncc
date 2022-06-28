@@ -9,7 +9,7 @@
 #include <nncc/common/types.h>
 #include <nncc/context/hid.h>
 
-namespace nncc::context {
+namespace nncc::input {
 
 enum class EventType {
     Exit,
@@ -18,7 +18,6 @@ enum class EventType {
     Key,
     Resize,
     Char,
-    SharedTensor,
 
     Count,
     None
@@ -43,16 +42,6 @@ struct MouseEvent : public Event {
 
     bool down = false;
     bool move = false;
-};
-
-struct SharedTensorEvent : public Event {
-    explicit SharedTensorEvent(const EventType& _type = EventType::SharedTensor) : Event(_type) {}
-
-    nncc::string name;
-    nncc::string manager_handle;
-    nncc::string filename;
-    torch::Dtype dtype;
-    nncc::vector<int64_t> dims;
 };
 
 struct KeyEvent : public Event {

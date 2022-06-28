@@ -2,7 +2,7 @@
 
 namespace nncc::engine {
 
-void Camera::Update(float timedelta, const context::MouseState& mouse_state, const context::KeyState& key_state) {
+void Camera::Update(float timedelta, const input::MouseState& mouse_state, const input::KeyState& key_state) {
     const bx::Vec3 direction = {
             bx::cos(pitch) * bx::sin(yaw),
             bx::sin(pitch),
@@ -15,20 +15,28 @@ void Camera::Update(float timedelta, const context::MouseState& mouse_state, con
             bx::cos(yaw - bx::kPiHalf),
     };
 
-    if (key_state.pressed_keys.contains(context::Key::KeyW)) {
+    if (key_state.pressed_keys.contains(input::Key::KeyW)) {
         eye_ = bx::mad(direction, timedelta * move_speed, eye_);
     }
 
-    if (key_state.pressed_keys.contains(context::Key::KeyS)) {
+    if (key_state.pressed_keys.contains(input::Key::KeyS)) {
         eye_ = bx::mad(direction, -timedelta * move_speed, eye_);
     }
 
-    if (key_state.pressed_keys.contains(context::Key::KeyA)) {
+    if (key_state.pressed_keys.contains(input::Key::KeyA)) {
         eye_ = bx::mad(right, timedelta * move_speed, eye_);
     }
 
-    if (key_state.pressed_keys.contains(context::Key::KeyD)) {
+    if (key_state.pressed_keys.contains(input::Key::KeyD)) {
         eye_ = bx::mad(right, -timedelta * move_speed, eye_);
+    }
+
+    if (key_state.pressed_keys.contains(input::Key::KeyE)) {
+        eye_ = bx::mad(up_, timedelta * move_speed, eye_);
+    }
+
+    if (key_state.pressed_keys.contains(input::Key::KeyQ)) {
+        eye_ = bx::mad(up_, -timedelta * move_speed, eye_);
     }
 
     if (!mouse_down) {
@@ -36,7 +44,7 @@ void Camera::Update(float timedelta, const context::MouseState& mouse_state, con
         mouse_last.y = mouse_state.y;
     }
 
-    mouse_down = mouse_state.buttons[static_cast<int>(context::MouseButton::Left)];
+    mouse_down = mouse_state.buttons[static_cast<int>(input::MouseButton::Left)];
 
     if (mouse_down) {
         mouse_now.x = mouse_state.x;

@@ -1,6 +1,6 @@
 #include "event.h"
 
-namespace nncc::context {
+namespace nncc::input {
 
 std::unique_ptr<Event> EventQueue::Poll() {
     std::unique_ptr<Event> front;

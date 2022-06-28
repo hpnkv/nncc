@@ -21,5 +21,5 @@ pybind11_add_module(nncc_python python.cpp)
 target_link_libraries(nncc_python PRIVATE nncc-common ${TORCH_LIBRARIES})
 target_include_directories(nncc_python PUBLIC ${NNCC_COMMON_DIR} ${Python_INCLUDE_DIRS} ${TORCH_INCLUDE_DIRS} ${pybind11_INCLUDE_DIR})
 
-#use_bgfx_shader(${PROJECT_SOURCE_DIR}/src/lib/nncc/render/shaders/default_diffuse/fs_default_diffuse.sc 00-minimal-bgfx-glfw)
-#use_bgfx_shader(${PROJECT_SOURCE_DIR}/src/lib/nncc/render/shaders/default_diffuse/vs_default_diffuse.sc 00-minimal-bgfx-glfw)
+#use_bgfx_shader(${PROJECT_SOURCE_DIR}/src/lib/nncc/rendering/shaders/default_diffuse/fs_default_diffuse.sc 00-minimal-bgfx-glfw)
+#use_bgfx_shader(${PROJECT_SOURCE_DIR}/src/lib/nncc/rendering/shaders/default_diffuse/vs_default_diffuse.sc 00-minimal-bgfx-glfw)

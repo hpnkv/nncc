@@ -1,7 +1,7 @@
 #include "glfw_utils.h"
 #include "hid.h"
 
-namespace nncc::context {
+namespace nncc::input {
 
 MouseButton translateGlfwMouseButton(int button) {
     if (button == GLFW_MOUSE_BUTTON_LEFT) {
