@@ -59,6 +59,7 @@ struct BatchData {
     std::queue<BatchCommand> commands;
 };
 
+
 class BatchRenderer {
 public:
     explicit BatchRenderer(const bgfx::RendererType::Enum& type = bgfx::RendererType::Noop) : type_(type) {}

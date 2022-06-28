@@ -137,7 +137,9 @@ bool nncc::input::InputSystem::ProcessEvents() {
 
         } else if (event->type == EventType::Resize) {
             auto resize_event = std::dynamic_pointer_cast<ResizeEvent>(event);
-            nncc::context::Context::Get().SetWindowResolution(event->window_idx, resize_event->width, resize_event->height);
+            nncc::context::Context::Get().SetWindowResolution(event->window_idx,
+                                                              resize_event->width,
+                                                              resize_event->height);
             bgfx::reset(resize_event->width, resize_event->height, 0);
             bgfx::setViewRect(0, 0, 0, bgfx::BackbufferRatio::Equal);
 

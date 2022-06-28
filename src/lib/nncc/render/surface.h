@@ -16,6 +16,7 @@ struct Viewport {
     float x, y, width, height;
 };
 
+
 struct PosNormUVVertex {
     engine::Vec3 position;
     engine::Vec3 norm;
@@ -26,6 +27,7 @@ struct PosNormUVVertex {
     static bgfx::VertexLayout layout;
 };
 
+
 template<class T>
 using VertexBuffer = nncc::vector<T>;
 using VertexBufferIndices = nncc::vector<uint16_t>;
@@ -35,6 +37,7 @@ public:
     VertexBuffer<PosNormUVVertex> vertices;
     VertexBufferIndices indices;
 };
+
 
 struct Material {
     bgfx::ProgramHandle shader;
@@ -55,6 +58,7 @@ struct Material {
     static bgfx::TextureHandle default_texture;
     static constexpr std::array<uint8_t, 4> white{0xFF, 0xFF, 0xFF, 0xFF};
 };
+
 
 struct Model {
     nncc::vector<Mesh> meshes;

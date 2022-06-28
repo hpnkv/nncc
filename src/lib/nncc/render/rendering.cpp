@@ -5,9 +5,9 @@
 namespace nncc::render {
 
 void RenderingSystem::Update(nncc::context::Context& context,
-                                           const nncc::engine::Transform& view_matrix,
-                                           uint16_t width,
-                                           uint16_t height) {
+                             const nncc::engine::Transform& view_matrix,
+                             uint16_t width,
+                             uint16_t height) {
     const auto& cregistry = context.registry;
 
     bgfx::setViewClear(0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x303030ff, 1.0f, 0);

@@ -2,6 +2,4 @@
 
 namespace nncc::engine {
 
-
-
 }

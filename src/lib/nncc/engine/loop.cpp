@@ -48,7 +48,10 @@ int Loop() {
             current_button_mask <<= 1;
         }
 
-        imguiBeginFrame(context.input.mouse_state.x, context.input.mouse_state.y, imgui_pressed_buttons, context.input.mouse_state.z,
+        imguiBeginFrame(context.input.mouse_state.x,
+                        context.input.mouse_state.y,
+                        imgui_pressed_buttons,
+                        context.input.mouse_state.z,
                         uint16_t(window.width),
                         uint16_t(window.height)
         );
@@ -74,13 +77,15 @@ int Loop() {
                     continue;
                 }
 
-                if (!selected_name.empty()) {{
-                    auto previously_selected_tensor = tensors.Get(selected_name);
-                    if (registry.try_get<render::Material>(previously_selected_tensor)) {
-                        auto& mat = registry.get<render::Material>(previously_selected_tensor);
-                        mat.diffuse_color = 0xFFFFFFFF;
+                if (!selected_name.empty()) {
+                    {
+                        auto previously_selected_tensor = tensors.Get(selected_name);
+                        if (registry.try_get<render::Material>(previously_selected_tensor)) {
+                            auto& mat = registry.get<render::Material>(previously_selected_tensor);
+                            mat.diffuse_color = 0xFFFFFFFF;
+                        }
                     }
-                }}
+                }
                 {
                     auto selected_tensor = tensors.Get(name.value);
                     if (registry.try_get<render::Material>(selected_tensor)) {

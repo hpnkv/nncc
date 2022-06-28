@@ -4,15 +4,15 @@ namespace nncc::engine {
 
 void Camera::Update(float timedelta, const input::MouseState& mouse_state, const input::KeyState& key_state) {
     const bx::Vec3 direction = {
-            bx::cos(pitch) * bx::sin(yaw),
-            bx::sin(pitch),
-            bx::cos(pitch) * bx::cos(yaw),
+        bx::cos(pitch) * bx::sin(yaw),
+        bx::sin(pitch),
+        bx::cos(pitch) * bx::cos(yaw),
     };
 
     const bx::Vec3 right = {
-            bx::sin(yaw - bx::kPiHalf),
-            0.0f,
-            bx::cos(yaw - bx::kPiHalf),
+        bx::sin(yaw - bx::kPiHalf),
+        0.0f,
+        bx::cos(yaw - bx::kPiHalf),
     };
 
     if (key_state.pressed_keys.contains(input::Key::KeyW)) {

@@ -23,13 +23,16 @@ enum class EventType {
     None
 };
 
+
 struct Event {
     explicit Event(const EventType& _type = EventType::None) : type(_type) {}
+
     virtual ~Event() = default;
 
     int16_t window_idx = 0;
     EventType type;
 };
+
 
 struct MouseEvent : public Event {
     explicit MouseEvent(const EventType& _type = EventType::MouseMove) : Event(_type) {}
@@ -44,6 +47,7 @@ struct MouseEvent : public Event {
     bool move = false;
 };
 
+
 struct KeyEvent : public Event {
     KeyEvent() : Event(EventType::Key) {}
 
@@ -52,11 +56,13 @@ struct KeyEvent : public Event {
     bool down = false;
 };
 
+
 struct CharEvent : public Event {
     CharEvent() : Event(EventType::Char) {}
 
     unsigned int codepoint = 0;
 };
+
 
 struct ResizeEvent : public Event {
     ResizeEvent() : Event(EventType::Resize) {}
@@ -64,9 +70,11 @@ struct ResizeEvent : public Event {
     int width = 0, height = 0;
 };
 
+
 struct ExitEvent : public Event {
     ExitEvent() : Event(EventType::Exit) {}
 };
+
 
 class EventQueue {
 public:

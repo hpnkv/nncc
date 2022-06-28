@@ -29,7 +29,6 @@ static int InputTextCallbackFolly(ImGuiInputTextCallbackData* data) {
 
 namespace ImGui {
 
-
 IMGUI_API bool
 InputText(const char* label, nncc::string* str, ImGuiInputTextFlags flags = 0, ImGuiInputTextCallback callback = NULL,
           void* user_data = NULL);
@@ -40,7 +39,6 @@ IMGUI_API bool InputTextMultiline(const char* label, nncc::string* str, const Im
 
 IMGUI_API bool InputTextWithHint(const char* label, const char* hint, nncc::string* str, ImGuiInputTextFlags flags = 0,
                                  ImGuiInputTextCallback callback = NULL, void* user_data = NULL);
-
 
 }
 

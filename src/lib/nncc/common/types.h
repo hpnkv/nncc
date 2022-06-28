@@ -7,7 +7,7 @@ namespace nncc {
 
 using string = folly::fbstring;
 
-template <class T, class Allocator = std::allocator<T>>
+template<class T, class Allocator = std::allocator<T>>
 using vector = folly::fbvector<T, Allocator>;
 
 }

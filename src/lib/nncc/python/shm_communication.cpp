@@ -6,7 +6,6 @@
 
 namespace nncc::python {
 
-
 void ListenToRedisSharedTensors(entt::dispatcher* dispatcher, const nncc::string& queue_name) {
     cpp_redis::client redis;
     redis.connect();
@@ -16,7 +15,7 @@ void ListenToRedisSharedTensors(entt::dispatcher* dispatcher, const nncc::string
     bool done = false;
 
     while (!done) {
-        redis.blpop({queue_name.toStdString()}, 0, [&done, &dispatcher] (cpp_redis::reply& reply) {
+        redis.blpop({queue_name.toStdString()}, 0, [&done, &dispatcher](cpp_redis::reply& reply) {
             auto encoded_handle = reply.as_array()[1].as_string();
             if (encoded_handle == kRedisStopString) {
                 done = true;

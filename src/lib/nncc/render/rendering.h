@@ -13,7 +13,6 @@ class Context;
 
 }
 
-
 namespace nncc::render {
 
 class RenderingSystem {

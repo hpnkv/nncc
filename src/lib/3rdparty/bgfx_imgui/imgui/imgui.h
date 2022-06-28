@@ -25,6 +25,7 @@ struct Font {
 
 void PushFont(Font::Enum _font);
 
+
 // BK - simple string class for convenience.
 class ImString {
 public:
@@ -56,10 +57,10 @@ private:
 
 inline uint32_t imguiRGBA(uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a = 255) {
     return 0
-           | (uint32_t(_r) << 0)
-           | (uint32_t(_g) << 8)
-           | (uint32_t(_b) << 16)
-           | (uint32_t(_a) << 24);
+        | (uint32_t(_r) << 0)
+        | (uint32_t(_g) << 8)
+        | (uint32_t(_b) << 16)
+        | (uint32_t(_a) << 24);
 }
 
 //namespace bx { struct AllocatorI; }
@@ -133,10 +134,10 @@ inline void NextLine() {
 
 inline bool MouseOverArea() {
     return ImGui::IsAnyItemActive()
-           || ImGui::IsAnyItemHovered()
-           || ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow)
+        || ImGui::IsAnyItemHovered()
+        || ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow)
 //			|| ImGuizmo::IsOver()
-            ;
+        ;
 }
 
 void PushEnabled(bool _enabled);

@@ -2,9 +2,11 @@ $input v_pos, v_view, v_normal, v_texcoord0
 
 #include "common.sh"
 
-SAMPLER2D(diffuseTX, 0);
+SAMPLER2D(diffuseTX,
+0);
 
-uniform vec4 diffuseCol;  // the diffuse colour
+uniform vec4
+diffuseCol;  // the diffuse colour
 
 #define MAX_LIGHTS 4
 
@@ -27,5 +29,5 @@ void main() {
 
 //    gl_FragColor = vec4(light.rgb * diffuseCol.rgb * texture2D( diffuseTX, v_texcoord0 ).rgb,1);
 //    gl_FragColor = texture2D( diffuseTX, v_texcoord0 );
-    gl_FragColor = vec4(diffuseCol.rgb * texture2D( diffuseTX, v_texcoord0 ).rgb, 1);
+    gl_FragColor = vec4(diffuseCol.rgb * texture2D(diffuseTX, v_texcoord0).rgb, 1);
 }

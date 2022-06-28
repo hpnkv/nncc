@@ -1,7 +1,5 @@
 #include "hid.h"
 
-namespace nncc::context {
-
-
+namespace nncc::input {
 
 }

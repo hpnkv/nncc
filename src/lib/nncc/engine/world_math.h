@@ -45,19 +45,22 @@ public:
     }
 
 private:
-    float elements_[16] {};
+    float elements_[16]{};
 };
 
 
 struct Vec3 {
     Vec3() = default;
+
     Vec3(float _x, float _y, float _z) {
         x = _x;
         y = _y;
         z = _z;
     }
+
     float x = 0, y = 0, z = 0;
 };
+
 
 using Transform = Matrix4;
 using Position = Vec3;

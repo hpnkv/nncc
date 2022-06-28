@@ -48,6 +48,7 @@ private:
     int64_t offset_ = 0, previous_ = 0, current_ = 0;
 };
 
+
 class ImGuiComponent {
 public:
     virtual void Render() = 0;
@@ -56,6 +57,7 @@ public:
 
 private:
 };
+
 
 class TextEdit : public ImGuiComponent {
 public:
@@ -72,6 +74,7 @@ public:
 private:
     nncc::string label_, content_;
 };
+
 
 int LoopThreadFunc(bx::Thread* self, void* args);
 

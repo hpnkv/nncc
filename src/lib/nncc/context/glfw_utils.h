@@ -8,6 +8,7 @@
 #include <nncc/input/hid.h>
 
 #include <GLFW/glfw3.h>
+
 #if NNCC_PLATFORM_LINUX
 #define GLFW_EXPOSE_NATIVE_X11
 #elif NNCC_PLATFORM_WINDOWS
@@ -16,7 +17,6 @@
 #define GLFW_EXPOSE_NATIVE_COCOA
 #endif
 #include <GLFW/glfw3native.h>
-
 
 namespace nncc::context {
 

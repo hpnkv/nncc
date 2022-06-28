@@ -6,7 +6,11 @@
 
 namespace nncc::render {
 
-void BatchRenderer::Add(bgfx::ViewId view_id, const Mesh& mesh, const Material& material, const engine::Transform& transform, uint64_t state) {
+void BatchRenderer::Add(bgfx::ViewId view_id,
+                        const Mesh& mesh,
+                        const Material& material,
+                        const engine::Transform& transform,
+                        uint64_t state) {
     BatchData* batch;
     BatchId batch_id = {material.shader.idx, material.diffuse_texture.idx};
     if (!batch_groups_.count(batch_id)) {
@@ -44,7 +48,9 @@ void BatchRenderer::Add(bgfx::ViewId view_id, const Mesh& mesh, const Material& 
     // Copy vertex + indices to transient buffer
     for (auto i = 0; i < command.vertex_count; ++i) {
         ++batch->transient_vertex_buffer.numel;
-        std::memcpy(&batch->transient_vertex_buffer.content[command.vertex_start_index + i], &mesh.vertices[i], sizeof(PosNormUVVertex));
+        std::memcpy(&batch->transient_vertex_buffer.content[command.vertex_start_index + i],
+                    &mesh.vertices[i],
+                    sizeof(PosNormUVVertex));
     }
 
     int vertex_index_offset = 0;
@@ -53,7 +59,8 @@ void BatchRenderer::Add(bgfx::ViewId view_id, const Mesh& mesh, const Material& 
     }
 
     for (auto i = 0; i < command.index_count; ++i) {
-        batch->transient_index_buffer.content[batch->transient_index_buffer.numel + i] = mesh.indices[i] + vertex_index_offset;
+        batch->transient_index_buffer.content[batch->transient_index_buffer.numel + i] =
+            mesh.indices[i] + vertex_index_offset;
     }
 
     // Push batch command
@@ -61,8 +68,8 @@ void BatchRenderer::Add(bgfx::ViewId view_id, const Mesh& mesh, const Material& 
 }
 
 void BatchRenderer::Flush() {
-    uint16_t vertex_start  = 0;
-    uint16_t vertex_count  = 0;
+    uint16_t vertex_start = 0;
+    uint16_t vertex_count = 0;
 
     uint16_t indices_start = 0;
     uint16_t indices_count = 0;
@@ -105,8 +112,12 @@ void BatchRenderer::Flush() {
             if (!next_command.has_value() || !CanBatch(&command, &*next_command)) {
                 bgfx::TransientVertexBuffer tvb{};
                 bgfx::allocTransientVertexBuffer(&tvb, vertex_count, PosNormUVVertex::layout);
-                std::memcpy(tvb.data, batch.transient_vertex_buffer.content.data() + vertex_start, sizeof(PosNormUVVertex) * vertex_count);
-                auto ibh = bgfx::createIndexBuffer( bgfx::makeRef(batch.transient_index_buffer.content.data() + indices_start, sizeof(uint16_t) * indices_count));
+                std::memcpy(tvb.data,
+                            batch.transient_vertex_buffer.content.data() + vertex_start,
+                            sizeof(PosNormUVVertex) * vertex_count);
+                auto ibh =
+                    bgfx::createIndexBuffer(bgfx::makeRef(batch.transient_index_buffer.content.data() + indices_start,
+                                                          sizeof(uint16_t) * indices_count));
 
                 bgfx::setVertexBuffer(0, &tvb);
                 bgfx::setIndexBuffer(ibh);

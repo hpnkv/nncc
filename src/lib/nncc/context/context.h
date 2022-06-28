@@ -15,8 +15,6 @@
 #include <nncc/context/glfw_utils.h>
 #include <nncc/render/rendering.h>
 
-
-
 namespace nncc::context {
 
 class Context {
@@ -41,7 +39,10 @@ public:
 
     bool InitWindowing(GLFWerrorfun error_callback);
 
-    int16_t CreateWindow(uint16_t width, uint16_t height, const nncc::string& title = "window", GLFWmonitor* monitor = nullptr,
+    int16_t CreateWindow(uint16_t width,
+                         uint16_t height,
+                         const nncc::string& title = "window",
+                         GLFWmonitor* monitor = nullptr,
                          GLFWwindow* share = nullptr);
 
     void DestroyWindow(int16_t idx);

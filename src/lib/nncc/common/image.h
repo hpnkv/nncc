@@ -23,6 +23,7 @@ struct Image {
     nncc::vector<uint8_t> buffer;
 };
 
+
 Image LoadImage(const nncc::string& filename);
 
 }

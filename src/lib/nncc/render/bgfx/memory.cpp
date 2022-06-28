@@ -22,36 +22,27 @@ bgfx::ShaderHandle LoadShader(bx::FileReaderI* reader, const nncc::string& name)
 
     switch (bgfx::getRendererType()) {
         case bgfx::RendererType::Noop:
-        case bgfx::RendererType::Direct3D9:
-            shader_path << "shaders/dx9/";
+        case bgfx::RendererType::Direct3D9:shader_path << "shaders/dx9/";
             break;
         case bgfx::RendererType::Direct3D11:
-        case bgfx::RendererType::Direct3D12:
-            shader_path << "shaders/dx11/";
+        case bgfx::RendererType::Direct3D12:shader_path << "shaders/dx11/";
             break;
         case bgfx::RendererType::Agc:
-        case bgfx::RendererType::Gnm:
-            shader_path << "shaders/pssl/";
+        case bgfx::RendererType::Gnm:shader_path << "shaders/pssl/";
             break;
-        case bgfx::RendererType::Metal:
-            shader_path << "shaders/metal/";
+        case bgfx::RendererType::Metal:shader_path << "shaders/metal/";
             break;
-        case bgfx::RendererType::Nvn:
-            shader_path << "shaders/nvn/";
+        case bgfx::RendererType::Nvn:shader_path << "shaders/nvn/";
             break;
-        case bgfx::RendererType::OpenGL:
-            shader_path << "shaders/glsl/";
+        case bgfx::RendererType::OpenGL:shader_path << "shaders/glsl/";
             break;
-        case bgfx::RendererType::OpenGLES:
-            shader_path << "shaders/essl/";
+        case bgfx::RendererType::OpenGLES:shader_path << "shaders/essl/";
             break;
         case bgfx::RendererType::Vulkan:
-        case bgfx::RendererType::WebGPU:
-            shader_path << "shaders/spirv/";
+        case bgfx::RendererType::WebGPU:shader_path << "shaders/spirv/";
             break;
 
-        case bgfx::RendererType::Count:
-            BX_ASSERT(false, "You should not be here!");
+        case bgfx::RendererType::Count:BX_ASSERT(false, "You should not be here!");
             break;
     }
     shader_path << name << ".bin";
