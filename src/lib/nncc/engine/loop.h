@@ -73,7 +73,7 @@ private:
     nncc::string label_, content_;
 };
 
-int MainThreadFunc(bx::Thread* self, void* args);
+int LoopThreadFunc(bx::Thread* self, void* args);
 
 int Run();
 

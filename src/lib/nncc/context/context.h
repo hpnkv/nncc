@@ -6,30 +6,16 @@
 #include <vector>
 
 #include <bgfx/bgfx.h>
-#include <bgfx/platform.h>
 #include <bx/thread.h>
 
 #define ENTT_USE_ATOMIC
 #include <entt/entt.hpp>
 
-#include <nncc/context/event.h>
-#include <nncc/context/hid.h>
+#include <nncc/input/input.h>
 #include <nncc/context/glfw_utils.h>
-#include <nncc/render/system.h>
+#include <nncc/render/rendering.h>
 
-namespace nncc::input {
 
-struct InputSystem {
-    EventQueue queue;
-
-    std::deque<unsigned int> input_characters;
-    KeyState key_state;
-    MouseState mouse_state;
-
-    bool ProcessEvents();
-};
-
-}
 
 namespace nncc::context {
 
@@ -51,7 +37,7 @@ public:
 
     void Exit();
 
-    bool Init();
+    bool InitInMainThread();
 
     bool InitWindowing(GLFWerrorfun error_callback);
 

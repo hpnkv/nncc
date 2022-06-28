@@ -18,12 +18,22 @@ namespace nncc::render {
 
 class RenderingSystem {
 public:
-    void Init() {
+    int Init(uint16_t width, uint16_t height) {
+        bgfx::Init init;
+        init.resolution.width = (uint32_t) width;
+        init.resolution.height = (uint32_t) height;
+        init.resolution.reset = 0;
+        if (!bgfx::init(init)) {
+            return 1;
+        }
+
         bx::FileReader reader;
         const auto fs = nncc::engine::LoadShader(&reader, "fs_default_diffuse");
         const auto vs = nncc::engine::LoadShader(&reader, "vs_default_diffuse");
         auto program = bgfx::createProgram(vs, fs, true);
         shader_programs_["default_diffuse"] = program;
+
+        return 0;
     }
 
     void Update(context::Context& context, const engine::Transform& view_matrix, uint16_t width, uint16_t height);

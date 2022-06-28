@@ -7,7 +7,7 @@
 #include <folly/ProducerConsumerQueue.h>
 
 #include <nncc/common/types.h>
-#include <nncc/context/hid.h>
+#include "nncc/input/hid.h"
 
 namespace nncc::input {
 

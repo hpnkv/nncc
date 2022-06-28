@@ -1,5 +1,4 @@
 #include "glfw_utils.h"
-#include "hid.h"
 
 namespace nncc::input {
 

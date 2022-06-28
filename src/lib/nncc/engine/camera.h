@@ -2,7 +2,7 @@
 
 #include <bx/math.h>
 
-#include <nncc/context/hid.h>
+#include "nncc/input/hid.h"
 #include <nncc/engine/world_math.h>
 
 namespace nncc::engine {

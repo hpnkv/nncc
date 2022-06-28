@@ -1,12 +1,15 @@
 #include "context.h"
+#include <bgfx/platform.h>
 
 #include <nncc/python/shm_communication.h>
 
 namespace nncc::context {
 
-bool Context::Init() {
+bool Context::InitInMainThread() {
     InitWindowing(&Context::GLFWErrorCallback);
 
+    // this init happens prior to RenderingSystem.InitInMainThread() to indicate BGFX that
+    // we will use a separate rendering thread.
     bgfx::PlatformData pd;
     pd.ndt = windows_[0].GetNativeDisplayType();
     pd.nwh = windows_[0].GetNativeHandle();
@@ -14,6 +17,7 @@ bool Context::Init() {
     pd.backBuffer = nullptr;
     pd.backBufferDS = nullptr;
     bgfx::setPlatformData(pd);
+    bgfx::renderFrame();
 
     return true;
 }

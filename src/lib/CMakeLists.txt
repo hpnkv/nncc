@@ -8,13 +8,18 @@ set(
         nncc/engine/loop.cpp
         nncc/common/image.cpp
         nncc/context/context.cpp
-        nncc/context/event.cpp
         nncc/context/glfw_utils.cpp
-        nncc/context/hid.cpp
         nncc/python/tensor_registry.cpp
         nncc/python/shm_communication.cpp
         3rdparty/imgui_smart_strings.cpp
         3rdparty/bgfx_imgui/imgui/imgui.cpp
+)
+
+set(
+        NNCC_INPUT_SOURCES
+        nncc/input/hid.cpp
+        nncc/input/event.cpp
+#        nncc/input/input.cpp
 )
 
 set(
@@ -23,11 +28,12 @@ set(
         nncc/render/renderer.cpp
         nncc/render/batch_renderer.cpp
         nncc/render/surface.cpp
-        nncc/render/system.cpp
+        nncc/render/rendering.cpp
 )
 
 set(
         NNCC_SOURCES
+        ${NNCC_INPUT_SOURCES}
         ${NNCC_ENGINE_SOURCES}
         ${NNCC_RENDER_SOURCES}
 )

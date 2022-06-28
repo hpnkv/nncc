@@ -1,6 +1,5 @@
 #include "loop.h"
 
-#include <cpp_redis/cpp_redis>
 #include <libshm/libshm.h>
 
 #include <3rdparty/bgfx_imgui/imgui/imgui.h>
@@ -14,14 +13,15 @@ int Loop() {
     auto& window = context.GetWindow(0);
 
     render::PosNormUVVertex::Init();
+    if (context.rendering.Init(window.width, window.height) != 0) {
+        return 1;
+    }
 
     engine::Timer timer;
     engine::Camera camera;
 
     TensorRegistry tensors;
     tensors.Init(&context.dispatcher);
-
-    context.rendering.Init();
 
     imguiCreate();
 
@@ -123,25 +123,17 @@ int RedisListenerThread(bx::Thread* self, void* args) {
     return 0;
 }
 
-int MainThreadFunc(bx::Thread* self, void* args) {
+int LoopThreadFunc(bx::Thread* self, void* args) {
     using namespace nncc;
 
-    auto context = static_cast<context::Context*>(args);
-    auto& window = context->GetWindow(0);
-
-    bgfx::Init init;
-    init.resolution.width = (uint32_t) window.width;
-    init.resolution.height = (uint32_t) window.height;
-    init.resolution.reset = 0;
-    if (!bgfx::init(init)) {
-        return 1;
-    }
+    auto& context = context::Context::Get();
+    auto& window = context.GetWindow(0);
 
     bx::Thread redis_thread;
-    redis_thread.init(&RedisListenerThread, context, 0, "redis");
+    redis_thread.init(&RedisListenerThread, &context, 0, "redis");
 
     int result = Loop();
-    context->Destroy();
+    context.Destroy();
 
     bgfx::shutdown();
 
@@ -150,19 +142,16 @@ int MainThreadFunc(bx::Thread* self, void* args) {
 }
 
 int Run() {
-    using namespace nncc::context;
-
-    auto& context = Context::Get();
-    if (!context.Init()) {
+    auto& context = nncc::context::Context::Get();
+    if (!context.InitInMainThread()) {
         return 1;
     }
-    bgfx::renderFrame();
 
     auto& window = context.GetWindow(0);
     auto glfw_main_window = context.GetGlfwWindow(0);
 
     auto thread = context.GetDefaultThread();
-    thread->init(&MainThreadFunc, &context, 0, "rendering");
+    thread->init(&LoopThreadFunc, &context, 0, "main_loop");
 
     while (glfw_main_window != nullptr && !glfwWindowShouldClose(glfw_main_window)) {
         glfwWaitEventsTimeout(1. / 120);
@@ -178,9 +167,9 @@ int Run() {
             context.input.queue.Push(0, std::move(event));
         }
 
-        GlfwMessage message;
+        nncc::context::GlfwMessage message;
         while (context.GetMessageQueue().read(message)) {
-            if (message.type == GlfwMessageType::Destroy) {
+            if (message.type == nncc::context::GlfwMessageType::Destroy) {
                 glfwDestroyWindow(glfw_main_window);
                 glfw_main_window = nullptr;
             }
