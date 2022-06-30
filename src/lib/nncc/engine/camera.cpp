@@ -48,7 +48,7 @@ void Camera::Update(float timedelta,
             mouse_last.y = mouse_state.y;
         }
 
-        mouse_down = mouse_state.buttons[static_cast<int>(input::MouseButton::Left)];
+        mouse_down = mouse_state.buttons[static_cast<int>(input::MouseButton::Right)];
 
         if (mouse_down) {
             mouse_now.x = mouse_state.x;

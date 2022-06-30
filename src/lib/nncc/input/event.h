@@ -40,6 +40,7 @@ struct MouseEvent : public Event {
     int32_t x = 0;
     int32_t y = 0;
     int32_t scroll = 0;
+    int modifiers = 0;
 
     MouseButton button = MouseButton::None;
 

@@ -18,10 +18,12 @@ namespace nncc::render {
 class RenderingSystem {
 public:
     int Init(uint16_t width, uint16_t height) {
+        render::PosNormUVVertex::Init();
+
         bgfx::Init init;
         init.resolution.width = (uint32_t) width;
         init.resolution.height = (uint32_t) height;
-        init.resolution.reset = 0;
+        init.resolution.reset = BGFX_RESET_VSYNC | BGFX_RESET_HIDPI;
         if (!bgfx::init(init)) {
             return 1;
         }

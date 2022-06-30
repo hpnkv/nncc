@@ -58,7 +58,7 @@ void GlfwWindowingImpl::GLFWErrorCallback(int error, const char* description) {
     fprintf(stderr, "GLFW error %d: %s\n", error, description);
 }
 
-void GlfwWindowingImpl::MouseButtonCallback(GLFWwindow* window, int32_t button, int32_t action, int32_t) {
+void GlfwWindowingImpl::MouseButtonCallback(GLFWwindow* window, int32_t button, int32_t action, int32_t mods) {
     double x_pos, y_pos;
     glfwGetCursorPos(window, &x_pos, &y_pos);
 
@@ -67,6 +67,7 @@ void GlfwWindowingImpl::MouseButtonCallback(GLFWwindow* window, int32_t button, 
     event->y = static_cast<int32_t>(y_pos);
     event->button = input::translateGlfwMouseButton(button);
     event->down = action == GLFW_PRESS;
+    event->modifiers = mods;
 
     auto& context = Context::Get();
     auto window_idx = context.GetWindowIdx(window);
@@ -140,7 +141,7 @@ bool nncc::input::InputSystem::ProcessEvents() {
             nncc::context::Context::Get().SetWindowResolution(event->window_idx,
                                                               resize_event->width,
                                                               resize_event->height);
-            bgfx::reset(resize_event->width, resize_event->height, 0);
+            bgfx::reset(resize_event->width, resize_event->height, BGFX_RESET_VSYNC | BGFX_RESET_HIDPI);
             bgfx::setViewRect(0, 0, 0, bgfx::BackbufferRatio::Equal);
 
         } else if (event->type == EventType::MouseButton) {
@@ -149,6 +150,7 @@ bool nncc::input::InputSystem::ProcessEvents() {
             mouse_state.x = btn_event->x;
             mouse_state.y = btn_event->y;
             mouse_state.buttons[static_cast<int>(btn_event->button)] = btn_event->down;
+            key_state.modifiers = btn_event->modifiers;
 
         } else if (event->type == EventType::MouseMove) {
             auto move_event = std::dynamic_pointer_cast<MouseEvent>(event);

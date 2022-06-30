@@ -13,7 +13,6 @@ int Loop() {
     auto& context = context::Context::Get();
     auto& window = context.GetWindow(0);
 
-    render::PosNormUVVertex::Init();
     if (context.rendering.Init(window.width, window.height) != 0) {
         return 1;
     }
@@ -40,6 +39,9 @@ int Loop() {
         auto& registry = context.registry;
         const auto& cregistry = context.registry;
 
+        camera.Update(timer.Timedelta(), context.input.mouse_state, context.input.key_state, ImGui::MouseOverArea());
+        bgfx::touch(0);
+
         uint8_t imgui_pressed_buttons = 0;
         uint8_t current_button_mask = 1;
         for (size_t i = 0; i < 3; ++i) {
@@ -56,10 +58,6 @@ int Loop() {
                         uint16_t(window.width),
                         uint16_t(window.height)
         );
-
-        camera.Update(timer.Timedelta(), context.input.mouse_state, context.input.key_state, ImGui::MouseOverArea());
-
-        bgfx::touch(0);
 
         ImGui::SetNextWindowPos(ImVec2(50.0f, 50.0f), ImGuiCond_FirstUseEver);
         ImGui::SetNextWindowSize(ImVec2(320.0f, 800.0f), ImGuiCond_FirstUseEver);
@@ -106,24 +104,21 @@ int Loop() {
         }
 
         ImGui::End();
-        imguiEndFrame();
 
-        context.rendering.Update(context, camera.GetViewMatrix(), window.width, window.height);
-
-        imguiBeginFrame(context.input.mouse_state.x,
-                        context.input.mouse_state.y,
-                        imgui_pressed_buttons,
-                        context.input.mouse_state.z,
-                        uint16_t(window.width),
-                        uint16_t(window.height), -1, 1
-        );
         ImGuizmo::BeginFrame();
         ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, window.width, window.height);
         engine::Matrix4 projection, view = camera.GetViewMatrix();
         bx::mtxProj(*projection, 30, static_cast<float>(window.width) / static_cast<float>(window.height), 0.01f, 1000.f, bgfx::getCaps()->homogeneousDepth);
         auto identity = engine::Matrix4::Identity();
-        ImGuizmo::DrawGrid(*view, *projection, *identity, 100.f);
+        if (!selected_name.empty()) {
+            auto transform = registry.try_get<Transform>(tensors.Get(selected_name));
+            if (transform != nullptr) {
+                ImGuizmo::Manipulate(*view, *projection, ImGuizmo::TRANSLATE, ImGuizmo::LOCAL, **transform, NULL, NULL);
+            }
+        }
         imguiEndFrame();
+
+        context.rendering.Update(context, camera.GetViewMatrix(), window.width, window.height);
 
         // TODO: make this a subsystem's job
         context.input.input_characters.clear();
