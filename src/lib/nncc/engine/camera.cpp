@@ -18,31 +18,31 @@ void Camera::Update(float timedelta,
         bx::cos(yaw - bx::kPiHalf),
     };
 
-    if (key_state.pressed_keys.contains(input::Key::KeyW)) {
-        eye_ = bx::mad(direction, timedelta * move_speed, eye_);
-    }
-
-    if (key_state.pressed_keys.contains(input::Key::KeyS)) {
-        eye_ = bx::mad(direction, -timedelta * move_speed, eye_);
-    }
-
-    if (key_state.pressed_keys.contains(input::Key::KeyA)) {
-        eye_ = bx::mad(right, timedelta * move_speed, eye_);
-    }
-
-    if (key_state.pressed_keys.contains(input::Key::KeyD)) {
-        eye_ = bx::mad(right, -timedelta * move_speed, eye_);
-    }
-
-    if (key_state.pressed_keys.contains(input::Key::KeyE)) {
-        eye_ = bx::mad(up_, timedelta * move_speed, eye_);
-    }
-
-    if (key_state.pressed_keys.contains(input::Key::KeyQ)) {
-        eye_ = bx::mad(up_, -timedelta * move_speed, eye_);
-    }
-
     if (!mouse_over_gui) {
+        if (key_state.pressed_keys.contains(input::Key::KeyW)) {
+            eye_ = bx::mad(direction, timedelta * move_speed, eye_);
+        }
+
+        if (key_state.pressed_keys.contains(input::Key::KeyS)) {
+            eye_ = bx::mad(direction, -timedelta * move_speed, eye_);
+        }
+
+        if (key_state.pressed_keys.contains(input::Key::KeyA)) {
+            eye_ = bx::mad(right, timedelta * move_speed, eye_);
+        }
+
+        if (key_state.pressed_keys.contains(input::Key::KeyD)) {
+            eye_ = bx::mad(right, -timedelta * move_speed, eye_);
+        }
+
+        if (key_state.pressed_keys.contains(input::Key::KeyE)) {
+            eye_ = bx::mad(up_, timedelta * move_speed, eye_);
+        }
+
+        if (key_state.pressed_keys.contains(input::Key::KeyQ)) {
+            eye_ = bx::mad(up_, -timedelta * move_speed, eye_);
+        }
+
         if (!mouse_down) {
             mouse_last.x = mouse_state.x;
             mouse_last.y = mouse_state.y;

@@ -15,6 +15,12 @@
 #include <nncc/render/primitives.h>
 
 
+struct TensorControl {
+    bool controllable = true;
+    nncc::string callback_name;
+};
+
+
 struct RetrieveKey {
     template<typename T>
     typename T::first_type operator()(T key_and_value) const {
@@ -75,7 +81,7 @@ struct Name {
 
 
 struct TensorControlEvent {
-    entt::entity tensor;
+    entt::entity tensor_entity;
     std::optional<nncc::string> callback_name;
 };
 
@@ -168,6 +174,11 @@ public:
                                   texture_memory);
 
             drawable_.insert(entity);
+
+        } else if (event.dims.empty() || event.dims.size() == 1) {
+            if (!registry.all_of<TensorControl>(entity)) {
+                registry.emplace<TensorControl>(entity);
+            }
         }
     }
 
@@ -176,18 +187,15 @@ public:
             return;
         }
 
-        auto key = fmt::format("nncc_{}", *event.callback_name);
-        redis_.get(key, [this, &event](cpp_redis::reply& reply) {
-            if (reply.as_array()[0].as_string() == "false") {  // control is NOT in progress
-                control_request_in_progress_[event.tensor] = false;
-            }
-        });
-        redis_.sync_commit();
+        nncc::string queue_name = "nncc_requests";
+        nncc::string lock_name = fmt::format("nncc_{}", *event.callback_name);
 
-        if (!control_request_in_progress_[event.tensor]) {
-            control_request_in_progress_[event.tensor] = true;
-            redis_.set(key, "true");
-            redis_.lpush("nncc_requests", {event.callback_name->toStdString()});
+        auto do_update = redis_.get(lock_name.toStdString());
+        redis_.sync_commit();
+        if (do_update.get().as_string() == "true") {
+            redis_.set(lock_name.toStdString(), "false");
+            redis_.lpush(queue_name.toStdString(), {event.callback_name->toStdString()});
+            redis_.sync_commit();
         }
     }
 
@@ -196,7 +204,11 @@ public:
     }
 
     entt::entity Get(const nncc::string& name) {
-        return tensors_[name];
+        return tensors_.at(name);
+    }
+
+    bool Contains(const nncc::string& name) {
+        return tensors_.contains(name);
     }
 
     void Clear() {

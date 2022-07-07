@@ -7,7 +7,76 @@
 #include <nncc/python/shm_communication.h>
 #include <nncc/python/tensor_registry.h>
 
+#define IMGUI_DISABLE_DEBUG_TOOLS
+
 namespace nncc::engine {
+
+bool TensorControlGui(const nncc::string& label, entt::entity tensor_entity, const nncc::string& callback_name, cpp_redis::client* redis) {
+    auto& context = context::Context::Get();
+    auto& registry = context.registry;
+
+    auto& tensor = *registry.get<TensorWithPointer>(tensor_entity);
+    bool updated = false;
+    if (tensor.ndimension() <= 1) {
+        ImGui::Text("%s", label.c_str());
+
+        if (tensor.dtype() == torch::kFloat32) {
+            for (auto i = 0; i < tensor.numel(); ++i) {
+                auto* element = tensor.data_ptr<float>() + i;
+                if (i > 0) {
+                    ImGui::SameLine();
+                }
+                ImGui::PushItemWidth(30);
+                if (ImGui::DragFloat(fmt::format("##{}_dragfloat_{}", label, i).c_str(), element, 0.01f, -10.0f, 10.0f, "%.2f")) {
+                    updated = true;
+                    break;
+                }
+            }
+        }
+
+        if (tensor.dtype() == torch::kInt32) {
+            for (auto i = 0; i < tensor.numel(); ++i) {
+                auto* element = tensor.data_ptr<int>() + i;
+                if (i > 0) {
+                    ImGui::SameLine();
+                }
+                if (tensor.numel() > 1) {
+                    ImGui::PushItemWidth(60);
+                    if (ImGui::DragInt(fmt::format("##{}_dragint_{}", label, i).c_str(), element)) {
+                        updated = true;
+                    }
+                } else {
+                    if (ImGui::InputInt(fmt::format("##{}_inputint_{}", label, i).c_str(), element)) {
+                        updated = true;
+                    }
+                }
+                if (updated) {
+                    break;
+                }
+            }
+        }
+
+        if (updated) {
+            TensorControlEvent event;
+            event.tensor_entity = tensor_entity;
+            event.callback_name = callback_name;
+
+            context::Context::Get().dispatcher.enqueue(event);
+        }
+    }
+}
+
+uint8_t GetImGuiPressedMouseButtons(const input::MouseState& mouse_state) {
+    uint8_t pressed_buttons = 0;
+    uint8_t current_button_mask = 1;
+    for (size_t i = 0; i < 3; ++i) {
+        if (mouse_state.buttons[i]) {
+            pressed_buttons |= current_button_mask;
+        }
+        current_button_mask <<= 1;
+    }
+    return pressed_buttons;
+}
 
 int Loop() {
     auto& context = context::Context::Get();
@@ -27,6 +96,14 @@ int Loop() {
 
     nncc::string selected_name;
 
+    cpp_redis::client redis;
+    redis.connect();
+
+    nncc::string mask_function_def;
+    nncc::string main_mask, second_mask;
+
+    bool show_tools = true;
+
     while (true) {
         if (auto should_exit = context.input.ProcessEvents(); should_exit) {
             bgfx::touch(0);
@@ -42,68 +119,99 @@ int Loop() {
         camera.Update(timer.Timedelta(), context.input.mouse_state, context.input.key_state, ImGui::MouseOverArea());
         bgfx::touch(0);
 
-        uint8_t imgui_pressed_buttons = 0;
-        uint8_t current_button_mask = 1;
-        for (size_t i = 0; i < 3; ++i) {
-            if (context.input.mouse_state.buttons[i]) {
-                imgui_pressed_buttons |= current_button_mask;
-            }
-            current_button_mask <<= 1;
-        }
-
         imguiBeginFrame(context.input.mouse_state.x,
                         context.input.mouse_state.y,
-                        imgui_pressed_buttons,
+                        GetImGuiPressedMouseButtons(context.input.mouse_state),
                         context.input.mouse_state.z,
                         uint16_t(window.width),
                         uint16_t(window.height)
         );
 
+        if (ImGui::BeginMainMenuBar()) {
+            if (ImGui::BeginMenu("Tools")) {
+                ImGui::MenuItem("Blend weights", NULL, &show_tools);
+                ImGui::EndMenu();
+            }
+            ImGui::EndMainMenuBar();
+        }
+
         ImGui::SetNextWindowPos(ImVec2(50.0f, 50.0f), ImGuiCond_FirstUseEver);
         ImGui::SetNextWindowSize(ImVec2(320.0f, 800.0f), ImGuiCond_FirstUseEver);
-
-        ImGui::Begin("Example: weight blending");
-        ImGui::Text("Shared tensors");
-
-        ImGui::BeginListBox("##label");
-        auto named_tensors = cregistry.view<Name, TensorWithPointer>();
-        for (auto entity : named_tensors) {
-            const auto& [name, tensor_container] = named_tensors.get(entity);
-            auto is_selected = selected_name == name.value;
-            if (ImGui::Selectable(name.value.c_str(), is_selected)) {
-                if (selected_name == name.value) {
-                    continue;
-                }
-
-                if (!selected_name.empty()) {
-                    {
-                        auto previously_selected_tensor = tensors.Get(selected_name);
-                        if (registry.try_get<render::Material>(previously_selected_tensor)) {
-                            auto& mat = registry.get<render::Material>(previously_selected_tensor);
-                            mat.diffuse_color = 0xFFFFFFFF;
+        if (ImGui::Begin("Shared tensors")) {
+            if (ImGui::BeginListBox("##label")) {
+                auto named_tensors = cregistry.view<Name, TensorWithPointer>();
+                for (auto entity : named_tensors) {
+                    const auto& [name, tensor_container] = named_tensors.get(entity);
+                    auto is_selected = selected_name == name.value;
+                    if (ImGui::Selectable(name.value.c_str(), is_selected)) {
+                        if (selected_name == name.value) {
+                            continue;
                         }
+
+                        if (!selected_name.empty()) {
+                            {
+                                auto previously_selected_tensor = tensors.Get(selected_name);
+                                if (registry.try_get<render::Material>(previously_selected_tensor)) {
+                                    auto& mat = registry.get<render::Material>(previously_selected_tensor);
+                                    mat.diffuse_color = 0xFFFFFFFF;
+                                }
+                            }
+                        }
+                        {
+                            auto selected_tensor = tensors.Get(name.value);
+                            if (registry.try_get<render::Material>(selected_tensor)) {
+                                auto& mat = registry.get<render::Material>(selected_tensor);
+                                mat.diffuse_color = 0xDDFFDDFF;
+                            }
+                        }
+                        selected_name = name.value;
                     }
                 }
-                {
-                    auto selected_tensor = tensors.Get(name.value);
-                    if (registry.try_get<render::Material>(selected_tensor)) {
-                        auto& mat = registry.get<render::Material>(selected_tensor);
-                        mat.diffuse_color = 0xDDFFDDFF;
-                    }
-                }
-                selected_name = name.value;
+                ImGui::EndListBox();
             }
-        }
-        ImGui::EndListBox();
 
-        if (ImGui::SmallButton(ICON_FA_STOP_CIRCLE)) {
-            tensors.Clear();
-            selected_name.clear();
-        } else if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("Remove all shared tensors");
+            if (!tensors.Contains(selected_name)) {
+                selected_name.clear();
+            } else {
+                auto selected_tensor_entity = tensors.Get(selected_name);
+                if (registry.all_of<TensorWithPointer, Name, TensorControl>(selected_tensor_entity)) {
+                    auto& control_callback = registry.get<TensorControl>(selected_tensor_entity).callback_name;
+                    auto& name = registry.get<Name>(selected_tensor_entity).value;
+                    ImGui::Text("%s", fmt::format("{}: callback name", name).c_str());
+                    ImGui::InputText(fmt::format("##{}_callback_name", name).c_str(), &control_callback);
+                }
+            }
+
+            auto controllable_tensors = registry.view<TensorWithPointer, Name, TensorControl>(entt::exclude<render::Mesh>);
+            for (auto&& [entity, tensor, name, control] : controllable_tensors.each()) {
+                TensorControlGui(name.value, entity, control.callback_name, &redis);
+            }
+
+            if (ImGui::SmallButton(ICON_FA_STOP_CIRCLE)) {
+                tensors.Clear();
+                selected_name.clear();
+            } else if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("Remove all shared tensors");
+            }
+            ImGui::End();
         }
 
-        ImGui::End();
+        ImGui::SetNextWindowPos(ImVec2(400.0f, 50.0f), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(600.0f, 300.0f), ImGuiCond_FirstUseEver);
+        if (ImGui::Begin("Blend mask")) {
+            auto [gui_width, gui_height] = ImGui::GetWindowSize();
+            ImGui::Text("Mask function");
+            ImGui::PushItemWidth(std::max(gui_width - 50, 100.0f));
+            ImGui::InputTextMultiline("##mask_function", &mask_function_def);
+            ImGui::Text("Inputs");
+            ImGui::PushItemWidth(std::max(gui_width / 5, 100.f));
+            ImGui::InputText("main", &main_mask);
+            ImGui::SameLine();
+            ImGui::PushItemWidth(std::max(gui_width / 5, 100.f));
+            ImGui::InputText("second", &second_mask);
+            ImGui::Button("Save");
+            ImGui::End();
+        }
 
         ImGuizmo::BeginFrame();
         ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, window.width, window.height);
@@ -116,8 +224,8 @@ int Loop() {
                 ImGuizmo::Manipulate(*view, *projection, ImGuizmo::TRANSLATE, ImGuizmo::LOCAL, **transform, NULL, NULL);
             }
         }
-        imguiEndFrame();
 
+        imguiEndFrame();
         context.rendering.Update(context, camera.GetViewMatrix(), window.width, window.height);
 
         // TODO: make this a subsystem's job
