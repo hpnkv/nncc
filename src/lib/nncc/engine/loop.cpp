@@ -228,7 +228,6 @@ int Loop() {
             gui_piece.render();
         }
 
-
         ImGui::SetNextWindowPos(ImVec2(400.0f, 50.0f), ImGuiCond_FirstUseEver);
         ImGui::SetNextWindowSize(ImVec2(600.0f, 300.0f), ImGuiCond_FirstUseEver);
         if (ImGui::Begin("Blend mask")) {
@@ -259,7 +258,10 @@ int Loop() {
 //        }
 
         imguiEndFrame();
-        context.rendering.Update(context, camera.GetViewMatrix(), window.width, window.height);
+
+        auto aspect_ratio = static_cast<float>(window.width) / static_cast<float>(window.height);
+        auto projection_matrix = camera.GetProjectionMatrix(30.0f, aspect_ratio, 0.01f, 1000.0f);
+        context.rendering.Update(context, camera.GetViewMatrix(), projection_matrix, window.width, window.height);
 
         // TODO: make this a subsystem's job
         context.input.input_characters.clear();

@@ -37,7 +37,7 @@ public:
         return 0;
     }
 
-    void Update(context::Context& context, const engine::Transform& view_matrix, uint16_t width, uint16_t height);
+    void Update(context::Context& context, const engine::Transform& view_matrix, const engine::Transform& projection_matrix, uint16_t width, uint16_t height);
 
     void Destroy() {
         auto default_texture = Material::GetDefaultTexture();

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <bx/math.h>
+#include <bgfx/bgfx.h>
 
 #include "nncc/input/hid.h"
 #include <nncc/engine/world_math.h>
@@ -12,6 +13,12 @@ public:
     void Update(float timedelta, const input::MouseState& mouse_state, const input::KeyState& key_state, bool mouse_over_gui = false);
 
     Matrix4 GetViewMatrix();
+
+    Matrix4 GetProjectionMatrix(float field_of_view, float aspect, float near, float far) {
+        engine::Matrix4 matrix;
+        bx::mtxProj(*matrix, field_of_view, aspect, near, far, bgfx::getCaps()->homogeneousDepth);
+        return matrix;
+    }
 
 private:
     input::MouseState mouse_last{};

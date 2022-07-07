@@ -23,6 +23,10 @@ public:
 
     void SetViewMatrix(const bx::Vec3& eye, const bx::Vec3& at, const bx::Vec3& up = {0, 1, 0});
 
+    void SetProjectionMatrix(const engine::Matrix4& matrix) {
+        projection_matrix_ = matrix;
+    }
+
     void SetProjectionMatrix(float field_of_view, float aspect, float near, float far);
 
     void SetViewport(const Viewport& viewport);

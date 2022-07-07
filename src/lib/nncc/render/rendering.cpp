@@ -6,6 +6,7 @@ namespace nncc::render {
 
 void RenderingSystem::Update(nncc::context::Context& context,
                              const nncc::engine::Transform& view_matrix,
+                             const nncc::engine::Transform& projection_matrix,
                              uint16_t width,
                              uint16_t height) {
     const auto& cregistry = context.registry;
@@ -14,8 +15,7 @@ void RenderingSystem::Update(nncc::context::Context& context,
     bgfx::setViewRect(0, 0, 0, width, height);
 
     renderer_.SetViewMatrix(view_matrix);
-    renderer_.SetProjectionMatrix(30, static_cast<float>(width) / static_cast<float>(height), 0.01f,
-                                  1000.0f);
+    renderer_.SetProjectionMatrix(projection_matrix);
     renderer_.SetViewport({0, 0, static_cast<float>(width), static_cast<float>(height)});
 
     auto view = cregistry.view<Material, Mesh, engine::Transform>();
