@@ -11,7 +11,7 @@
 
 namespace nncc::engine {
 
-bool TensorControlGui(const nncc::string& label, entt::entity tensor_entity, const nncc::string& callback_name, cpp_redis::client* redis) {
+bool TensorControlGui(const nncc::string& label, entt::entity tensor_entity, const nncc::string& callback_name) {
     auto& context = context::Context::Get();
     auto& registry = context.registry;
 
@@ -78,6 +78,92 @@ uint8_t GetImGuiPressedMouseButtons(const input::MouseState& mouse_state) {
     return pressed_buttons;
 }
 
+struct GuiPiece {
+    entt::delegate<void()> render;
+};
+
+class SharedTensorPicker {
+public:
+    explicit SharedTensorPicker(TensorRegistry* tensors) : tensors_(*tensors) {}
+
+    void Render() {
+        auto& context = context::Context::Get();
+        auto& registry = context.registry;
+        const auto& cregistry = context.registry;
+
+        ImGui::SetNextWindowPos(ImVec2(50.0f, 50.0f), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(320.0f, 800.0f), ImGuiCond_FirstUseEver);
+        if (ImGui::Begin("Shared tensors")) {
+            if (ImGui::BeginListBox("##label")) {
+                auto named_tensors = cregistry.view<Name, TensorWithPointer>();
+                for (auto entity : named_tensors) {
+                    const auto& [name, tensor_container] = named_tensors.get(entity);
+                    auto is_selected = selected_name_ == name.value;
+                    if (ImGui::Selectable(name.value.c_str(), is_selected)) {
+                        if (selected_name_ == name.value) {
+                            continue;
+                        }
+
+                        if (!selected_name_.empty()) {
+                            {
+                                auto previously_selected_tensor = tensors_.Get(selected_name_);
+                                if (registry.try_get<render::Material>(previously_selected_tensor)) {
+                                    auto& mat = registry.get<render::Material>(previously_selected_tensor);
+                                    mat.diffuse_color = 0xFFFFFFFF;
+                                }
+                            }
+                        }
+                        {
+                            auto selected_tensor = tensors_.Get(name.value);
+                            if (registry.try_get<render::Material>(selected_tensor)) {
+                                auto& mat = registry.get<render::Material>(selected_tensor);
+                                mat.diffuse_color = 0xDDFFDDFF;
+                            }
+                        }
+                        selected_name_ = name.value;
+                    }
+                }
+                ImGui::EndListBox();
+            }
+
+            if (!tensors_.Contains(selected_name_)) {
+                selected_name_.clear();
+            } else {
+                auto selected_tensor_entity = tensors_.Get(selected_name_);
+                if (registry.all_of<TensorWithPointer, Name, TensorControl>(selected_tensor_entity)) {
+                    auto& control_callback = registry.get<TensorControl>(selected_tensor_entity).callback_name;
+                    auto& name = registry.get<Name>(selected_tensor_entity).value;
+                    ImGui::Text("%s", fmt::format("{}: callback name", name).c_str());
+                    ImGui::InputText(fmt::format("##{}_callback_name", name).c_str(), &control_callback);
+                }
+            }
+
+            auto controllable_tensors = registry.view<TensorWithPointer, Name, TensorControl>(entt::exclude<render::Mesh>);
+            for (auto&& [entity, tensor, name, control] : controllable_tensors.each()) {
+                TensorControlGui(name.value, entity, control.callback_name);
+            }
+
+            if (ImGui::SmallButton(ICON_FA_STOP_CIRCLE)) {
+                tensors_.Clear();
+                selected_name_.clear();
+            } else if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("Remove all shared tensors");
+            }
+            ImGui::End();
+        }
+    }
+
+    GuiPiece GetGuiPiece() {
+        GuiPiece tensor_picker_gui;
+        tensor_picker_gui.render.connect<&SharedTensorPicker::Render>(this);
+        return tensor_picker_gui;
+    }
+
+private:
+    TensorRegistry& tensors_;
+    nncc::string selected_name_;
+};
+
 int Loop() {
     auto& context = context::Context::Get();
     auto& window = context.GetWindow(0);
@@ -92,12 +178,15 @@ int Loop() {
     TensorRegistry tensors;
     tensors.Init(&context.dispatcher);
 
-    imguiCreate();
-
-    nncc::string selected_name;
-
     cpp_redis::client redis;
     redis.connect();
+
+    nncc::vector<GuiPiece> gui_pieces;
+
+    auto tensor_picker = SharedTensorPicker(&tensors);
+    gui_pieces.push_back(tensor_picker.GetGuiPiece());
+
+    imguiCreate();
 
     nncc::string mask_function_def;
     nncc::string main_mask, second_mask;
@@ -135,66 +224,10 @@ int Loop() {
             ImGui::EndMainMenuBar();
         }
 
-        ImGui::SetNextWindowPos(ImVec2(50.0f, 50.0f), ImGuiCond_FirstUseEver);
-        ImGui::SetNextWindowSize(ImVec2(320.0f, 800.0f), ImGuiCond_FirstUseEver);
-        if (ImGui::Begin("Shared tensors")) {
-            if (ImGui::BeginListBox("##label")) {
-                auto named_tensors = cregistry.view<Name, TensorWithPointer>();
-                for (auto entity : named_tensors) {
-                    const auto& [name, tensor_container] = named_tensors.get(entity);
-                    auto is_selected = selected_name == name.value;
-                    if (ImGui::Selectable(name.value.c_str(), is_selected)) {
-                        if (selected_name == name.value) {
-                            continue;
-                        }
-
-                        if (!selected_name.empty()) {
-                            {
-                                auto previously_selected_tensor = tensors.Get(selected_name);
-                                if (registry.try_get<render::Material>(previously_selected_tensor)) {
-                                    auto& mat = registry.get<render::Material>(previously_selected_tensor);
-                                    mat.diffuse_color = 0xFFFFFFFF;
-                                }
-                            }
-                        }
-                        {
-                            auto selected_tensor = tensors.Get(name.value);
-                            if (registry.try_get<render::Material>(selected_tensor)) {
-                                auto& mat = registry.get<render::Material>(selected_tensor);
-                                mat.diffuse_color = 0xDDFFDDFF;
-                            }
-                        }
-                        selected_name = name.value;
-                    }
-                }
-                ImGui::EndListBox();
-            }
-
-            if (!tensors.Contains(selected_name)) {
-                selected_name.clear();
-            } else {
-                auto selected_tensor_entity = tensors.Get(selected_name);
-                if (registry.all_of<TensorWithPointer, Name, TensorControl>(selected_tensor_entity)) {
-                    auto& control_callback = registry.get<TensorControl>(selected_tensor_entity).callback_name;
-                    auto& name = registry.get<Name>(selected_tensor_entity).value;
-                    ImGui::Text("%s", fmt::format("{}: callback name", name).c_str());
-                    ImGui::InputText(fmt::format("##{}_callback_name", name).c_str(), &control_callback);
-                }
-            }
-
-            auto controllable_tensors = registry.view<TensorWithPointer, Name, TensorControl>(entt::exclude<render::Mesh>);
-            for (auto&& [entity, tensor, name, control] : controllable_tensors.each()) {
-                TensorControlGui(name.value, entity, control.callback_name, &redis);
-            }
-
-            if (ImGui::SmallButton(ICON_FA_STOP_CIRCLE)) {
-                tensors.Clear();
-                selected_name.clear();
-            } else if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("Remove all shared tensors");
-            }
-            ImGui::End();
+        for (const auto& gui_piece: gui_pieces) {
+            gui_piece.render();
         }
+
 
         ImGui::SetNextWindowPos(ImVec2(400.0f, 50.0f), ImGuiCond_FirstUseEver);
         ImGui::SetNextWindowSize(ImVec2(600.0f, 300.0f), ImGuiCond_FirstUseEver);
@@ -213,17 +246,17 @@ int Loop() {
             ImGui::End();
         }
 
-        ImGuizmo::BeginFrame();
-        ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, window.width, window.height);
-        engine::Matrix4 projection, view = camera.GetViewMatrix();
-        bx::mtxProj(*projection, 30, static_cast<float>(window.width) / static_cast<float>(window.height), 0.01f, 1000.f, bgfx::getCaps()->homogeneousDepth);
-        auto identity = engine::Matrix4::Identity();
-        if (!selected_name.empty()) {
-            auto transform = registry.try_get<Transform>(tensors.Get(selected_name));
-            if (transform != nullptr) {
-                ImGuizmo::Manipulate(*view, *projection, ImGuizmo::TRANSLATE, ImGuizmo::LOCAL, **transform, NULL, NULL);
-            }
-        }
+//        ImGuizmo::BeginFrame();
+//        ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, window.width, window.height);
+//        engine::Matrix4 projection, view = camera.GetViewMatrix();
+//        bx::mtxProj(*projection, 30, static_cast<float>(window.width) / static_cast<float>(window.height), 0.01f, 1000.f, bgfx::getCaps()->homogeneousDepth);
+//        auto identity = engine::Matrix4::Identity();
+//        if (!selected_name.empty()) {
+//            auto transform = registry.try_get<Transform>(tensors.Get(selected_name));
+//            if (transform != nullptr) {
+//                ImGuizmo::Manipulate(*view, *projection, ImGuizmo::TRANSLATE, ImGuizmo::LOCAL, **transform, NULL, NULL);
+//            }
+//        }
 
         imguiEndFrame();
         context.rendering.Update(context, camera.GetViewMatrix(), window.width, window.height);
