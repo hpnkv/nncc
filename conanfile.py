@@ -13,6 +13,7 @@ class NNCCConan(ConanFile):
         "glfw/3.3.7",
         "folly/2022.01.31.00",
         "imgui/cci.20220621+1.88.docking",
+        "mpdecimal/2.5.1",
         "openssl/1.1.1o",
         "zlib/1.2.12"
     ]

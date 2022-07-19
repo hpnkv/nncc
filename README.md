@@ -7,7 +7,8 @@ not be limited to this functionality.
 
 ## Build from source
 The build process is mostly automated thanks to Conan. However, you will need to download and patch some external 
-dependencies, which is done by provided `install_deps.sh`. The whole build sequence is:
+dependencies, which is done by provided `install_deps.sh`. You also need to have `automake` and `autoconf` installed. 
+The whole build sequence is:
 
 ```shell
 chmod +x install_deps.sh

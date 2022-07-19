@@ -13,6 +13,7 @@ target_include_directories(nncc PUBLIC
         ${NNCC_PROJECT_ROOT}/external/stb
         ${NNCC_PROJECT_ROOT}/external/IconFontCppHeaders
         ${NNCC_PROJECT_ROOT}/external/ImGuizmo
+        ${CPP_REDIS_INCLUDES}
         ${NNCC_INCLUDES_PRIVATE}
         )
 
