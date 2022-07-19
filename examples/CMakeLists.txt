@@ -1,1 +1,2 @@
-add_subdirectory(00-minimal-bgfx-glfw)
+add_subdirectory(001-helloworld-mt)
+add_subdirectory(002-base-context)
