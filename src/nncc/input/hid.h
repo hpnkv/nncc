@@ -143,6 +143,10 @@ struct MouseState {
     int32_t x = 0;
     int32_t y = 0;
     int32_t z = 0;
+
+    double scroll_x = 0;
+    double scroll_y = 0;
+
     bool buttons[static_cast<int>(MouseButton::Count)]{};
 
     [[nodiscard]] uint8_t GetImGuiPressedMouseButtons() const {

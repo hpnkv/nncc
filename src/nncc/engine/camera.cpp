@@ -55,10 +55,10 @@ void Camera::Update(float timedelta,
             mouse_now_.y = mouse_state.y;
         }
 
-        mouse_last_.z = mouse_now_.z;
-        mouse_now_.z = mouse_state.z;
+        mouse_last_.scroll_y = mouse_now_.scroll_y;
+        mouse_now_.scroll_y = mouse_state.scroll_y;
 
-        const auto deltaZ = float(mouse_now_.z - mouse_last_.z);
+        const auto delta_scroll = float(mouse_now_.scroll_y - mouse_last_.scroll_y);
 
         if (mouse_down_) {
             const int32_t deltaX = mouse_now_.x - mouse_last_.x;
@@ -70,7 +70,7 @@ void Camera::Update(float timedelta,
             mouse_last_.x = mouse_now_.x;
             mouse_last_.y = mouse_now_.y;
         }
-        eye_ = bx::mad(direction, deltaZ * timedelta * move_speed_, eye_);
+        eye_ = bx::mad(direction, delta_scroll * timedelta * move_speed_, eye_);
     }
 
     at_ = bx::add(eye_, direction);

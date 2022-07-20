@@ -41,6 +41,7 @@ int16_t Context::CreateWindow(uint16_t width, uint16_t height, const nncc::strin
     glfwSetCursorPosCallback(window.ptr.get(), &GlfwWindowingImpl::CursorPositionCallback);
     glfwSetKeyCallback(window.ptr.get(), &GlfwWindowingImpl::KeyCallback);
     glfwSetCharCallback(window.ptr.get(), &GlfwWindowingImpl::CharacterCallback);
+    glfwSetScrollCallback(window.ptr.get(), &GlfwWindowingImpl::ScrollCallback);
 
     int16_t window_idx = static_cast<int16_t>(windows_.size());
     window_indices_[window.ptr.get()] = window_idx;
@@ -116,6 +117,17 @@ void GlfwWindowingImpl::CharacterCallback(GLFWwindow* window, unsigned int codep
     context.input.queue.Push(window_idx, std::move(event));
 }
 
+void GlfwWindowingImpl::ScrollCallback(GLFWwindow* window, double x_offset, double y_offset) {
+    auto event = std::make_unique<input::MouseEvent>(input::EventType::MouseScroll);
+
+    event->scroll_x = x_offset;
+    event->scroll_y = y_offset;
+
+    auto& context = Context::Get();
+    auto window_idx = context.GetWindowIdx(window);
+    context.input.queue.Push(window_idx, std::move(event));
+}
+
 void Context::Exit() {
     std::unique_ptr<input::Event> event(new input::ExitEvent);
     Context::Get().input.queue.Push(0, std::move(event));
@@ -156,6 +168,12 @@ bool nncc::input::InputSystem::ProcessEvents() {
 
             mouse_state.x = move_event->x;
             mouse_state.y = move_event->y;
+
+        } else if (event->type == EventType::MouseScroll) {
+            auto scroll_event = std::dynamic_pointer_cast<MouseEvent>(event);
+
+            mouse_state.scroll_x += scroll_event->scroll_x;
+            mouse_state.scroll_y += scroll_event->scroll_y;
 
         } else if (event->type == EventType::Key) {
             auto key_event = std::dynamic_pointer_cast<KeyEvent>(event);

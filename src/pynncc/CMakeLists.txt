@@ -1,9 +1,10 @@
-pybind11_add_module(pynncc module.cpp)
+#pybind11_add_module(pynncc module.cpp)
 
 add_library(
-        pynnccv
+        pynncc
         module.cpp
         ${NNCC_PROJECT_ROOT}/src/pynncc/torch/tensor_registry.cpp
+        ${NNCC_PROJECT_ROOT}/src/pynncc/torch/shm_communication.cpp
 )
 
 target_link_libraries(pynncc PRIVATE nncc ${TORCH_LIBRARIES} ${Python_LIBRARIES} pybind11::embed shm)

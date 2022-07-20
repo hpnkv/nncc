@@ -4,14 +4,15 @@
 #include <numeric>
 #include <unordered_set>
 
-#include <cpp_redis/cpp_redis>
 #include <bgfx/bgfx.h>
+#include <cpp_redis/cpp_redis>
 #include <fmt/format.h>
-#include <torch/torch.h>
 #include <libshm/libshm.h>
+#include <torch/torch.h>
 
 #include <nncc/common/types.h>
 #include <nncc/context/context.h>
+#include <nncc/gui/imgui_bgfx.h>
 #include <nncc/rendering/renderer.h>
 #include <nncc/rendering/primitives.h>
 
@@ -138,6 +139,62 @@ private:
 
     cpp_redis::client redis_;
 };
+
+bool TensorControlGui(const nncc::string& label, entt::entity tensor_entity, const nncc::string& callback_name) {
+    auto& context = context::Context::Get();
+    auto& registry = context.registry;
+
+    auto& tensor = *registry.get<TensorWithPointer>(tensor_entity);
+    bool updated = false;
+
+    if (tensor.ndimension() <= 1) {
+        ImGui::Text("%s", label.c_str());
+
+        if (tensor.dtype() == torch::kFloat32) {
+            for (auto i = 0; i < tensor.numel(); ++i) {
+                auto* element = tensor.data_ptr<float>() + i;
+                if (i > 0) {
+                    ImGui::SameLine();
+                }
+                ImGui::PushItemWidth(30);
+                if (ImGui::DragFloat(fmt::format("##{}_dragfloat_{}", label, i).c_str(), element, 0.01f, -10.0f, 10.0f, "%.2f")) {
+                    updated = true;
+                    break;
+                }
+            }
+        }
+
+        if (tensor.dtype() == torch::kInt32) {
+            for (auto i = 0; i < tensor.numel(); ++i) {
+                auto* element = tensor.data_ptr<int>() + i;
+                if (i > 0) {
+                    ImGui::SameLine();
+                }
+                if (tensor.numel() > 1) {
+                    ImGui::PushItemWidth(60);
+                    if (ImGui::DragInt(fmt::format("##{}_dragint_{}", label, i).c_str(), element)) {
+                        updated = true;
+                    }
+                } else {
+                    if (ImGui::InputInt(fmt::format("##{}_inputint_{}", label, i).c_str(), element)) {
+                        updated = true;
+                    }
+                }
+                if (updated) {
+                    break;
+                }
+            }
+        }
+
+        if (updated) {
+            TensorControlEvent event;
+            event.tensor_entity = tensor_entity;
+            event.callback_name = callback_name;
+
+            context::Context::Get().dispatcher.enqueue(event);
+        }
+    }
+}
 
 }
 

@@ -39,6 +39,8 @@ public:
     static void CursorPositionCallback(GLFWwindow* window, double x_pos, double y_pos);
 
     static void KeyCallback(GLFWwindow* window, int32_t key, int32_t scancode, int32_t action, int32_t modifiers);
+
+    static void ScrollCallback(GLFWwindow* window, double x_offset, double y_offset);
 };
 
 class Context {
