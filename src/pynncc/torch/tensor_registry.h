@@ -7,12 +7,11 @@
 #include <bgfx/bgfx.h>
 #include <cpp_redis/cpp_redis>
 #include <fmt/format.h>
-#include <libshm/libshm.h>
 #include <torch/torch.h>
 
 #include <nncc/common/types.h>
 #include <nncc/context/context.h>
-#include <nncc/gui/imgui_bgfx.h>
+#include <nncc/gui/gui.h>
 #include <nncc/rendering/renderer.h>
 #include <nncc/rendering/primitives.h>
 
@@ -30,7 +29,7 @@ struct RetrieveKey {
     }
 };
 
-namespace nncc {
+namespace nncc::python {
 
 bgfx::TextureFormat::Enum GetTextureFormatFromChannelsAndDtype(int64_t channels, const torch::Dtype& dtype);
 
@@ -42,22 +41,7 @@ public:
         const nncc::string& filename,
         torch::Dtype dtype,
         const nncc::vector<int64_t>& dims
-    ) {
-        size_t total_bytes = (
-            torch::elementSize(dtype)
-                * std::accumulate(dims.begin(), dims.end(), 1, std::multiplies<size_t>())
-        );
-
-        data_ptr_ = THManagedMapAllocator::makeDataPtr(
-            manager_handle.c_str(),
-            filename.c_str(),
-            at::ALLOCATOR_MAPPED_SHAREDMEM,
-            total_bytes
-        );
-        tensor_ = torch::from_blob(data_ptr_.get(),
-                                   at::IntArrayRef(dims.data(), dims.size()),
-                                   torch::TensorOptions().dtype(dtype));
-    }
+    );
 
     const torch::Tensor& operator*() const {
         return tensor_;
@@ -68,22 +52,22 @@ public:
     }
 
 private:
-    at::DataPtr data_ptr_;
-    torch::Tensor tensor_;
+    at::DataPtr data_ptr_{};
+    torch::Tensor tensor_{};
 };
 
 
 struct Name {
     Name() = default;
 
-    Name(const nncc::string& _value) : value(_value) {}
+    explicit Name(const nncc::string& _value) : value(_value) {}
 
     nncc::string value;
 };
 
 
 struct TensorControlEvent {
-    entt::entity tensor_entity;
+    entt::entity tensor_entity{};
     std::optional<nncc::string> callback_name;
 };
 
@@ -140,61 +124,89 @@ private:
     cpp_redis::client redis_;
 };
 
-bool TensorControlGui(const nncc::string& label, entt::entity tensor_entity, const nncc::string& callback_name) {
-    auto& context = context::Context::Get();
-    auto& registry = context.registry;
+bool TensorControlGui(const nncc::string& label, entt::entity tensor_entity, const nncc::string& callback_name);
 
-    auto& tensor = *registry.get<TensorWithPointer>(tensor_entity);
-    bool updated = false;
+class SharedTensorPicker {
+public:
+    explicit SharedTensorPicker(TensorRegistry* tensors) : tensors_(*tensors) {}
 
-    if (tensor.ndimension() <= 1) {
-        ImGui::Text("%s", label.c_str());
+    void Render() {
+        auto& context = context::Context::Get();
+        auto& registry = context.registry;
+        const auto& cregistry = context.registry;
 
-        if (tensor.dtype() == torch::kFloat32) {
-            for (auto i = 0; i < tensor.numel(); ++i) {
-                auto* element = tensor.data_ptr<float>() + i;
-                if (i > 0) {
-                    ImGui::SameLine();
+        ImGui::SetNextWindowPos(ImVec2(50.0f, 50.0f), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(320.0f, 800.0f), ImGuiCond_FirstUseEver);
+        if (ImGui::Begin("Shared tensors")) {
+            if (ImGui::BeginListBox("##label")) {
+                auto named_tensors = cregistry.view<Name, TensorWithPointer>();
+                for (auto entity : named_tensors) {
+                    const auto& [name, tensor_container] = named_tensors.get(entity);
+                    auto is_selected = selected_name_ == name.value;
+                    if (ImGui::Selectable(name.value.c_str(), is_selected)) {
+                        if (selected_name_ == name.value) {
+                            continue;
+                        }
+
+                        if (!selected_name_.empty()) {
+                            {
+                                auto previously_selected_tensor = tensors_.Get(selected_name_);
+                                if (registry.try_get<rendering::Material>(previously_selected_tensor)) {
+                                    auto& mat = registry.get<rendering::Material>(previously_selected_tensor);
+                                    mat.diffuse_color = 0xFFFFFFFF;
+                                }
+                            }
+                        }
+                        {
+                            auto selected_tensor = tensors_.Get(name.value);
+                            if (registry.try_get<rendering::Material>(selected_tensor)) {
+                                auto& mat = registry.get<rendering::Material>(selected_tensor);
+                                mat.diffuse_color = 0xDDFFDDFF;
+                            }
+                        }
+                        selected_name_ = name.value;
+                    }
                 }
-                ImGui::PushItemWidth(30);
-                if (ImGui::DragFloat(fmt::format("##{}_dragfloat_{}", label, i).c_str(), element, 0.01f, -10.0f, 10.0f, "%.2f")) {
-                    updated = true;
-                    break;
+                ImGui::EndListBox();
+            }
+
+            if (!tensors_.Contains(selected_name_)) {
+                selected_name_.clear();
+            } else {
+                auto selected_tensor_entity = tensors_.Get(selected_name_);
+                if (registry.all_of<TensorWithPointer, Name, TensorControl>(selected_tensor_entity)) {
+                    auto& control_callback = registry.get<TensorControl>(selected_tensor_entity).callback_name;
+                    auto& name = registry.get<Name>(selected_tensor_entity).value;
+                    ImGui::Text("%s", fmt::format("{}: callback name", name).c_str());
+                    ImGui::InputText(fmt::format("##{}_callback_name", name).c_str(), &control_callback);
                 }
             }
-        }
 
-        if (tensor.dtype() == torch::kInt32) {
-            for (auto i = 0; i < tensor.numel(); ++i) {
-                auto* element = tensor.data_ptr<int>() + i;
-                if (i > 0) {
-                    ImGui::SameLine();
-                }
-                if (tensor.numel() > 1) {
-                    ImGui::PushItemWidth(60);
-                    if (ImGui::DragInt(fmt::format("##{}_dragint_{}", label, i).c_str(), element)) {
-                        updated = true;
-                    }
-                } else {
-                    if (ImGui::InputInt(fmt::format("##{}_inputint_{}", label, i).c_str(), element)) {
-                        updated = true;
-                    }
-                }
-                if (updated) {
-                    break;
-                }
+            auto controllable_tensors = registry.view<TensorWithPointer, Name, TensorControl>(entt::exclude<rendering::Mesh>);
+            for (auto&& [entity, tensor, name, control] : controllable_tensors.each()) {
+                TensorControlGui(name.value, entity, control.callback_name);
             }
-        }
 
-        if (updated) {
-            TensorControlEvent event;
-            event.tensor_entity = tensor_entity;
-            event.callback_name = callback_name;
-
-            context::Context::Get().dispatcher.enqueue(event);
+            if (ImGui::SmallButton(ICON_FA_STOP_CIRCLE)) {
+                tensors_.Clear();
+                selected_name_.clear();
+            } else if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("Remove all shared tensors");
+            }
+            ImGui::End();
         }
     }
-}
+
+    gui::GuiPiece GetGuiPiece() {
+        gui::GuiPiece tensor_picker_gui;
+        tensor_picker_gui.render.connect<&SharedTensorPicker::Render>(this);
+        return tensor_picker_gui;
+    }
+
+private:
+    TensorRegistry& tensors_;
+    nncc::string selected_name_;
+};
 
 }
 

@@ -24,8 +24,9 @@ git submodule update
 
 cd ../
 git clone -b master --recurse-submodule https://github.com/pytorch/pytorch.git
-mkdir pytorch-build
-cd pytorch-build
-cmake -DBUILD_SHARED_LIBS:BOOL=ON -DCMAKE_BUILD_TYPE:STRING=Release \
-      -DPYTHON_EXECUTABLE:PATH=$(which python3) -DCMAKE_INSTALL_PREFIX:PATH=../pytorch-install ../pytorch
-cmake --build . --target install -- -j 8
+cd pytorch
+BUILD_SHARED_LIBS=OFF BUILD_BINARY=OFF ATEN_NO_TEST=ON BUILD_TEST=0 USE_SYSTEM_ONNX=OFF BUILD_CUSTOM_PROTOBUF=OFF USE_PROTOBUF_SHARED_LIBS=ON ONNX_BUILD_TESTS=ON USE_OPENMP=OFF python tools/build_libtorch.py
+sed -i'' -e 's/add_library(shm SHARED core.cpp)/add_library(shm STATIC core.cpp)/g' \
+    "$HOME"/.conan/data/folly/2022.01.31.00/_/_/export/conanfile.py
+sed -i'' -e 's/target_link_libraries(shm torch c10)/target_link_libraries(shm torch)/g' \
+    torch/lib/libshm/CMakeLists.txt

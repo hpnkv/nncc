@@ -7,9 +7,17 @@ set(NNCC_INCLUDES_PRIVATE ${NNCC_INCLUDES_PRIVATE} PARENT_SCOPE)
 set(NNCC_INCLUDES ${NNCC_INCLUDES_PRIVATE})
 set(NNCC_INCLUDES ${NNCC_INCLUDES} PARENT_SCOPE)
 
-target_link_libraries(nncc PUBLIC bx bgfx glfw3 folly imgui)
+target_link_libraries(nncc PUBLIC
+        bx bgfx
+        CONAN_PKG::glfw
+        CONAN_PKG::folly
+        CONAN_PKG::imgui
+        CONAN_PKG::double-conversion
+        )
 target_include_directories(nncc PUBLIC
         ${BGFX_DIR}/include ${BX_DIR}/include
+        ${CONAN_INCLUDE_DIRS_ENTT}
+        ${CONAN_INCLUDE_DIRS_GLFW}
         ${NNCC_PROJECT_ROOT}/external/stb
         ${NNCC_PROJECT_ROOT}/external/IconFontCppHeaders
         ${NNCC_PROJECT_ROOT}/external/ImGuizmo

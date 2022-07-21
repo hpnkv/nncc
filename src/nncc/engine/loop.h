@@ -7,7 +7,7 @@
 #include <nncc/context/context.h>
 #include <nncc/engine/camera.h>
 #include <nncc/engine/timer.h>
-#include <nncc/gui/imgui_bgfx.h>
+#include <nncc/gui/gui.h>
 
 namespace nncc::engine {
 

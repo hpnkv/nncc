@@ -1,5 +1,7 @@
 #include <stdexcept>
 #include <pybind11/pybind11.h>
+#include <libshm/libshm.h>
+#include <torch/torch.h>
 
 namespace py = pybind11;
 

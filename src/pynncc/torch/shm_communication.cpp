@@ -22,8 +22,6 @@ void ListenToRedisSharedTensors(entt::dispatcher* dispatcher, const nncc::string
                 return;
             }
 
-            std::cout << encoded_handle << std::endl;
-
             nncc::string name, manager_handle, filename, dtype_string, dims_string;
             folly::split("::", encoded_handle, name, manager_handle, filename, dtype_string, dims_string);
 

@@ -1,6 +1,9 @@
 #include "tensor_registry.h"
 
-namespace nncc {
+#include <libshm/libshm.h>
+#include <torch/torch.h>
+
+namespace nncc::python {
 
 bgfx::TextureFormat::Enum GetTextureFormatFromChannelsAndDtype(int64_t channels, const torch::Dtype& dtype) {
     if (channels == 3 && dtype == torch::kUInt8) {
@@ -11,6 +14,66 @@ bgfx::TextureFormat::Enum GetTextureFormatFromChannelsAndDtype(int64_t channels,
         return bgfx::TextureFormat::RGBA8;
     } else {
         throw std::runtime_error("Can only visualise uint8 or float32 tensors with 3 or 4 channels (RGB or RGBA).");
+    }
+}
+
+bool TensorControlGui(const string& label, entt::entity tensor_entity, const string& callback_name) {
+    auto& context = context::Context::Get();
+    auto& registry = context.registry;
+
+    auto& tensor = *registry.get<TensorWithPointer>(tensor_entity);
+    bool updated = false;
+
+    if (tensor.ndimension() <= 1) {
+        ImGui::Text("%s", label.c_str());
+
+        if (tensor.dtype() == torch::kFloat32) {
+            for (auto i = 0; i < tensor.numel(); ++i) {
+                auto* element = tensor.data_ptr<float>() + i;
+                if (i > 0) {
+                    ImGui::SameLine();
+                }
+                ImGui::PushItemWidth(30);
+                if (ImGui::DragFloat(fmt::format("##{}_dragfloat_{}", label, i).c_str(), element, 0.01f, -10.0f, 10.0f, "%.2f")) {
+                    if (ImGui::IsItemDeactivatedAfterEdit()) {
+                        updated = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (tensor.dtype() == torch::kInt32) {
+            for (auto i = 0; i < tensor.numel(); ++i) {
+                auto* element = tensor.data_ptr<int>() + i;
+                if (i > 0) {
+                    ImGui::SameLine();
+                }
+                if (tensor.numel() > 1) {
+                    ImGui::PushItemWidth(60);
+                    if (ImGui::DragInt(fmt::format("##{}_dragint_{}", label, i).c_str(), element)) {
+                        if (ImGui::IsItemDeactivatedAfterEdit()) {
+                            updated = true;
+                        }
+                    }
+                } else {
+                    if (ImGui::InputInt(fmt::format("##{}_inputint_{}", label, i).c_str(), element)) {
+                        updated = true;
+                    }
+                }
+                if (updated) {
+                    break;
+                }
+            }
+        }
+
+        if (updated) {
+            TensorControlEvent event;
+            event.tensor_entity = tensor_entity;
+            event.callback_name = callback_name;
+
+            context::Context::Get().dispatcher.enqueue(event);
+        }
     }
 }
 
@@ -108,5 +171,25 @@ void TensorRegistry::Clear() {
     for (const auto& entity : all_tensors) {
         nncc::context::Context::Get().registry.destroy(entity);
     }
+}
+
+TensorWithPointer::TensorWithPointer(const string& manager_handle,
+                                     const string& filename,
+                                     torch::Dtype dtype,
+                                     const vector<int64_t>& dims) {
+    size_t total_bytes = (
+        torch::elementSize(dtype)
+            * std::accumulate(dims.begin(), dims.end(), 1, std::multiplies<size_t>())
+    );
+
+    data_ptr_ = THManagedMapAllocator::makeDataPtr(
+        manager_handle.c_str(),
+        filename.c_str(),
+        at::ALLOCATOR_MAPPED_SHAREDMEM,
+        total_bytes
+    );
+    tensor_ = torch::from_blob(data_ptr_.get(),
+                               at::IntArrayRef(dims.data(), dims.size()),
+                               torch::TensorOptions().dtype(dtype));
 }
 }

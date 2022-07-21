@@ -9,6 +9,7 @@ os.environ["CONAN_CMAKE_GENERATOR"] = "Ninja"
 class NNCCConan(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
     requires = [
+        "double-conversion/3.2.0",
         "entt/3.10.1",
         "glfw/3.3.7",
         "folly/2022.01.31.00",
