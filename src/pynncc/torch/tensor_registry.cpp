@@ -33,12 +33,10 @@ bool TensorControlGui(const string& label, entt::entity tensor_entity, const str
                 if (i > 0) {
                     ImGui::SameLine();
                 }
-                ImGui::PushItemWidth(30);
-                if (ImGui::DragFloat(fmt::format("##{}_dragfloat_{}", label, i).c_str(), element, 0.01f, -10.0f, 10.0f, "%.2f")) {
-                    if (ImGui::IsItemDeactivatedAfterEdit()) {
-                        updated = true;
-                        break;
-                    }
+                auto control_element = ImGui::VSliderFloat(fmt::format("##{}_dragfloat_{}", label, i).c_str(), ImVec2(40, 240), element, -2.0f, 2.0f, "%.2f");
+                if (control_element) {
+                    updated = true;
+                    break;
                 }
             }
         }
@@ -52,9 +50,7 @@ bool TensorControlGui(const string& label, entt::entity tensor_entity, const str
                 if (tensor.numel() > 1) {
                     ImGui::PushItemWidth(60);
                     if (ImGui::DragInt(fmt::format("##{}_dragint_{}", label, i).c_str(), element)) {
-                        if (ImGui::IsItemDeactivatedAfterEdit()) {
-                            updated = true;
-                        }
+                        updated = true;
                     }
                 } else {
                     if (ImGui::InputInt(fmt::format("##{}_inputint_{}", label, i).c_str(), element)) {
@@ -75,6 +71,8 @@ bool TensorControlGui(const string& label, entt::entity tensor_entity, const str
             context::Context::Get().dispatcher.enqueue(event);
         }
     }
+
+    return updated;
 }
 
 void TensorRegistry::OnSharedTensorUpdate(const SharedTensorEvent& event) {
@@ -156,7 +154,8 @@ void TensorRegistry::OnSharedTensorControl(const TensorControlEvent& event) {
 
     auto do_update = redis_.get(lock_name.toStdString());
     redis_.sync_commit();
-    if (do_update.get().as_string() == "true") {
+    auto reply = do_update.get();
+    if (reply.is_null() || reply.as_string() == "true") {
         redis_.set(lock_name.toStdString(), "false");
         redis_.lpush(queue_name.toStdString(), {event.callback_name->toStdString()});
         redis_.sync_commit();

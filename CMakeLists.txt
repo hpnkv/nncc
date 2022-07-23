@@ -12,6 +12,7 @@ set(CMAKE_CXX_STANDARD 20)
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup(TARGETS)
 
+set(CMAKE_MACOSX_RPATH 1)
 
 # Non-Conan externals
 add_subdirectory(external/bgfx.cmake)
@@ -23,22 +24,24 @@ add_subdirectory(src/nncc)
 add_subdirectory(examples)
 
 # PyTorch
+set(TORCH_SRC_ROOT ${NNCC_PROJECT_ROOT}/external/pytorch)  # for libshm
+set(TORCH_BUILD_ROOT ${NNCC_PROJECT_ROOT}/external/pytorch-build)
+set(TORCH_INSTALL_ROOT ${NNCC_PROJECT_ROOT}/external/pytorch-install)
 
-list(APPEND CMAKE_PREFIX_PATH "${NNCC_PROJECT_ROOT}/external/pytorch/torch")
-list(APPEND CMAKE_PREFIX_PATH "${NNCC_PROJECT_ROOT}/external/pytorch/build")
+list(PREPEND CMAKE_PREFIX_PATH ${TORCH_INSTALL_ROOT})
 find_package(Torch REQUIRED)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
+
 if(MSVC)
     set(LIBSHM_SUBDIR libshm_windows)
 else()
     set(LIBSHM_SUBDIR libshm)
 endif()
 
-set(TORCH_SRC_ROOT ${NNCC_PROJECT_ROOT}/external/pytorch)
-set(TORCH_INSTALL_ROOT ${NNCC_PROJECT_ROOT}/external/pytorch/torch)
-#set(TORCH_BUILD_ROOT ${NNCC_PROJECT_ROOT}/external/pytorch-build)
+list(APPEND CMAKE_BUILD_RPATH "${TORCH_INSTALL_ROOT}/lib")
+list(APPEND CMAKE_INSTALL_RPATH "${TORCH_INSTALL_ROOT}/lib")
 
 set(LIBSHM_SRCDIR ${TORCH_SRC_ROOT}/torch/lib/${LIBSHM_SUBDIR})
-add_subdirectory(${LIBSHM_SRCDIR})
 
 find_package(Python COMPONENTS Interpreter Development)
 find_package(pybind11 REQUIRED)

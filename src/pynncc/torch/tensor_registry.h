@@ -18,7 +18,7 @@
 
 struct TensorControl {
     bool controllable = true;
-    nncc::string callback_name;
+    nncc::string callback_name{"update_blend"};
 };
 
 

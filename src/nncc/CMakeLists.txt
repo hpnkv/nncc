@@ -1,6 +1,6 @@
 include(${NNCC_PROJECT_ROOT}/cmake/target_shader.cmake)
 
-add_library(nncc)
+add_library(nncc ${NNCC_PROJECT_ROOT}/external/imnodes/imnodes/imnodes.cpp)
 
 set(NNCC_INCLUDES_PRIVATE ${NNCC_PROJECT_ROOT}/include ${CMAKE_CURRENT_LIST_DIR}/..)
 set(NNCC_INCLUDES_PRIVATE ${NNCC_INCLUDES_PRIVATE} PARENT_SCOPE)
@@ -21,6 +21,7 @@ target_include_directories(nncc PUBLIC
         ${NNCC_PROJECT_ROOT}/external/stb
         ${NNCC_PROJECT_ROOT}/external/IconFontCppHeaders
         ${NNCC_PROJECT_ROOT}/external/ImGuizmo
+        ${NNCC_PROJECT_ROOT}/external/imnodes
         ${CPP_REDIS_INCLUDES}
         ${NNCC_INCLUDES_PRIVATE}
         )
