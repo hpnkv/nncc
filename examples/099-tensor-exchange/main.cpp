@@ -12,26 +12,8 @@
 using namespace nncc;
 namespace py = pybind11;
 
-void SetupPythonPath() {
-    py::module sys = py::module::import("sys");
-    sys.attr("path").attr("insert")(1, "/Users/apankov/Snapchat/dev/cameos-ai");
-
-    py::module segmentation = py::module_::import("ai.playground.art_lenses.segmentation");
-    auto mask_class = segmentation.attr("LabelledMultichannelMask");
-
-//    try {
-//        py::module ai = py::module::import("ai");
-//        auto mask_class = ai.attr("playground").attr("art_lenses").attr("segmentation").attr("LabelledMultichannelMask");
-//    } catch (py::error_already_set&) {
-//        std::cerr << "Pythonpath is incorrect" << std::endl;
-//    }
-
-}
-
 int Loop() {
     using namespace nncc;
-
-    SetupPythonPath();
 
     // Get references to the context, ENTT registry and window holder
     auto& context = context::Context::Get();
@@ -114,12 +96,6 @@ int Loop() {
 
 int main() {
     py::scoped_interpreter guard{};
-    py::module sys = py::module::import("sys");
-    sys.attr("path").attr("insert")(1, "/Users/apankov/Snapchat/dev/cameos-ai");
-    sys.attr("path").attr("insert")(1, "/Users/apankov/.pyenv/versions/3.8.13/envs/ml-lenses/lib/python3.8/site-packages");
-
-    py::module segmentation = py::module_::import("ai.playground.art_lenses.segmentation");
-    auto mask_class = segmentation.attr("LabelledMultichannelMask");
 
     nncc::engine::ApplicationLoop loop;
     loop.connect<&Loop>();
