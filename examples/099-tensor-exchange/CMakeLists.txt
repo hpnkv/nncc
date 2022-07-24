@@ -7,4 +7,5 @@ if (IOS OR WIN32)
 else()
     # For everything else symlink some folders into our output directory
     add_custom_command( TARGET 099-tensor-exchange COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_BINARY_DIR}/src/nncc/shaders $<TARGET_FILE_DIR:099-tensor-exchange>/shaders)
+
 endif()

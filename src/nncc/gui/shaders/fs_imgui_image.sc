@@ -9,8 +9,7 @@ $input v_texcoord0
 
 uniform vec4
 u_imageLodEnabled;
-SAMPLER2D(s_texColor,
-0);
+SAMPLER2D(s_texColor, 0);
 
 #define u_imageLod     u_imageLodEnabled.x
 #define u_imageEnabled u_imageLodEnabled.y
