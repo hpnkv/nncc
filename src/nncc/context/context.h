@@ -43,6 +43,38 @@ public:
     static void ScrollCallback(GLFWwindow* window, double x_offset, double y_offset);
 };
 
+class SubsystemManager {
+public:
+    template<class T>
+    void Register(T* instance) {
+        nncc::string type_name(typeid(T).name());
+        subsystems_[type_name].push_back(static_cast<void*>(instance));
+    }
+
+    template<class T>
+    T* Get() {
+        nncc::string type_name(typeid(T).name());
+        if (subsystems_[type_name].empty()) {
+            return nullptr;
+        }
+        return static_cast<T*>(subsystems_[type_name][0]);
+    }
+
+    template<class T>
+    nncc::vector<T*> GetAll() {
+        nncc::string type_name(typeid(T).name());
+        nncc::vector<T*> result;
+        result.reserve(subsystems_[type_name].size());
+        for (auto* instance : subsystems_[type_name]) {
+            result.push_back(static_cast<T*>(instance));
+        }
+        return result;
+    }
+
+private:
+    std::unordered_map<nncc::string, nncc::vector<void*>> subsystems_;
+};
+
 class Context {
 public:
     Context() = default;
@@ -99,6 +131,7 @@ public:
     entt::dispatcher dispatcher;
     input::InputSystem input;
     rendering::RenderingSystem rendering;
+    SubsystemManager subsystems;
 
 private:
     folly::ProducerConsumerQueue<GlfwMessage> glfw_message_queue_{64};

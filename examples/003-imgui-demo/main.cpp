@@ -8324,7 +8324,12 @@ void ImGui::ShowStyleEditor(ImGuiStyle*) {}
 
 #endif // #ifndef IMGUI_DISABLE
 
+#include <nncc/context/context.h>
+#include <nncc/gui/imgui_bgfx.h>
 #include <nncc/engine/loop.h>
+#include <nncc/engine/camera.h>
+#include <nncc/engine/timer.h>
+
 
 int Loop() {
     // Get references to the context, ENTT registry and window holder

@@ -9,58 +9,8 @@
 #include <pynncc/torch/tensor_registry.h>
 #include <pynncc/torch/shm_communication.h>
 
-#include "node_editor.h"
-
 using namespace nncc;
 namespace py = pybind11;
-
-//namespace nodes {
-//
-//Result EvaluateTensorInputNode(Node* node, entt::registry* registry) {
-//    Result result;
-//    if (!node->settings_by_name.contains("name")) {
-//        result.message = "node does not contain a `name` setting";
-//        return result;
-//    }
-//
-//    auto& name_attribute = node->settings_by_name.at("name");
-//    if (name_attribute.type != AttributeType::String) {
-//        result.message = "`name` setting is not a string.";
-//        return result;
-//    }
-//
-//    if (name_attribute.value == nullptr) {
-//        result.message = "`name` setting is empty.";
-//        return result;
-//    }
-//
-//    const auto& name = *static_cast<nncc::string*>(name_attribute.value);
-//    auto tensors = static_cast<python::TensorRegistry*>(node->settings_by_name.at("tensor_registry").value);
-//
-//    auto entity = tensors->Get(name);
-//    auto& out_attribute = node->outputs_by_name.at("tensor");
-//    out_attribute.entity = entity;
-//
-//    result.code = 0;
-//    result.message = "";
-//
-//    return result;
-//}
-//
-//Node MakeTensorInputNode(python::TensorRegistry* tensors) {
-//    Node node;
-//    node.AddSetting({"name", AttributeType::String});
-//    node.AddSetting({.name = "tensor_registry", .type = AttributeType::UserDefined, .value = static_cast<void*>(tensors)});
-//    node.AddOutput({"tensor", AttributeType::Tensor});
-//
-//    node.evaluate.connect<&EvaluateTensorInputNode>();
-//
-//    return node;
-//}
-//
-//}
-
-
 
 int Loop() {
     using namespace nncc;
@@ -68,6 +18,8 @@ int Loop() {
     // Get references to the context, ENTT registry and window holder
     auto& context = context::Context::Get();
     auto& window = context.GetWindow(0);
+
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 4.0f);
 
     // Create a thread listening to shared memory handles and a tensor registry
     bx::Thread tensor_update_listener_;
@@ -88,23 +40,14 @@ int Loop() {
     bx::Vec3 eye{1., 0., -10.}, at{0., 1., 0.}, up{0., 0., -1.};
     engine::Camera camera{eye, at, up};
 
-    nodes::ComputeGraph graph;
-    nodes::ComputeNode independent_node, dependent_node;
-    dependent_node.AddInput({.name = "input", .type = nodes::AttributeType::String});
-    independent_node.AddOutput({.name = "output", .type = nodes::AttributeType::String});
+    nodes::ComputeNodeEditor compute_node_editor;
 
-    auto dependent = boost::add_vertex(dependent_node, graph);
-    auto independent = boost::add_vertex(independent_node, graph);
-    boost::add_edge(independent, dependent, {"output", "input"}, graph);
-    boost::write_graphviz(std::cout, graph, [&](auto& out, auto v) {
-                              out << "[label=\"" << graph[v].id << "\"]";
-                          },
-                          [&](auto& out, auto e) {
-                              out << "[label=\"" << graph[e].from_output << "->" << graph[e].to_input << "\"]";
-                          });
-    std::cout << std::flush;
-
-    node_editor::NodeEditorInitialize();
+//    boost::write_graphviz(std::cout, graph, [&](auto& out, auto v) {
+//                              out << "[label=\"" << graph[v].id << "\"]";
+//                          },
+//                          [&](auto& out, auto e) {
+//                              out << "[label=\"" << graph[e].from_output << "->" << graph[e].to_input << "\"]";
+//                          });
 
     // Frame-by-frame loop
     while (true) {
@@ -133,10 +76,28 @@ int Loop() {
             }
             ImGui::EndMainMenuBar();
         }
-        node_editor::NodeEditorShow(timer.Time());
         for (const auto& gui_piece: gui_pieces) {
             gui_piece.render();
         }
+
+        ImGui::SetNextWindowPos(ImVec2(1250.0f, 50.0f), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(320.0f, 600.0f), ImGuiCond_FirstUseEver);
+        ImGui::Begin("Compute nodes context");
+        auto selected_nodes = compute_node_editor.GetSelectedNodes();
+        if (ImGui::Button("Evaluate graph")) {
+            compute_node_editor.GetGraph().Evaluate(&context.registry);
+        }
+        if (selected_nodes.size() == 1) {
+            if (selected_nodes[0]->render_context_ui) {
+                selected_nodes[0]->render_context_ui(selected_nodes[0]);
+            }
+        }
+        ImGui::End();
+
+        ImGui::SetNextWindowPos(ImVec2(400.0f, 50.0f), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(800.0f, 600.0f), ImGuiCond_FirstUseEver);
+        compute_node_editor.Update();
+
         imguiEndFrame();
 
         auto aspect_ratio = static_cast<float>(window.width) / static_cast<float>(window.height);
@@ -154,8 +115,6 @@ int Loop() {
         bgfx::frame();
         timer.Update();
     }
-
-    node_editor::NodeEditorShutdown();
 
     python::StopSharedTensorRedisLoop(python::kRedisQueueName);
     return 0;
