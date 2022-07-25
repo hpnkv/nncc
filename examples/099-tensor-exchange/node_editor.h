@@ -122,7 +122,7 @@ public:
         auto flags = ImGuiWindowFlags_MenuBar;
 
         // The node editor window
-        ImGui::Begin("color node editor", NULL, flags);
+        ImGui::Begin("color node editor", nullptr, flags);
 
         if (ImGui::BeginMenuBar()) {
             if (ImGui::BeginMenu("Mini-map")) {
@@ -141,7 +141,7 @@ public:
 
                 for (int i = 0; i < 4; i++) {
                     bool selected = minimap_location_ == locations[i];
-                    if (ImGui::MenuItem(names[i], NULL, &selected))
+                    if (ImGui::MenuItem(names[i], nullptr, &selected))
                         minimap_location_ = locations[i];
                 }
                 ImGui::EndMenu();
@@ -173,7 +173,7 @@ public:
         ImGui::NextColumn();
         if (ImGui::Checkbox("emulate_three_button_mouse", &emulate_three_button_mouse)) {
             ImNodes::GetIO().EmulateThreeButtonMouse.Modifier =
-                emulate_three_button_mouse ? &ImGui::GetIO().KeyAlt : NULL;
+                emulate_three_button_mouse ? &ImGui::GetIO().KeyAlt : nullptr;
         }
         ImGui::Columns(1);
 

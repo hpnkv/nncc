@@ -12,6 +12,7 @@
 #include <nncc/common/types.h>
 #include <nncc/context/context.h>
 #include <nncc/gui/gui.h>
+#include <nncc/gui/nodes/graph.h>
 #include <nncc/rendering/renderer.h>
 #include <nncc/rendering/primitives.h>
 
@@ -85,6 +86,7 @@ public:
     TensorRegistry() = default;
 
     void Init(entt::dispatcher* dispatcher) {
+        context::Context::Get().subsystems.Register(this);
         dispatcher->sink<SharedTensorEvent>().connect<&TensorRegistry::OnSharedTensorUpdate>(*this);
         dispatcher->sink<TensorControlEvent>().connect<&TensorRegistry::OnSharedTensorControl>(*this);
         redis_.connect();
@@ -137,7 +139,8 @@ public:
 
         ImGui::SetNextWindowPos(ImVec2(50.0f, 50.0f), ImGuiCond_FirstUseEver);
         ImGui::SetNextWindowSize(ImVec2(320.0f, 800.0f), ImGuiCond_FirstUseEver);
-        if (ImGui::Begin("Shared tensors")) {
+        if (ImGui::Begin("Data")) {
+            ImGui::LabelText("", "Shared tensors");
             if (ImGui::BeginListBox("##label")) {
                 auto named_tensors = cregistry.view<Name, TensorWithPointer>();
                 for (auto entity : named_tensors) {
@@ -207,6 +210,37 @@ private:
     TensorRegistry& tensors_;
     nncc::string selected_name_;
 };
+
+//nodes::ComputeNode MakeTensorInputOp(const nncc::string& name) {
+//    nodes::ComputeNode node;
+//
+//    node.name = name;
+//    node.type = "TensorInput";
+//
+//    node.AddSetting(nodes::Attribute("name", nodes::AttributeType::String));
+//    node.AddOutput(nodes::Attribute("value", nodes::AttributeType::Tensor));
+//
+//    auto evaluate_fn = [](nodes::ComputeNode* node, entt::registry* registry) {
+//        auto& context = context::Context::Get();
+//        auto* tensor_registry = context.subsystems.Get<TensorRegistry>();
+//        if (tensor_registry == nullptr) {
+//            return nodes::Result{1, "Tensor registry subsystem is not initialised."};
+//        }
+//
+//        tensor_registry->Get();
+//
+//        node->outputs_by_name.at("value").value = node->settings_by_name.at("value").value;
+//        return nodes::Result{0, ""};
+//    };
+//    node.evaluate.connect<evaluate_fn>();
+//
+//    auto render_extended_view_fn = [](nodes::ComputeNode* node) {
+//        ImGui::InputFloat("Value", &node->settings_by_name.at("value").value, 0.1f, 1.0f, "%0.2f");
+//    };
+//    node.render_context_ui.connect<render_extended_view_fn>();
+//
+//    return node;
+//}
 
 }
 
