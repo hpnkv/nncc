@@ -12,9 +12,11 @@
 #include <nncc/common/types.h>
 #include <nncc/context/context.h>
 #include <nncc/gui/gui.h>
-#include <nncc/gui/nodes/graph.h>
+#include <nncc/nodes/graph.h>
 #include <nncc/rendering/renderer.h>
 #include <nncc/rendering/primitives.h>
+
+#include "compute_nodes.h"
 
 
 struct TensorControl {
@@ -227,7 +229,12 @@ private:
 //            return nodes::Result{1, "Tensor registry subsystem is not initialised."};
 //        }
 //
-//        tensor_registry->Get();
+//        auto entity = tensor_registry->Get(node->settings_by_name.at("name"));
+//        auto* tensor_with_pointer = context.registry.try_get<TensorWithPointer>(entity);
+//        if (tensor_with_pointer == nullptr) {
+//            return nodes::Result{1, "No tensor exists with specified name."};
+//        }
+//        tensor_registry->Get(*te);
 //
 //        node->outputs_by_name.at("value").value = node->settings_by_name.at("value").value;
 //        return nodes::Result{0, ""};

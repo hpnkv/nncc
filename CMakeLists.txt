@@ -23,6 +23,9 @@ set(CPP_REDIS_LIBS cpp_redis)
 add_subdirectory(src/nncc)
 add_subdirectory(examples)
 
+list(APPEND CMAKE_PREFIX_PATH ${NNCC_PROJECT_ROOT}/external/dyno/dependencies/install)
+set(DYNO_INCLUDE_PATH ${NNCC_PROJECT_ROOT}/external/dyno/include)
+
 # PyTorch
 set(TORCH_SRC_ROOT ${NNCC_PROJECT_ROOT}/external/pytorch)  # for libshm
 set(TORCH_BUILD_ROOT ${NNCC_PROJECT_ROOT}/external/pytorch-build)
@@ -38,9 +41,6 @@ else()
     set(LIBSHM_SUBDIR libshm)
 endif()
 
-list(APPEND CMAKE_BUILD_RPATH "${TORCH_INSTALL_ROOT}/lib")
-list(APPEND CMAKE_INSTALL_RPATH "${TORCH_INSTALL_ROOT}/lib")
-
 set(LIBSHM_SRCDIR ${TORCH_SRC_ROOT}/torch/lib/${LIBSHM_SUBDIR})
 
 find_package(Python COMPONENTS Interpreter Development)
@@ -50,3 +50,9 @@ set(TORCH_ALL_INCLUDES ${TORCH_INSTALL_ROOT}/include ${TORCH_INSTALL_ROOT}/inclu
 
 
 add_subdirectory(src/pynncc)
+
+message(TORCH_ALL_INCLUDES ${TORCH_ALL_INCLUDES})
+add_executable(test-poly ${NNCC_PROJECT_ROOT}/src/pynncc/torch/compute_nodes.cpp)
+target_link_libraries(test-poly PRIVATE nncc pynncc "${TORCH_LIBRARIES}" ${Python_LIBRARIES} pybind11::embed ${CPP_REDIS_LIBS}
+        "${TORCH_BUILD_ROOT}/lib/libonnx.a" "${TORCH_BUILD_ROOT}/lib/libonnx_proto.a")
+target_include_directories(test-poly PRIVATE ${TORCH_ALL_INCLUDES})
