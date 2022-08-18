@@ -12,11 +12,9 @@
 #include <nncc/common/types.h>
 #include <nncc/context/context.h>
 #include <nncc/gui/gui.h>
-#include <nncc/nodes/graph.h>
+#include <nncc/gui/nodes/graph.h>
 #include <nncc/rendering/renderer.h>
 #include <nncc/rendering/primitives.h>
-
-#include "compute_nodes.h"
 
 
 struct TensorControl {

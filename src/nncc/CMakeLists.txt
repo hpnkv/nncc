@@ -24,7 +24,7 @@ target_include_directories(nncc PUBLIC
         ${NNCC_PROJECT_ROOT}/external/imnodes
         ${CPP_REDIS_INCLUDES}
         ${NNCC_INCLUDES_PRIVATE}
-        ${NNCC_PROJECT_ROOT}/external/dyno/include
+        ${DYNO_INCLUDE_PATH}
         )
 
 # Common: types, utilities, macros
@@ -53,18 +53,12 @@ target_sources(
         nncc PRIVATE
         ${NNCC_GUI_DIR}/imgui_bgfx.cpp
         ${NNCC_GUI_DIR}/imgui_smart_strings.cpp
+        ${NNCC_GUI_DIR}/nodes/graph.cpp
 )
 target_shader(nncc ${NNCC_GUI_DIR}/shaders/fs_imgui_image.sc FRAGMENT)
 target_shader(nncc ${NNCC_GUI_DIR}/shaders/vs_imgui_image.sc VERTEX)
 target_shader(nncc ${NNCC_GUI_DIR}/shaders/fs_ocornut_imgui.sc FRAGMENT)
 target_shader(nncc ${NNCC_GUI_DIR}/shaders/vs_ocornut_imgui.sc VERTEX)
-
-# Nodes: computation graphs
-set(NNCC_NODES_DIR ${CMAKE_CURRENT_LIST_DIR}/nodes)
-target_sources(
-        nncc PRIVATE
-        ${NNCC_NODES_DIR}/graph.cpp
-)
 
 # Input: abstraction for key/mouse/char events, event queue
 set(NNCC_INPUT_DIR ${CMAKE_CURRENT_LIST_DIR}/input)

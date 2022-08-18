@@ -15,6 +15,8 @@ namespace py = pybind11;
 int Loop() {
     using namespace nncc;
 
+    py::scoped_interpreter guard{};
+
     // Get references to the context, ENTT registry and window holder
     auto& context = context::Context::Get();
     auto& window = context.GetWindow(0);
@@ -41,13 +43,6 @@ int Loop() {
     engine::Camera camera{eye, at, up};
 
     nodes::ComputeNodeEditor compute_node_editor;
-
-//    boost::write_graphviz(std::cout, graph, [&](auto& out, auto v) {
-//                              out << "[label=\"" << graph[v].id << "\"]";
-//                          },
-//                          [&](auto& out, auto e) {
-//                              out << "[label=\"" << graph[e].from_output << "->" << graph[e].to_input << "\"]";
-//                          });
 
     // Frame-by-frame loop
     while (true) {
@@ -121,8 +116,6 @@ int Loop() {
 }
 
 int main() {
-    py::scoped_interpreter guard{};
-
     nncc::engine::ApplicationLoop loop;
     loop.connect<&Loop>();
     return nncc::engine::Run(&loop);

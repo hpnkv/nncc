@@ -52,7 +52,7 @@ set(TORCH_ALL_INCLUDES ${TORCH_INSTALL_ROOT}/include ${TORCH_INSTALL_ROOT}/inclu
 add_subdirectory(src/pynncc)
 
 message(TORCH_ALL_INCLUDES ${TORCH_ALL_INCLUDES})
-add_executable(test-poly ${NNCC_PROJECT_ROOT}/src/pynncc/torch/compute_nodes.cpp)
-target_link_libraries(test-poly PRIVATE nncc pynncc "${TORCH_LIBRARIES}" ${Python_LIBRARIES} pybind11::embed ${CPP_REDIS_LIBS}
-        "${TORCH_BUILD_ROOT}/lib/libonnx.a" "${TORCH_BUILD_ROOT}/lib/libonnx_proto.a")
-target_include_directories(test-poly PRIVATE ${TORCH_ALL_INCLUDES})
+#add_executable(test-poly ${NNCC_PROJECT_ROOT}/src/pynncc/torch/compute_nodes.cpp)
+#target_link_libraries(test-poly PRIVATE nncc pynncc "${TORCH_LIBRARIES}" ${Python_LIBRARIES} pybind11::embed ${CPP_REDIS_LIBS}
+#        "${TORCH_BUILD_ROOT}/lib/libonnx.a" "${TORCH_BUILD_ROOT}/lib/libonnx_proto.a")
+#target_include_directories(test-poly PRIVATE ${TORCH_ALL_INCLUDES})

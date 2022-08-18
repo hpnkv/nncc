@@ -5,6 +5,7 @@ add_library(
         module.cpp
         ${NNCC_PROJECT_ROOT}/src/pynncc/torch/tensor_registry.cpp
         ${NNCC_PROJECT_ROOT}/src/pynncc/torch/shm_communication.cpp
+        ${NNCC_PROJECT_ROOT}/src/pynncc/python/ops.cpp
         ${TORCH_SRC_ROOT}/torch/lib/libshm/core.cpp
 )
 
