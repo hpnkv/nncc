@@ -1,13 +1,13 @@
 #include <boost/graph/graphviz.hpp>
 #include <pybind11/embed.h>
-#include <pybind11/pybind11.h>
+
+#include <pynncc/torch/tensor_registry.h>
+#include <pynncc/torch/shm_communication.h>
 
 #include <nncc/engine/camera.h>
 #include <nncc/engine/loop.h>
 #include <nncc/engine/timer.h>
 #include <nncc/gui/nodes/graph.h>
-#include <pynncc/torch/tensor_registry.h>
-#include <pynncc/torch/shm_communication.h>
 
 using namespace nncc;
 namespace py = pybind11;

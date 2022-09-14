@@ -1,5 +1,5 @@
-#include "shm_communication.h"
 #include "tensor_registry.h"
+#include "shm_communication.h"
 
 #include <folly/String.h>
 #include <folly/Range.h>

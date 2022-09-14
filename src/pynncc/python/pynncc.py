@@ -6,7 +6,7 @@ def get_tensor_shm_handle(tensor: torch.Tensor) -> str:
     if not tensor.is_shared():
         raise ValueError("Supplied tensor is not in shared memory.")
         
-    manager_handle, filename, _ = tensor.storage()._share_filename_()
+    manager_handle, filename, _ = tensor.storage()._share_filename_cpu_()
 
     dtype = None
     if tensor.dtype == torch.uint8:

@@ -17,25 +17,7 @@ namespace nncc::rendering {
 
 class RenderingSystem {
 public:
-    int Init(uint16_t width, uint16_t height) {
-        rendering::PosNormUVVertex::Init();
-
-        bgfx::Init init;
-        init.resolution.width = (uint32_t) width;
-        init.resolution.height = (uint32_t) height;
-        init.resolution.reset = BGFX_RESET_VSYNC | BGFX_RESET_HIDPI;
-        if (!bgfx::init(init)) {
-            return 1;
-        }
-
-        bx::FileReader reader;
-        const auto fs = nncc::engine::LoadShader(&reader, "fs_default_diffuse");
-        const auto vs = nncc::engine::LoadShader(&reader, "vs_default_diffuse");
-        auto program = bgfx::createProgram(vs, fs, true);
-        shader_programs_["default_diffuse"] = program;
-
-        return 0;
-    }
+    int Init(uint16_t width, uint16_t height);
 
     void Update(context::Context& context, const math::Transform& view_matrix, const math::Transform& projection_matrix, uint16_t width, uint16_t height);
 

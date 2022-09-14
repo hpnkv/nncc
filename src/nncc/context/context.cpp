@@ -10,15 +10,7 @@ bool Context::InitInMainThread() {
 
     // this init happens prior to RenderingSystem.InitInMainThread() to indicate BGFX that
     // we will use a separate rendering thread.
-    bgfx::PlatformData pd;
-    pd.ndt = windows_[0].GetNativeDisplayType();
-    pd.nwh = windows_[0].GetNativeHandle();
-    pd.context = nullptr;
-    pd.backBuffer = nullptr;
-    pd.backBufferDS = nullptr;
-    bgfx::setPlatformData(pd);
     bgfx::renderFrame();
-
     return true;
 }
 

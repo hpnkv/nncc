@@ -78,9 +78,9 @@ void BatchRenderer::Flush() {
     if (type_ == bgfx::RendererType::Noop) {
         type_ = bgfx::getRendererType();
     }
-//    if (type_ == bgfx::RendererType::Metal) {
-//        vertex_winding_direction = BGFX_STATE_FRONT_CCW;
-//    }
+    if (type_ == bgfx::RendererType::Metal) {
+        vertex_winding_direction = BGFX_STATE_FRONT_CCW;
+    }
 
     bool is_batch = false;
     for (auto& [batch_id, batch] : batch_groups_) {

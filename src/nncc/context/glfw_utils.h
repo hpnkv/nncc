@@ -11,12 +11,17 @@
 
 #if NNCC_PLATFORM_LINUX
 #define GLFW_EXPOSE_NATIVE_X11
+#define GLFW_EXPOSE_NATIVE_GLX
 #elif NNCC_PLATFORM_WINDOWS
 #define GLFW_EXPOSE_NATIVE_WIN32
 #elif NNCC_PLATFORM_OSX
 #define GLFW_EXPOSE_NATIVE_COCOA
 #endif
 #include <GLFW/glfw3native.h>
+
+#if NNCC_PLATFORM_LINUX
+#include <nncc/common/X11_undefine_none.h>
+#endif
 
 namespace nncc::context {
 
@@ -50,7 +55,6 @@ struct GLFWWindowWrapper {
 
     void* GetNativeHandle() {
 #if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
-        init.platformData.ndt = glfwGetX11Display();
         return (void*)(uintptr_t)glfwGetX11Window(ptr.get());
 #elif BX_PLATFORM_OSX
         return glfwGetCocoaWindow(ptr.get());

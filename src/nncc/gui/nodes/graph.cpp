@@ -5,6 +5,15 @@ namespace nncc::nodes {
 int Attribute::id_counter = 0;
 int ComputeNode::id_counter = 0;
 
+auto ConstOpEvaluateFn(ComputeNode* node, entt::registry* registry) {
+    node->outputs_by_name.at("value").value = node->settings_by_name.at("value").value;
+    return Result{0, ""};
+}
+
+auto ConstOpRenderFn(ComputeNode* node) {
+    ImGui::InputFloat("Value", &node->settings_by_name.at("value").value, 0.1f, 1.0f, "%0.2f");
+}
+
 ComputeNode MakeConstOp(const string& name) {
     ComputeNode node;
 
@@ -14,18 +23,23 @@ ComputeNode MakeConstOp(const string& name) {
     node.AddSetting(Attribute("value", AttributeType::UserDefined));
     node.AddOutput(Attribute("value", AttributeType::UserDefined));
 
-    auto evaluate_fn = [](ComputeNode* node, entt::registry* registry) {
-        node->outputs_by_name.at("value").value = node->settings_by_name.at("value").value;
-        return Result{0, ""};
-    };
-    node.evaluate.connect<evaluate_fn>();
-
-    auto render_extended_view_fn = [](ComputeNode* node) {
-        ImGui::InputFloat("Value", &node->settings_by_name.at("value").value, 0.1f, 1.0f, "%0.2f");
-    };
-    node.render_context_ui.connect<render_extended_view_fn>();
+    node.evaluate.connect<&ConstOpEvaluateFn>();
+    node.render_context_ui.connect<&ConstOpRenderFn>();
 
     return node;
+}
+
+auto AddOpEvaluateFn(ComputeNode* node, entt::registry* registry) {
+    auto a = node->inputs_by_name.at("a").value;
+    auto b = node->inputs_by_name.at("b").value;
+
+    node->outputs_by_name.at("result").value = a + b;
+
+    return Result{0, ""};
+}
+
+auto AddOpRenderFn(ComputeNode* node) {
+    ImGui::InputFloat("result", &node->outputs_by_name.at("result").value, 0.0f, 0.0f, "%0.2f", ImGuiInputTextFlags_ReadOnly);
 }
 
 ComputeNode MakeAddOp(const string& name) {
@@ -39,22 +53,23 @@ ComputeNode MakeAddOp(const string& name) {
 
     node.AddOutput(Attribute("result", AttributeType::UserDefined));
 
-    auto evaluate_fn = [](ComputeNode* node, entt::registry* registry) {
-        auto a = node->inputs_by_name.at("a").value;
-        auto b = node->inputs_by_name.at("b").value;
-
-        node->outputs_by_name.at("result").value = a + b;
-
-        return Result{0, ""};
-    };
-    node.evaluate.connect<evaluate_fn>();
-
-    auto render_extended_view_fn = [](ComputeNode* node) {
-        ImGui::InputFloat("result", &node->outputs_by_name.at("result").value, 0.0f, 0.0f, "%0.2f", ImGuiInputTextFlags_ReadOnly);
-    };
-    node.render_context_ui.connect<render_extended_view_fn>();
+    node.evaluate.connect<&AddOpEvaluateFn>();
+    node.render_context_ui.connect<&AddOpRenderFn>();
 
     return node;
+}
+
+auto MulOpEvaluateFn(ComputeNode* node, entt::registry* registry) {
+    auto a = node->inputs_by_name.at("a").value;
+    auto b = node->inputs_by_name.at("b").value;
+
+    node->outputs_by_name.at("result").value = a * b;
+
+    return Result{0, ""};
+}
+
+auto MulOpRenderFn(ComputeNode* node) {
+    ImGui::InputFloat("result", &node->outputs_by_name.at("result").value, 0.0f, 0.0f, "%0.2f", ImGuiInputTextFlags_ReadOnly);
 }
 
 ComputeNode MakeMulOp(const string& name) {
@@ -68,20 +83,8 @@ ComputeNode MakeMulOp(const string& name) {
 
     node.AddOutput(Attribute("result", AttributeType::UserDefined));
 
-    auto evaluate_fn = [](ComputeNode* node, entt::registry* registry) {
-        auto a = node->inputs_by_name.at("a").value;
-        auto b = node->inputs_by_name.at("b").value;
-
-        node->outputs_by_name.at("result").value = a * b;
-
-        return Result{0, ""};
-    };
-    node.evaluate.connect<evaluate_fn>();
-
-    auto render_extended_view_fn = [](ComputeNode* node) {
-        ImGui::InputFloat("result", &node->outputs_by_name.at("result").value, 0.0f, 0.0f, "%0.2f", ImGuiInputTextFlags_ReadOnly);
-    };
-    node.render_context_ui.connect<render_extended_view_fn>();
+    node.evaluate.connect<&MulOpEvaluateFn>();
+    node.render_context_ui.connect<&MulOpRenderFn>();
 
     return node;
 }

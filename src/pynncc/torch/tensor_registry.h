@@ -4,10 +4,10 @@
 #include <numeric>
 #include <unordered_set>
 
+#include <torch/torch.h>
 #include <bgfx/bgfx.h>
 #include <cpp_redis/cpp_redis>
 #include <fmt/format.h>
-#include <torch/torch.h>
 
 #include <nncc/common/types.h>
 #include <nncc/context/context.h>

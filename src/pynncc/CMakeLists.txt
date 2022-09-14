@@ -11,7 +11,7 @@ add_library(
 message(Python_INCLUDE_DIRS ${Python_INCLUDE_DIRS})
 
 
-target_link_libraries(pynncc PRIVATE nncc "${TORCH_LIBRARIES}" ${Python_LIBRARIES} pybind11::embed ${CPP_REDIS_LIBS}
+target_link_libraries(pynncc PRIVATE nncc ${Python_LIBRARIES} pybind11::embed ${CPP_REDIS_LIBS}
         "${TORCH_BUILD_ROOT}/lib/libonnx.a" "${TORCH_BUILD_ROOT}/lib/libonnx_proto.a"
         )
 target_include_directories(
