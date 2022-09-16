@@ -167,6 +167,8 @@ struct OcornutImguiContext {
         if (fb_width <= 0 || fb_height <= 0)
             return;
 
+        _drawData->ScaleClipRects(_drawData->FramebufferScale);
+
         bgfx::setViewName(m_viewId, "ImGui");
         bgfx::setViewMode(m_viewId, bgfx::ViewMode::Sequential);
 
@@ -273,7 +275,10 @@ struct OcornutImguiContext {
         }
     }
 
-    void create(float _fontSize, bx::AllocatorI* _allocator) {
+    void create(float _fontSize, bx::AllocatorI* _allocator, float scale_w = 1., float scale_h = 1.) {
+        m_scale_w = scale_w;
+        m_scale_h = scale_h;
+
         m_allocator = _allocator;
 
         if (NULL == _allocator) {
@@ -443,7 +448,8 @@ struct OcornutImguiContext {
 
     void endFrame() {
         ImGui::Render();
-        render(ImGui::GetDrawData());
+        auto draw_data = ImGui::GetDrawData();
+        render(draw_data);
     }
 
     ImGuiContext* m_imgui;
@@ -458,6 +464,8 @@ struct OcornutImguiContext {
     int64_t m_last;
     int32_t m_lastScroll;
     bgfx::ViewId m_viewId;
+
+    float m_scale_w, m_scale_h;
 
     // TODO: I need to pass key-up events properly, this needs a refactoring of key_state
     std::unordered_set<nncc::input::Key> previous_pressed_keys;
@@ -477,8 +485,8 @@ static void memFree(void* _ptr, void* _userData) {
     BX_FREE(context.m_allocator, _ptr);
 }
 
-void imguiCreate(float _fontSize, bx::AllocatorI* _allocator) {
-    context.create(_fontSize, _allocator);
+void imguiCreate(float _fontSize, bx::AllocatorI* _allocator, float scale_w, float scale_h) {
+    context.create(_fontSize * scale_w, _allocator, scale_w, scale_h);
 }
 
 void imguiDestroy() {

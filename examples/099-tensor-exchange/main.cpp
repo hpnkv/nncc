@@ -19,7 +19,7 @@ int Loop() {
     auto& context = context::Context::Get();
     auto& window = context.GetWindow(0);
 
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 4.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 4.0f * window.scale_w);
 
     // Create a thread listening to shared memory handles and a tensor registry
     bx::Thread tensor_update_listener_;
@@ -73,8 +73,8 @@ int Loop() {
             gui_piece.render();
         }
 
-        ImGui::SetNextWindowPos(ImVec2(1250.0f, 50.0f), ImGuiCond_FirstUseEver);
-        ImGui::SetNextWindowSize(ImVec2(320.0f, 600.0f), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowPos(ImVec2(1250.0f * window.scale_w, 50.0f * window.scale_h), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(320.0f * window.scale_w, 600.0f * window.scale_h), ImGuiCond_FirstUseEver);
         ImGui::Begin("Compute nodes context");
         auto selected_nodes = compute_node_editor.GetSelectedNodes();
         if (ImGui::Button("Evaluate graph")) {
@@ -87,8 +87,8 @@ int Loop() {
         }
         ImGui::End();
 
-        ImGui::SetNextWindowPos(ImVec2(400.0f, 50.0f), ImGuiCond_FirstUseEver);
-        ImGui::SetNextWindowSize(ImVec2(800.0f, 600.0f), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowPos(ImVec2(400.0f * window.scale_w, 50.0f * window.scale_h), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(800.0f * window.scale_w, 600.0f * window.scale_h), ImGuiCond_FirstUseEver);
         compute_node_editor.Update();
 
         imguiEndFrame();
@@ -99,8 +99,8 @@ int Loop() {
         context.rendering.Update(context,
                                  camera.GetViewMatrix(),
                                  camera.GetProjectionMatrix(),
-                                 window.width,
-                                 window.height);
+                                 window.framebuffer_width,
+                                 window.framebuffer_height);
 
         // TODO: make this a subsystem's job
         context.input.input_characters.clear();

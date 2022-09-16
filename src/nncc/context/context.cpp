@@ -34,6 +34,7 @@ int16_t Context::CreateWindow(uint16_t width, uint16_t height, const nncc::strin
     glfwSetKeyCallback(window.ptr.get(), &GlfwWindowingImpl::KeyCallback);
     glfwSetCharCallback(window.ptr.get(), &GlfwWindowingImpl::CharacterCallback);
     glfwSetScrollCallback(window.ptr.get(), &GlfwWindowingImpl::ScrollCallback);
+    glfwSetFramebufferSizeCallback(window.ptr.get(), &GlfwWindowingImpl::FramebufferSizeCallback);
 
     int16_t window_idx = static_cast<int16_t>(windows_.size());
     window_indices_[window.ptr.get()] = window_idx;
@@ -120,6 +121,10 @@ void GlfwWindowingImpl::ScrollCallback(GLFWwindow* window, double x_offset, doub
     context.input.queue.Push(window_idx, std::move(event));
 }
 
+void GlfwWindowingImpl::FramebufferSizeCallback(GLFWwindow* window, int width, int height) {
+
+}
+
 void Context::Exit() {
     std::unique_ptr<input::Event> event(new input::ExitEvent);
     Context::Get().input.queue.Push(0, std::move(event));
@@ -129,6 +134,8 @@ void Context::Exit() {
 
 bool nncc::input::InputSystem::ProcessEvents() {
     std::shared_ptr<Event> event;
+
+    auto& context = context::Context::Get();
 
     do {
         event = queue.Poll();
@@ -141,10 +148,13 @@ bool nncc::input::InputSystem::ProcessEvents() {
 
         } else if (event->type == EventType::Resize) {
             auto resize_event = std::dynamic_pointer_cast<ResizeEvent>(event);
-            nncc::context::Context::Get().SetWindowResolution(event->window_idx,
-                                                              resize_event->width,
-                                                              resize_event->height);
-            bgfx::reset(resize_event->width, resize_event->height, BGFX_RESET_VSYNC | BGFX_RESET_HIDPI);
+            nncc::context::Context::Get().SetWindowSize(event->window_idx,
+                                                        resize_event->width,
+                                                        resize_event->height);
+
+            const auto& window = context.GetWindow(event->window_idx);
+
+            bgfx::reset(window.framebuffer_width, window.framebuffer_height, BGFX_RESET_VSYNC | BGFX_RESET_HIDPI);
             bgfx::setViewRect(0, 0, 0, bgfx::BackbufferRatio::Equal);
 
         } else if (event->type == EventType::MouseButton) {

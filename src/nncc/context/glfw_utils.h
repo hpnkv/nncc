@@ -39,9 +39,28 @@ struct GLFWWindowWrapper {
     GLFWWindowWrapper(uint16_t _width, uint16_t _height, nncc::string _title, GLFWmonitor* monitor = nullptr,
                       GLFWwindow* share = nullptr) : title(std::move(_title)), width(_width), height(_height) {
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+#if NNCC_PLATFORM_LINUX || NNCC_PLATFORM_BSD
+        glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);
+#endif
         auto window = glfwCreateWindow(
             width, height, title.c_str(), monitor, share
         );
+        glfwGetFramebufferSize(window, &framebuffer_width, &framebuffer_height);
+
+        int temp_width, temp_height;
+        glfwGetWindowSize(window, &temp_width, &temp_height);
+        width = temp_width;
+        height = temp_height;
+
+#if NNCC_PLATFORM_LINUX || NNCC_PLATFORM_BSD
+        auto actual_monitor = glfwGetWindowMonitor(window);
+        glfwGetMonitorContentScale(actual_monitor, &scale_w, &scale_h);
+#elif NNCC_PLATFORM_OSX
+        // TODO: this is a very rough approximation and needs to be rewritten
+        scale_w = static_cast<float>(framebuffer_width) / static_cast<float>(width);
+        scale_h = static_cast<float>(framebuffer_height) / static_cast<float>(height);
+#endif
+
         ptr.reset(window);
     }
 
@@ -65,6 +84,8 @@ struct GLFWWindowWrapper {
 
     GLFWWindowUniquePtr ptr;
     uint16_t width = 0, height = 0;
+    int framebuffer_width = 0, framebuffer_height = 0;
+    float scale_w, scale_h;
     nncc::string title = "window";
 
     // TODO: do we need to save monitor and share?

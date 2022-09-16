@@ -41,6 +41,8 @@ public:
     static void KeyCallback(GLFWwindow* window, int32_t key, int32_t scancode, int32_t action, int32_t modifiers);
 
     static void ScrollCallback(GLFWwindow* window, double x_offset, double y_offset);
+
+    static void FramebufferSizeCallback(GLFWwindow* window, int width, int height);
 };
 
 class SubsystemManager {
@@ -122,9 +124,11 @@ public:
         return &default_thread_;
     }
 
-    void SetWindowResolution(int16_t idx, int width, int height) {
+    void SetWindowSize(int16_t idx, int width, int height) {
         windows_[idx].width = width;
         windows_[idx].height = height;
+
+        glfwGetFramebufferSize(windows_[idx].ptr.get(), &windows_[idx].framebuffer_width, &windows_[idx].framebuffer_height);
     }
 
     entt::registry registry;

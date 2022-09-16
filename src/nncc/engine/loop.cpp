@@ -13,11 +13,15 @@ int LoopThreadFunc(bx::Thread* self, void* args) {
     auto& context = context::Context::Get();
     auto& window = context.GetWindow(0);
 
-    if (context.rendering.Init(window.width, window.height) != 0) {
+    if (context.rendering.Init(window.framebuffer_width, window.framebuffer_height) != 0) {
         return 1;
     }
+    float font_size = 18;
+    imguiCreate(font_size, NULL, window.scale_w, window.scale_h);
+#if NNCC_PLATFORM_LINUX
+    ImGui::GetStyle().ScaleAllSizes(window.scale_w);
+#endif
 
-    imguiCreate();
     ImNodes::CreateContext();
 
     int result = delegate();
