@@ -105,6 +105,7 @@ int Loop() {
         // TODO: make this a subsystem's job
         context.input.input_characters.clear();
 
+//        bgfx::setDebug(BGFX_DEBUG_STATS);
         bgfx::frame();
         timer.Update();
     }

@@ -123,10 +123,10 @@ void BatchRenderer::Flush() {
                 bgfx::setIndexBuffer(ibh);
                 bgfx::setState(BGFX_STATE_DEFAULT | vertex_winding_direction);
 
-                float color_a = static_cast<float>(command.material.diffuse_color & 0xFF) / 255.;
-                float color_b = static_cast<float>(command.material.diffuse_color >> 8 & 0xFF) / 255.;
-                float color_g = static_cast<float>(command.material.diffuse_color >> 16 & 0xFF) / 255.;
-                float color_r = static_cast<float>(command.material.diffuse_color >> 24 & 0xFF) / 255.;
+                float color_a = static_cast<float>(command.material.diffuse_color & 0xFF) / 255.0f;
+                float color_b = static_cast<float>(command.material.diffuse_color >> 8 & 0xFF) / 255.0f;
+                float color_g = static_cast<float>(command.material.diffuse_color >> 16 & 0xFF) / 255.0f;
+                float color_r = static_cast<float>(command.material.diffuse_color >> 24 & 0xFF) / 255.0f;
                 auto color = std::array<float, 4>{color_r, color_g, color_b, color_a};
                 bgfx::setUniform(command.material.d_color_uniform, color.data());
 

@@ -16,14 +16,13 @@ void RenderingSystem::Update(nncc::context::Context& context,
     renderer_.SetViewport({0, 0, static_cast<float>(width), static_cast<float>(height)});
 
     auto view = cregistry.view<Material, Mesh, math::Transform>();
-    std::map<uint16_t, nncc::vector<entt::entity>> entities_by_shader;
+    std::map<const bgfx::ProgramHandle*, nncc::vector<entt::entity>> entities_by_shader;
     for (auto entity : view) {
         const auto& [material, mesh, transform] = view.get(entity);
-        entities_by_shader[material.shader.idx].push_back(entity);
+        entities_by_shader[&material.shader].push_back(entity);
     }
-    for (const auto& [shader_idx, entities] : entities_by_shader) {
-        bgfx::ProgramHandle shader{shader_idx};
-        renderer_.Prepare(shader);
+    for (const auto& [shader, entities] : entities_by_shader) {
+        renderer_.Prepare(*shader);
 
         for (const auto& entity : entities) {
             const auto& [material, mesh, transform] = view.get(entity);

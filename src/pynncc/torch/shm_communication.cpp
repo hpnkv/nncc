@@ -39,7 +39,7 @@ int StartSharedTensorRedisLoop(bx::Thread* self, void* dispatcher_) {
             } else if (dtype_string == "int32") {
                 dtype = torch::kInt32;
             } else {
-                success = false;
+//                success = false;
                 return;
             }
 

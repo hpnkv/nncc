@@ -52,7 +52,7 @@ int Run(ApplicationLoop* loop) {
     thread->init(&LoopThreadFunc, static_cast<void*>(loop), 0, "main_loop");
 
     while (!glfwWindowShouldClose(glfw_main_window)) {
-        glfwWaitEventsTimeout(1. / 120);
+        glfwWaitEventsTimeout(1. / 60);
 
         // TODO: support multiple windows
         int width, height;
