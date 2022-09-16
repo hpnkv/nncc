@@ -275,9 +275,8 @@ struct OcornutImguiContext {
         }
     }
 
-    void create(float _fontSize, bx::AllocatorI* _allocator, float scale_w = 1., float scale_h = 1.) {
-        m_scale_w = scale_w;
-        m_scale_h = scale_h;
+    void create(float _fontSize, bx::AllocatorI* _allocator, float scale = 1.) {
+        m_scale = scale;
 
         m_allocator = _allocator;
 
@@ -397,6 +396,12 @@ struct OcornutImguiContext {
     ) {
         using namespace nncc::input;
 
+#if NNCC_PLATFORM_OSX
+        _mx = _mx * m_scale;
+        _my = _my * m_scale;
+        _scroll = _scroll * m_scale;
+#endif
+
         m_viewId = _viewId;
 
         ImGuiIO& io = ImGui::GetIO();
@@ -465,7 +470,7 @@ struct OcornutImguiContext {
     int32_t m_lastScroll;
     bgfx::ViewId m_viewId;
 
-    float m_scale_w, m_scale_h;
+    float m_scale;
 
     // TODO: I need to pass key-up events properly, this needs a refactoring of key_state
     std::unordered_set<nncc::input::Key> previous_pressed_keys;
@@ -485,8 +490,8 @@ static void memFree(void* _ptr, void* _userData) {
     BX_FREE(context.m_allocator, _ptr);
 }
 
-void imguiCreate(float _fontSize, bx::AllocatorI* _allocator, float scale_w, float scale_h) {
-    context.create(_fontSize * scale_w, _allocator, scale_w, scale_h);
+void imguiCreate(float _fontSize, bx::AllocatorI* _allocator, float scale) {
+    context.create(_fontSize * scale, _allocator, scale);
 }
 
 void imguiDestroy() {

@@ -17,10 +17,8 @@ int LoopThreadFunc(bx::Thread* self, void* args) {
         return 1;
     }
     float font_size = 18;
-    imguiCreate(font_size, NULL, window.scale_w, window.scale_h);
-#if NNCC_PLATFORM_LINUX
-    ImGui::GetStyle().ScaleAllSizes(window.scale_w);
-#endif
+    imguiCreate(font_size, NULL, window.scale);
+    ImGui::GetStyle().ScaleAllSizes(window.scale);
 
     ImNodes::CreateContext();
 

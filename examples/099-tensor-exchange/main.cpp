@@ -19,7 +19,7 @@ int Loop() {
     auto& context = context::Context::Get();
     auto& window = context.GetWindow(0);
 
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 4.0f * window.scale_w);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 4.0f * window.scale);
 
     // Create a thread listening to shared memory handles and a tensor registry
     bx::Thread tensor_update_listener_;
@@ -59,8 +59,8 @@ int Loop() {
                         context.input.mouse_state.y,
                         context.input.mouse_state.GetImGuiPressedMouseButtons(),
                         static_cast<int32_t>(context.input.mouse_state.scroll_y),
-                        uint16_t(window.width),
-                        uint16_t(window.height)
+                        uint16_t(window.framebuffer_width),
+                        uint16_t(window.framebuffer_height)
         );
         if (ImGui::BeginMainMenuBar()) {
             if (ImGui::BeginMenu("Tools")) {
@@ -73,8 +73,8 @@ int Loop() {
             gui_piece.render();
         }
 
-        ImGui::SetNextWindowPos(ImVec2(1250.0f * window.scale_w, 50.0f * window.scale_h), ImGuiCond_FirstUseEver);
-        ImGui::SetNextWindowSize(ImVec2(320.0f * window.scale_w, 600.0f * window.scale_h), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowPos(ImVec2(1250.0f * window.scale, 50.0f * window.scale), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(320.0f * window.scale, 600.0f * window.scale), ImGuiCond_FirstUseEver);
         ImGui::Begin("Compute nodes context");
         auto selected_nodes = compute_node_editor.GetSelectedNodes();
         if (ImGui::Button("Evaluate graph")) {
@@ -87,8 +87,8 @@ int Loop() {
         }
         ImGui::End();
 
-        ImGui::SetNextWindowPos(ImVec2(400.0f * window.scale_w, 50.0f * window.scale_h), ImGuiCond_FirstUseEver);
-        ImGui::SetNextWindowSize(ImVec2(800.0f * window.scale_w, 600.0f * window.scale_h), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowPos(ImVec2(400.0f * window.scale, 50.0f * window.scale), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(800.0f * window.scale, 600.0f * window.scale), ImGuiCond_FirstUseEver);
         compute_node_editor.Update();
 
         imguiEndFrame();

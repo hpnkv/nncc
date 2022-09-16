@@ -137,11 +137,10 @@ public:
         auto& registry = context.registry;
         const auto& cregistry = context.registry;
 
-        const auto& scale_w = context.GetWindow(0).scale_w;
-        const auto& scale_h = context.GetWindow(0).scale_h;
+        const auto& scale = context.GetWindow(0).scale;
 
-        ImGui::SetNextWindowPos(ImVec2(50.0f * scale_w, 50.0f * scale_h), ImGuiCond_FirstUseEver);
-        ImGui::SetNextWindowSize(ImVec2(320.0f * scale_w, 800.0f * scale_h), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowPos(ImVec2(50.0f * scale, 50.0f * scale), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(320.0f * scale, 800.0f * scale), ImGuiCond_FirstUseEver);
         if (ImGui::Begin("Data")) {
             ImGui::LabelText("", "Shared tensors");
             if (ImGui::BeginListBox("##label")) {

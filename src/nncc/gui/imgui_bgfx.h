@@ -64,7 +64,7 @@ inline uint32_t imguiRGBA(uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a = 255) 
 
 //namespace bx { struct AllocatorI; }
 
-void imguiCreate(float _fontSize = 18.0f, bx::AllocatorI* _allocator = NULL, float scale_w = 1., float scale_h = 1.);
+void imguiCreate(float _fontSize = 18.0f, bx::AllocatorI* _allocator = NULL, float scale = 1.);
 
 void imguiDestroy();
 
