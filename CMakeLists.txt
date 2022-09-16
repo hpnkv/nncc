@@ -13,8 +13,6 @@ set(CMAKE_CXX_STANDARD 20)
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup(TARGETS)
 
-set(CMAKE_MACOSX_RPATH 1)
-
 # Non-Conan externals
 add_subdirectory(external/bgfx.cmake)
 add_subdirectory(external/cpp_redis)
@@ -22,7 +20,9 @@ set(CPP_REDIS_INCLUDES ${NNCC_PROJECT_ROOT}/external/cpp_redis/includes ${NNCC_P
 set(CPP_REDIS_LIBS cpp_redis)
 
 add_subdirectory(src/nncc)
-add_subdirectory(examples)
+
+find_package(Python COMPONENTS Interpreter Development)
+find_package(pybind11 REQUIRED)
 
 # PyTorch
 set(TORCH_SRC_ROOT ${NNCC_PROJECT_ROOT}/external/pytorch)  # for libshm
@@ -33,7 +33,7 @@ list(PREPEND CMAKE_PREFIX_PATH ${TORCH_INSTALL_ROOT})
 
 set(TORCH_CUDA_ARCH_LIST Common)
 find_package(Torch REQUIRED)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS} -fopenmp")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
 
 if(MSVC)
     set(LIBSHM_SUBDIR libshm_windows)
@@ -46,10 +46,9 @@ list(APPEND CMAKE_INSTALL_RPATH "${TORCH_INSTALL_ROOT}/lib")
 
 set(LIBSHM_SRCDIR ${TORCH_SRC_ROOT}/torch/lib/${LIBSHM_SUBDIR})
 
-find_package(Python COMPONENTS Interpreter Development)
-find_package(pybind11 REQUIRED)
-
 set(TORCH_ALL_INCLUDES ${TORCH_INSTALL_ROOT}/include ${TORCH_INSTALL_ROOT}/include/torch/csrc/api/include ${LIBSHM_SRCDIR})
 
 add_subdirectory(src/pynncc)
 target_link_libraries(pynncc PRIVATE "${TORCH_LIBRARIES}")
+
+add_subdirectory(examples)
