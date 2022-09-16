@@ -8,7 +8,6 @@ void Renderer::Add(const Mesh& mesh, const Material& material, const math::Trans
 
 void Renderer::Present() {
     batch_renderer_ctx_.Flush();
-    ++view_id_;
 
     view_matrix_.reset();
     projection_matrix_.reset();

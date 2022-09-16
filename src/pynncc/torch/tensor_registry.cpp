@@ -178,7 +178,7 @@ TensorWithPointer::TensorWithPointer(const string& manager_handle,
                                      const vector<int64_t>& dims) {
     size_t total_bytes = (
         torch::elementSize(dtype)
-            * std::accumulate(dims.begin(), dims.end(), 1, std::multiplies<size_t>())
+            * std::accumulate(dims.begin(), dims.end(), 1, std::multiplies<>())
     );
 
     data_ptr_ = THManagedMapAllocator::makeDataPtr(

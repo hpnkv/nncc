@@ -121,7 +121,7 @@ void BatchRenderer::Flush() {
 
                 bgfx::setVertexBuffer(0, &tvb);
                 bgfx::setIndexBuffer(ibh);
-                bgfx::setState(BGFX_STATE_DEFAULT | BGFX_STATE_DEPTH_TEST_LESS | BGFX_STATE_WRITE_A | BGFX_STATE_CULL_CW);
+                bgfx::setState(BGFX_STATE_DEFAULT);
 
                 float color_a = static_cast<float>(command.material.diffuse_color & 0xFF) / 255.;
                 float color_b = static_cast<float>(command.material.diffuse_color >> 8 & 0xFF) / 255.;

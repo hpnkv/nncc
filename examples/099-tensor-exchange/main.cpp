@@ -42,13 +42,6 @@ int Loop() {
 
     nodes::ComputeNodeEditor compute_node_editor;
 
-//    boost::write_graphviz(std::cout, graph, [&](auto& out, auto v) {
-//                              out << "[label=\"" << graph[v].id << "\"]";
-//                          },
-//                          [&](auto& out, auto e) {
-//                              out << "[label=\"" << graph[e].from_output << "->" << graph[e].to_input << "\"]";
-//                          });
-
     // Frame-by-frame loop
     while (true) {
         if (auto should_exit = context.input.ProcessEvents(); should_exit) {

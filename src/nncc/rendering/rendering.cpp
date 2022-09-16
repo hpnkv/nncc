@@ -11,18 +11,24 @@ void RenderingSystem::Update(nncc::context::Context& context,
                              uint16_t height) {
     const auto& cregistry = context.registry;
 
-    bgfx::setViewClear(0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x303030ff, 1.0f, 0);
-    bgfx::setViewRect(0, 0, 0, width, height);
-
     renderer_.SetViewMatrix(view_matrix);
     renderer_.SetProjectionMatrix(projection_matrix);
     renderer_.SetViewport({0, 0, static_cast<float>(width), static_cast<float>(height)});
 
     auto view = cregistry.view<Material, Mesh, math::Transform>();
+    std::map<uint16_t, nncc::vector<entt::entity>> entities_by_shader;
     for (auto entity : view) {
         const auto& [material, mesh, transform] = view.get(entity);
-        renderer_.Prepare(material.shader);
-        renderer_.Add(mesh, material, transform);
+        entities_by_shader[material.shader.idx].push_back(entity);
+    }
+    for (const auto& [shader_idx, entities] : entities_by_shader) {
+        bgfx::ProgramHandle shader{shader_idx};
+        renderer_.Prepare(shader);
+
+        for (const auto& entity : entities) {
+            const auto& [material, mesh, transform] = view.get(entity);
+            renderer_.Add(mesh, material, transform);
+        }
     }
 
     renderer_.Present();
@@ -39,10 +45,13 @@ void RenderingSystem::Update(nncc::context::Context& context,
         init.platformData.nwh = window.GetNativeHandle();
         init.resolution.width = (uint32_t) width;
         init.resolution.height = (uint32_t) height;
-        init.resolution.reset = BGFX_RESET_VSYNC | BGFX_RESET_HIDPI;
+        init.resolution.reset = BGFX_RESET_VSYNC;
         if (!bgfx::init(init)) {
             return 1;
         }
+
+        bgfx::setViewClear(0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x303030ff, 1.0f, 0);
+        bgfx::setViewRect(0, 0, 0, width, height);
 
         bx::FileReader reader;
         const auto fs = nncc::engine::LoadShader(&reader, "fs_default_diffuse");

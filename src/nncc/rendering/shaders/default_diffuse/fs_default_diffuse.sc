@@ -2,11 +2,9 @@ $input v_pos, v_view, v_normal, v_texcoord0
 
 #include <bgfx_shader.sh>
 
-SAMPLER2D(diffuseTX,
-0);
+SAMPLER2D(diffuseTX, 0);
 
-uniform vec4
-diffuseCol;  // the diffuse colour
+uniform vec4 diffuseCol;  // the diffuse colour
 
 #define MAX_LIGHTS 4
 

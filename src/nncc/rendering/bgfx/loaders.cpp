@@ -48,7 +48,7 @@ bgfx::ShaderHandle LoadShader(bx::FileReaderI* reader, const nncc::string& name)
     shader_path << name << ".bin";
     auto path = shader_path.str();
 
-    bgfx::ShaderHandle handle = bgfx::createShader(LoadMemory(reader, shader_path.str()));
+    bgfx::ShaderHandle handle = bgfx::createShader(LoadMemory(reader, path));
     bgfx::setName(handle, name.c_str());
 
     return handle;
