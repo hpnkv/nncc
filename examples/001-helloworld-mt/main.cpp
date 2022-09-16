@@ -15,6 +15,10 @@
 #endif
 #include <GLFW/glfw3native.h>
 
+#if BX_PLATFORM_LINUX
+#include <nncc/common/X11_undefine_none.h>
+#endif
+
 #include <nncc/rendering/bgfx/loaders.h>
 
 static bx::DefaultAllocator s_allocator;

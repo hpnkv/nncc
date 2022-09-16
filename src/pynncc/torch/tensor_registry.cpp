@@ -127,7 +127,7 @@ void TensorRegistry::OnSharedTensorUpdate(const SharedTensorEvent& event) {
         auto& tensor = *registry.get<TensorWithPointer>(entity);
         auto texture_memory = bgfx::makeRef(tensor.data_ptr(), tensor.storage().nbytes());
         bgfx::updateTexture2D(material->diffuse_texture,
-                              1,
+                              0,
                               0,
                               0,
                               0,

@@ -167,6 +167,7 @@ public:
         auto flags = ImGuiWindowFlags_MenuBar;
 
         // The node editor window
+        ImGui::SetNextWindowCollapsed(true, ImGuiCond_FirstUseEver);
         ImGui::Begin("Compute node editor", nullptr, flags);
 
         ShowMenuBar();
