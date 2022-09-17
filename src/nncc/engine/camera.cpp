@@ -77,7 +77,7 @@ void Camera::Update(float timedelta,
     up_ = bx::cross(right, direction);
 }
 
-math::Matrix4 Camera::GetViewMatrix() {
+math::Matrix4 Camera::GetViewMatrix() const {
     math::Matrix4 result;
     bx::mtxLookAt(result.Data(), eye_, at_, up_);
     return result;

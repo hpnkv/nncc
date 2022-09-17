@@ -7,6 +7,7 @@
 
 #include <bgfx/bgfx.h>
 #include <bx/thread.h>
+#include <fmt/format.h>
 
 #define ENTT_USE_ATOMIC
 
@@ -51,17 +52,30 @@ class SubsystemManager {
 public:
     template<class T>
     void Register(T* instance) {
-        nncc::string type_name(typeid(T).name());
+        nncc::string type_name(fmt::format("__{}", typeid(T).name()));
         subsystems_[type_name].push_back(static_cast<void*>(instance));
     }
 
     template<class T>
+    void Register(T* instance, const nncc::string& name) {
+        subsystems_[name].push_back(static_cast<void*>(instance));
+    }
+
+    template<class T>
     T* Get() {
-        nncc::string type_name(typeid(T).name());
+        nncc::string type_name(fmt::format("__{}", typeid(T).name()));
         if (subsystems_[type_name].empty()) {
             return nullptr;
         }
         return static_cast<T*>(subsystems_[type_name][0]);
+    }
+
+    template<class T>
+    T* Get(const nncc::string& name) {
+        if (!subsystems_.contains(name) || subsystems_[name].empty()) {
+            return nullptr;
+        }
+        return static_cast<T*>(subsystems_[name][0]);
     }
 
     template<class T>
@@ -140,8 +154,6 @@ public:
     input::InputSystem input;
     rendering::RenderingSystem rendering;
     SubsystemManager subsystems;
-
-    math::Transform view, projection;
 
 private:
     folly::ProducerConsumerQueue<GlfwMessage> glfw_message_queue_{64};

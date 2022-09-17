@@ -16,6 +16,7 @@
 #include <nncc/gui/nodes/graph.h>
 #include <nncc/rendering/renderer.h>
 #include <nncc/rendering/primitives.h>
+#include <nncc/engine/camera.h>
 
 
 struct TensorControl {
@@ -131,12 +132,17 @@ bool TensorControlGui(const nncc::string& label, entt::entity tensor_entity, con
 
 class SharedTensorPicker {
 public:
-    explicit SharedTensorPicker(TensorRegistry* tensors) : tensors_(*tensors) {}
+    explicit SharedTensorPicker(TensorRegistry* tensors) : tensors_(*tensors) {
+        auto& context = context::Context::Get();
+        camera_ = context.subsystems.Get<engine::Camera>("current_camera");
+    }
 
     void Render() {
         auto& context = context::Context::Get();
         auto& registry = context.registry;
         const auto& cregistry = context.registry;
+
+        camera_ = context.subsystems.Get<engine::Camera>("current_camera");
 
         const auto& scale = context.GetWindow(0).scale;
 
@@ -187,7 +193,9 @@ public:
                     ImGui::InputText(fmt::format("##{}_callback_name", name).c_str(), &control_callback);
                 }
                 if (auto transform = registry.try_get<math::Transform>(selected_tensor_entity)) {
-                    gui::EditWithGuizmo(*context.view, *context.projection, **transform);
+                    if (camera_) {
+                        gui::EditWithGuizmo(*camera_->GetViewMatrix(), *camera_->GetProjectionMatrix(), **transform);
+                    }
                 }
             }
 
@@ -216,6 +224,7 @@ public:
 private:
     TensorRegistry& tensors_;
     nncc::string selected_name_;
+    engine::Camera* camera_ = nullptr;
 };
 
 }

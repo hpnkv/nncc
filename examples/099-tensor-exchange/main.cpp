@@ -39,6 +39,7 @@ int Loop() {
     // Create a camera
     bx::Vec3 eye{1., 0., -10.}, at{0., 1., 0.}, up{0., 0., -1.};
     engine::Camera camera{eye, at, up};
+    context.subsystems.Register(&camera, "current_camera");
 
     nodes::ComputeNodeEditor compute_node_editor;
 
@@ -98,8 +99,6 @@ int Loop() {
         auto aspect_ratio = static_cast<float>(window.width) / static_cast<float>(window.height);
         camera.SetProjectionMatrix(60.0f, aspect_ratio, 0.01f, 1000.0f);
         camera.Update(timer.Timedelta(), context.input.mouse_state, context.input.key_state, ImGui::MouseOverArea());
-        context.view = camera.GetViewMatrix();
-        context.projection = camera.GetProjectionMatrix();
         context.rendering.Update(context,
                                  camera.GetViewMatrix(),
                                  camera.GetProjectionMatrix(),

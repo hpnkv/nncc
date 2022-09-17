@@ -21,7 +21,7 @@ public:
                 const input::KeyState& key_state,
                 bool mouse_over_gui = false);
 
-    math::Matrix4 GetViewMatrix();
+    math::Matrix4 GetViewMatrix() const;
 
     [[nodiscard]] math::Matrix4 GetProjectionMatrix() const {
         return projection_matrix_;
