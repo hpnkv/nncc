@@ -13,7 +13,7 @@ function( target_shader ARG_TARGET ARG_FILE )
     endif()
 
     if( NOT ARG_OUTPUT )
-        set(ARG_OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/shaders)
+        set(ARG_OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/nncc_shaders)
     endif()
 
     add_shader(${ARG_FILE} ${TYPE} OUTPUT ${ARG_OUTPUT})

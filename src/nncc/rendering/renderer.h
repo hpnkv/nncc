@@ -15,6 +15,8 @@ namespace nncc::rendering {
 
 class Renderer {
 public:
+    explicit Renderer(uint8_t view_id = 0) : view_id_(view_id) {}
+
     void Add(const Mesh& mesh, const Material& material, const math::Transform& transform);
 
     void Present();
@@ -37,7 +39,7 @@ private:
     void Init();
 
     bgfx::VertexLayout* vertex_layout_ = nullptr;
-    BatchRenderer batch_renderer_ctx_;
+    BatchRenderer batch_renderer_ctx_ {};
 
     std::optional<Viewport> viewport_;
     std::optional<math::Matrix4> view_matrix_;
@@ -46,8 +48,8 @@ private:
     math::Matrix4 cached_vp_matrix_;
     math::Matrix4 cached_vp_matrix_inv_;
 
-    uint8_t view_id_;
-    bool initialised_;
+    uint8_t view_id_ = 0;
+    bool initialised_ = false;
 };
 
 }

@@ -8,6 +8,7 @@
 #include <nncc/engine/loop.h>
 #include <nncc/engine/timer.h>
 #include <nncc/gui/nodes/graph.h>
+#include <nncc/gui/picking.h>
 
 using namespace nncc;
 namespace py = pybind11;
@@ -18,6 +19,9 @@ int Loop() {
     // Get references to the context, ENTT registry and window holder
     auto& context = context::Context::Get();
     auto& window = context.GetWindow(0);
+
+    auto object_picker = gui::ObjectPicker();
+    context.subsystems.Register(&object_picker);
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 4.0f * window.scale);
 
@@ -108,10 +112,13 @@ int Loop() {
         // TODO: make this a subsystem's job
         context.input.input_characters.clear();
 
-//        bgfx::setDebug(BGFX_DEBUG_STATS);
-        bgfx::frame();
+        bgfx::setDebug(BGFX_DEBUG_STATS);
+        object_picker.Update();
+        context.frame_number = bgfx::frame();
         timer.Update();
     }
+
+    object_picker.Destroy();
 
     python::StopSharedTensorRedisLoop(python::kRedisQueueName);
     return 0;

@@ -17,6 +17,7 @@
 #include <nncc/rendering/renderer.h>
 #include <nncc/rendering/primitives.h>
 #include <nncc/engine/camera.h>
+#include "nncc/gui/picking.h"
 
 
 struct TensorControl {
@@ -118,6 +119,10 @@ public:
         return tensors_.contains(name);
     }
 
+    bool Contains(entt::entity entity) {
+        return names_.contains(entity);
+    }
+
     void Clear();
 
 private:
@@ -146,53 +151,58 @@ public:
 
         const auto& scale = context.GetWindow(0).scale;
 
+        auto object_picker = context.subsystems.Get<gui::ObjectPicker>();
+
         ImGui::SetNextWindowPos(ImVec2(50.0f * scale, 50.0f * scale), ImGuiCond_FirstUseEver);
         ImGui::SetNextWindowSize(ImVec2(320.0f * scale, 800.0f * scale), ImGuiCond_FirstUseEver);
         if (ImGui::Begin("Data")) {
             ImGui::LabelText("", "Shared tensors");
             if (ImGui::BeginListBox("##label")) {
                 auto named_tensors = cregistry.view<Name, TensorWithPointer>();
+                entt::entity clicked_tensor = entt::null;
+
+                // if a click in the list is made, save the corresponding entity
                 for (auto entity: named_tensors) {
                     const auto& [name, tensor_container] = named_tensors.get(entity);
-                    auto is_selected = selected_name_ == name.value;
-                    if (ImGui::Selectable(name.value.c_str(), is_selected)) {
-                        if (selected_name_ == name.value) {
-                            continue;
-                        }
-
-                        if (!selected_name_.empty()) {
-                            {
-                                auto previously_selected_tensor = tensors_.Get(selected_name_);
-                                if (registry.try_get<rendering::Material>(previously_selected_tensor)) {
-                                    auto& mat = registry.get<rendering::Material>(previously_selected_tensor);
-                                    mat.diffuse_color = 0xFFFFFFFF;
-                                }
-                            }
-                        }
-                        {
-                            auto selected_tensor = tensors_.Get(name.value);
-                            if (registry.try_get<rendering::Material>(selected_tensor)) {
-                                auto& mat = registry.get<rendering::Material>(selected_tensor);
-                                mat.diffuse_color = 0xDDFFDDFF;
-                            }
-                        }
-                        selected_name_ = name.value;
+                    if (ImGui::Selectable(name.value.c_str(), entity == selected_tensor_)) {
+                        clicked_tensor = entity;
+                        object_picker->SetPickedObject(clicked_tensor);
                     }
                 }
+
+                // if explicit click was made, select corresponding tensor, otherwise select object from picker (not necessarily a tensor)
+                auto new_selected_tensor = (clicked_tensor != entt::null) ? clicked_tensor : object_picker->GetPickedObject();
+                // check if that is a tensor, otherwise clear the selection
+                if(!named_tensors.contains(new_selected_tensor)) {
+                    new_selected_tensor = entt::null;
+                }
+
+                if (selected_tensor_ != entt::null && new_selected_tensor != selected_tensor_) {
+                    if (auto material = registry.try_get<rendering::Material>(selected_tensor_)) {
+                        material->diffuse_color = 0xFFFFFFFF;
+                    }
+                }
+
+                selected_tensor_ = new_selected_tensor;
+                if (selected_tensor_ != entt::null) {
+                    if (auto material = registry.try_get<rendering::Material>(selected_tensor_)) {
+                        material->diffuse_color = 0xDDFFDDFF;
+                    }
+                }
+
                 ImGui::EndListBox();
             }
 
-            if (!tensors_.Contains(selected_name_)) {
-                selected_name_.clear();
+            if (!tensors_.Contains(selected_tensor_)) {
+                selected_tensor_ = entt::null;
             } else {
-                auto selected_tensor_entity = tensors_.Get(selected_name_);
-                if (registry.all_of<TensorWithPointer, Name, TensorControl>(selected_tensor_entity)) {
-                    auto& control_callback = registry.get<TensorControl>(selected_tensor_entity).callback_name;
-                    auto& name = registry.get<Name>(selected_tensor_entity).value;
+                if (registry.all_of<TensorWithPointer, Name, TensorControl>(selected_tensor_)) {
+                    auto& control_callback = registry.get<TensorControl>(selected_tensor_).callback_name;
+                    auto& name = registry.get<Name>(selected_tensor_).value;
                     ImGui::Text("%s", fmt::format("{}: callback name", name).c_str());
                     ImGui::InputText(fmt::format("##{}_callback_name", name).c_str(), &control_callback);
                 }
-                if (auto transform = registry.try_get<math::Transform>(selected_tensor_entity)) {
+                if (auto transform = registry.try_get<math::Transform>(selected_tensor_)) {
                     if (camera_) {
                         gui::EditWithGuizmo(*camera_->GetViewMatrix(), *camera_->GetProjectionMatrix(), **transform);
                     }
@@ -205,12 +215,12 @@ public:
                 TensorControlGui(name.value, entity, control.callback_name);
             }
 
-            if (ImGui::SmallButton(ICON_FA_STOP_CIRCLE)) {
-                tensors_.Clear();
-                selected_name_.clear();
-            } else if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("Remove all shared tensors");
-            }
+//            if (ImGui::SmallButton(ICON_FA_STOP_CIRCLE)) {
+//                tensors_.Clear();
+//                selected_name_.clear();
+//            } else if (ImGui::IsItemHovered()) {
+//                ImGui::SetTooltip("Remove all shared tensors");
+//            }
             ImGui::End();
         }
     }
@@ -223,7 +233,7 @@ public:
 
 private:
     TensorRegistry& tensors_;
-    nncc::string selected_name_;
+    entt::entity selected_tensor_ = entt::null;
     engine::Camera* camera_ = nullptr;
 };
 

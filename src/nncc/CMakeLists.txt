@@ -54,12 +54,15 @@ target_sources(
         ${NNCC_GUI_DIR}/imgui_smart_strings.cpp
         ${NNCC_GUI_DIR}/nodes/graph.cpp
         ${NNCC_GUI_DIR}/guizmo.cpp
+        ${NNCC_GUI_DIR}/picking.cpp
         ../../external/ImGuizmo/ImGuizmo/ImGuizmo.cpp
 )
 target_shader(nncc ${NNCC_GUI_DIR}/shaders/fs_imgui_image.sc FRAGMENT)
 target_shader(nncc ${NNCC_GUI_DIR}/shaders/vs_imgui_image.sc VERTEX)
 target_shader(nncc ${NNCC_GUI_DIR}/shaders/fs_ocornut_imgui.sc FRAGMENT)
 target_shader(nncc ${NNCC_GUI_DIR}/shaders/vs_ocornut_imgui.sc VERTEX)
+target_shader(nncc ${NNCC_GUI_DIR}/shaders/picking/fs_picking.sc FRAGMENT)
+target_shader(nncc ${NNCC_GUI_DIR}/shaders/picking/vs_picking.sc VERTEX)
 
 # Input: abstraction for key/mouse/char events, event queue
 set(NNCC_INPUT_DIR ${CMAKE_CURRENT_LIST_DIR}/input)

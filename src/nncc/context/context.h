@@ -155,6 +155,8 @@ public:
     rendering::RenderingSystem rendering;
     SubsystemManager subsystems;
 
+    uint32_t frame_number = 0;
+
 private:
     folly::ProducerConsumerQueue<GlfwMessage> glfw_message_queue_{64};
 

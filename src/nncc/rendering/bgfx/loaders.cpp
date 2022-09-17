@@ -19,6 +19,7 @@ const bgfx::Memory* LoadMemory(bx::FileReaderI* reader, const nncc::string& path
 
 bgfx::ShaderHandle LoadShader(bx::FileReaderI* reader, const nncc::string& name) {
     std::ostringstream shader_path;
+    shader_path << "nncc_";
 
     switch (bgfx::getRendererType()) {
         case bgfx::RendererType::Noop:

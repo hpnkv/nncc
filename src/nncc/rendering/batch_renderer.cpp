@@ -131,7 +131,9 @@ void BatchRenderer::Flush() {
                 auto color = std::array<float, 4>{color_r, color_g, color_b, color_a};
                 bgfx::setUniform(command.material.d_color_uniform, color.data());
 
-                bgfx::setTexture(0, command.material.d_texture_uniform, command.material.diffuse_texture);
+                if (command.material.diffuse_texture.idx != bgfx::kInvalidHandle) {
+                    bgfx::setTexture(0, command.material.d_texture_uniform, command.material.diffuse_texture);
+                }
                 bgfx::setTransform(*command.transform);
 
                 bgfx::submit(command.view_id, command.material.shader);
