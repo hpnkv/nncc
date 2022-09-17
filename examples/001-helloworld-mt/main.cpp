@@ -6,6 +6,7 @@
 #include <bgfx/platform.h>
 
 #include <GLFW/glfw3.h>
+
 #if BX_PLATFORM_LINUX
 #define GLFW_EXPOSE_NATIVE_X11
 #elif BX_PLATFORM_WINDOWS
@@ -13,10 +14,13 @@
 #elif BX_PLATFORM_OSX
 #define GLFW_EXPOSE_NATIVE_COCOA
 #endif
+
 #include <GLFW/glfw3native.h>
 
 #if BX_PLATFORM_LINUX
+
 #include <nncc/common/X11_undefine_none.h>
+
 #endif
 
 #include <nncc/rendering/bgfx/loaders.h>
@@ -151,7 +155,7 @@ int main(int argc, char** argv) {
     ApiThreadArgs apiThreadArgs;
 #if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
     apiThreadArgs.platformData.ndt = glfwGetX11Display();
-    apiThreadArgs.platformData.nwh = (void*)(uintptr_t)glfwGetX11Window(window);
+    apiThreadArgs.platformData.nwh = (void*) (uintptr_t) glfwGetX11Window(window);
 #elif BX_PLATFORM_OSX
     apiThreadArgs.platformData.nwh = glfwGetCocoaWindow(window);
 #elif BX_PLATFORM_WINDOWS

@@ -7,15 +7,15 @@ void Camera::Update(float timedelta,
                     const input::KeyState& key_state,
                     bool mouse_over_gui) {
     const bx::Vec3 direction = {
-        bx::cos(pitch_) * bx::sin(yaw_),
-        bx::sin(pitch_),
-        bx::cos(pitch_) * bx::cos(yaw_),
+            bx::cos(pitch_) * bx::sin(yaw_),
+            bx::sin(pitch_),
+            bx::cos(pitch_) * bx::cos(yaw_),
     };
 
     const bx::Vec3 right = {
-        bx::sin(yaw_ - bx::kPiHalf),
-        0.0f,
-        bx::cos(yaw_ - bx::kPiHalf),
+            bx::sin(yaw_ - bx::kPiHalf),
+            0.0f,
+            bx::cos(yaw_ - bx::kPiHalf),
     };
 
     if (!mouse_over_gui) {

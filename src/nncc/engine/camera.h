@@ -12,8 +12,9 @@ math::Matrix4 DefaultProjectionMatrix();
 
 class Camera {
 public:
-    Camera(const bx::Vec3& eye, const bx::Vec3& at, const bx::Vec3& up, const math::Matrix4& projection_matrix = DefaultProjectionMatrix())
-        : eye_(eye), at_(at), up_(up), projection_matrix_(projection_matrix) {}
+    Camera(const bx::Vec3& eye, const bx::Vec3& at, const bx::Vec3& up,
+           const math::Matrix4& projection_matrix = DefaultProjectionMatrix())
+            : eye_(eye), at_(at), up_(up), projection_matrix_(projection_matrix) {}
 
     void Update(float timedelta,
                 const input::MouseState& mouse_state,

@@ -53,6 +53,8 @@ target_sources(
         ${NNCC_GUI_DIR}/imgui_bgfx.cpp
         ${NNCC_GUI_DIR}/imgui_smart_strings.cpp
         ${NNCC_GUI_DIR}/nodes/graph.cpp
+        ${NNCC_GUI_DIR}/guizmo.cpp
+        ../../external/ImGuizmo/ImGuizmo/ImGuizmo.cpp
 )
 target_shader(nncc ${NNCC_GUI_DIR}/shaders/fs_imgui_image.sc FRAGMENT)
 target_shader(nncc ${NNCC_GUI_DIR}/shaders/vs_imgui_image.sc VERTEX)

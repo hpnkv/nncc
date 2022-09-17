@@ -33,7 +33,8 @@ bool TensorControlGui(const string& label, entt::entity tensor_entity, const str
                 if (i > 0) {
                     ImGui::SameLine();
                 }
-                auto control_element = ImGui::VSliderFloat(fmt::format("##{}_dragfloat_{}", label, i).c_str(), ImVec2(40, 240), element, -2.0f, 2.0f, "%.2f");
+                auto control_element = ImGui::VSliderFloat(fmt::format("##{}_dragfloat_{}", label, i).c_str(),
+                                                           ImVec2(40, 240), element, -2.0f, 2.0f, "%.2f");
                 if (control_element) {
                     updated = true;
                     break;
@@ -167,7 +168,7 @@ void TensorRegistry::Clear() {
     all_tensors.reserve(names_.size());
     std::transform(names_.begin(), names_.end(), std::back_inserter(all_tensors), RetrieveKey());
 
-    for (const auto& entity : all_tensors) {
+    for (const auto& entity: all_tensors) {
         nncc::context::Context::Get().registry.destroy(entity);
     }
 }
@@ -177,15 +178,15 @@ TensorWithPointer::TensorWithPointer(const string& manager_handle,
                                      torch::Dtype dtype,
                                      const vector<int64_t>& dims) {
     size_t total_bytes = (
-        torch::elementSize(dtype)
+            torch::elementSize(dtype)
             * std::accumulate(dims.begin(), dims.end(), 1, std::multiplies<>())
     );
 
     data_ptr_ = THManagedMapAllocator::makeDataPtr(
-        manager_handle.c_str(),
-        filename.c_str(),
-        at::ALLOCATOR_MAPPED_SHAREDMEM,
-        total_bytes
+            manager_handle.c_str(),
+            filename.c_str(),
+            at::ALLOCATOR_MAPPED_SHAREDMEM,
+            total_bytes
     );
     tensor_ = torch::from_blob(data_ptr_.get(),
                                at::IntArrayRef(dims.data(), dims.size()),

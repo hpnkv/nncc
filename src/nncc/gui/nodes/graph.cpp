@@ -39,7 +39,8 @@ auto AddOpEvaluateFn(ComputeNode* node, entt::registry* registry) {
 }
 
 auto AddOpRenderFn(ComputeNode* node) {
-    ImGui::InputFloat("result", &node->outputs_by_name.at("result").value, 0.0f, 0.0f, "%0.2f", ImGuiInputTextFlags_ReadOnly);
+    ImGui::InputFloat("result", &node->outputs_by_name.at("result").value, 0.0f, 0.0f, "%0.2f",
+                      ImGuiInputTextFlags_ReadOnly);
 }
 
 ComputeNode MakeAddOp(const string& name) {
@@ -69,7 +70,8 @@ auto MulOpEvaluateFn(ComputeNode* node, entt::registry* registry) {
 }
 
 auto MulOpRenderFn(ComputeNode* node) {
-    ImGui::InputFloat("result", &node->outputs_by_name.at("result").value, 0.0f, 0.0f, "%0.2f", ImGuiInputTextFlags_ReadOnly);
+    ImGui::InputFloat("result", &node->outputs_by_name.at("result").value, 0.0f, 0.0f, "%0.2f",
+                      ImGuiInputTextFlags_ReadOnly);
 }
 
 ComputeNode MakeMulOp(const string& name) {

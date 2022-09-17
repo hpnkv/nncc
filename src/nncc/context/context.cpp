@@ -80,7 +80,8 @@ void GlfwWindowingImpl::CursorPositionCallback(GLFWwindow* window, double x_pos,
 
 const auto glfw_key_translation_table = input::GlfwKeyTranslationTable();
 
-void GlfwWindowingImpl::KeyCallback(GLFWwindow* window, int32_t glfw_key, int32_t scancode, int32_t action, int32_t modifiers) {
+void GlfwWindowingImpl::KeyCallback(GLFWwindow* window, int32_t glfw_key, int32_t scancode, int32_t action,
+                                    int32_t modifiers) {
     if (glfw_key == GLFW_KEY_UNKNOWN) {
         return;
     }

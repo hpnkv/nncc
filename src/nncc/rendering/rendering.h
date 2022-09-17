@@ -19,12 +19,13 @@ class RenderingSystem {
 public:
     int Init(uint16_t width, uint16_t height);
 
-    void Update(context::Context& context, const math::Transform& view_matrix, const math::Transform& projection_matrix, uint16_t width, uint16_t height);
+    void Update(context::Context& context, const math::Transform& view_matrix, const math::Transform& projection_matrix,
+                uint16_t width, uint16_t height);
 
     void Destroy() {
         auto default_texture = Material::GetDefaultTexture();
         bgfx::destroy(default_texture);
-        for (const auto& [name, handle] : shader_programs_) {
+        for (const auto& [name, handle]: shader_programs_) {
             bgfx::destroy(handle);
         }
     }

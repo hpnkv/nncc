@@ -152,7 +152,7 @@ struct MouseState {
     [[nodiscard]] uint8_t GetImGuiPressedMouseButtons() const {
         uint8_t pressed_buttons = 0;
         uint8_t current_button_mask = 1;
-        for (bool button : buttons) {
+        for (bool button: buttons) {
             if (button) {
                 pressed_buttons |= current_button_mask;
             }

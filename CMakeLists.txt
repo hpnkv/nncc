@@ -4,7 +4,11 @@ if (APPLE)
     set(CMAKE_OSX_DEPLOYMENT_TARGET "12.3" CACHE STRING "Minimum OS X deployment version")
 endif()
 
-project(nncc)
+set(CMAKE_CUDA_ARCHITECTURES OFF)
+set(CMAKE_CUDA_COMPILER /usr/local/cuda/bin/nvcc)
+set(CMAKE_CUDA_STANDARD 14)
+
+project(nncc LANGUAGES CXX)
 set(NNCC_PROJECT_ROOT ${CMAKE_CURRENT_LIST_DIR})
 
 
@@ -29,6 +33,8 @@ set(TORCH_SRC_ROOT ${NNCC_PROJECT_ROOT}/external/pytorch)  # for libshm
 set(TORCH_BUILD_ROOT ${NNCC_PROJECT_ROOT}/external/pytorch-build)
 set(TORCH_INSTALL_ROOT ${NNCC_PROJECT_ROOT}/external/pytorch-install)
 
+set(PYBIND11_INSTALL_ROOT /home/alex/.virtualenvs/ml-experiments)
+list(PREPEND CMAKE_PREFIX_PATH ${PYBIND11_INSTALL_ROOT})
 list(PREPEND CMAKE_PREFIX_PATH ${TORCH_INSTALL_ROOT})
 
 set(TORCH_CUDA_ARCH_LIST Common)

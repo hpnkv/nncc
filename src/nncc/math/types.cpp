@@ -6,10 +6,10 @@ namespace nncc::math {
 
 Matrix4 Matrix4::Identity() {
     const float data[16] = {
-        1, 0, 0, 0,
-        0, 1, 0, 0,
-        0, 0, 1, 0,
-        0, 0, 0, 1
+            1, 0, 0, 0,
+            0, 1, 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1
     };
     return Matrix4(data);
 }

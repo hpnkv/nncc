@@ -28,5 +28,5 @@ if (APPLE)
             "-framework Metal"
             "-framework MetalPerformanceShaders"
             "-framework MetalPerformanceShadersGraph"
-    )
+            )
 endif ()

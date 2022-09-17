@@ -34,7 +34,7 @@ enum class AttributeType {
 
 struct Attribute {
     Attribute(nncc::string _name, const AttributeType& _type)
-        : id(id_counter++), name(std::move(_name)), type(_type) {}
+            : id(id_counter++), name(std::move(_name)), type(_type) {}
 
     nncc::string name = "";
     AttributeType type = AttributeType::None;
@@ -156,7 +156,7 @@ ComputeNode MakeMulOp(const nncc::string& name);
 class ComputeNodeEditor {
 public:
     ComputeNodeEditor()
-        : graph_(), minimap_location_(ImNodesMiniMapLocation_BottomRight) {
+            : graph_(), minimap_location_(ImNodesMiniMapLocation_BottomRight) {
         ImNodesIO& io = ImNodes::GetIO();
         io.LinkDetachWithModifierClick.Modifier = &ImGui::GetIO().KeyCtrl;
     }
@@ -221,16 +221,16 @@ private:
         if (ImGui::BeginMenuBar()) {
             if (ImGui::BeginMenu("Mini-map")) {
                 const char* names[] = {
-                    "Top Left",
-                    "Top Right",
-                    "Bottom Left",
-                    "Bottom Right",
+                        "Top Left",
+                        "Top Right",
+                        "Bottom Left",
+                        "Bottom Right",
                 };
                 int locations[] = {
-                    ImNodesMiniMapLocation_TopLeft,
-                    ImNodesMiniMapLocation_TopRight,
-                    ImNodesMiniMapLocation_BottomLeft,
-                    ImNodesMiniMapLocation_BottomRight,
+                        ImNodesMiniMapLocation_TopLeft,
+                        ImNodesMiniMapLocation_TopRight,
+                        ImNodesMiniMapLocation_BottomLeft,
+                        ImNodesMiniMapLocation_BottomRight,
                 };
 
                 for (int i = 0; i < 4; i++) {
@@ -263,8 +263,8 @@ private:
 
     void HandleNewNodes() {
         const bool open_popup = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows) &&
-            ImNodes::IsEditorHovered() &&
-            ImGui::IsKeyReleased(ImGuiKey_A);
+                                ImNodes::IsEditorHovered() &&
+                                ImGui::IsKeyReleased(ImGuiKey_A);
 
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8.f, 8.f));
         if (!ImGui::IsAnyItemHovered() && open_popup) {
@@ -308,7 +308,7 @@ private:
             ImNodes::BeginNodeTitleBar();
             ImGui::TextUnformatted(node.name.c_str());
             ImNodes::EndNodeTitleBar();
-            for (auto& [name, input] : node.inputs_by_name) {
+            for (auto& [name, input]: node.inputs_by_name) {
                 ImNodes::BeginInputAttribute(input.id);
                 attribute_map_.insert_or_assign(input.id, AttributeDescriptor{vertex, &input, true});
                 const float label_width = ImGui::CalcTextSize(input.name.c_str()).x;
@@ -324,7 +324,7 @@ private:
 
             ImGui::Spacing();
 
-            for (auto& [name, output] : node.outputs_by_name) {
+            for (auto& [name, output]: node.outputs_by_name) {
                 {
                     ImNodes::BeginOutputAttribute(output.id);
                     attribute_map_.insert_or_assign(output.id, AttributeDescriptor{vertex, &output, false});
@@ -388,7 +388,7 @@ private:
         nncc::vector<int> selected_links;
         selected_links.resize(static_cast<size_t>(num_selected));
         ImNodes::GetSelectedLinks(selected_links.data());
-        for (const auto& link : selected_links) {
+        for (const auto& link: selected_links) {
             boost::remove_edge(edge_map_.at(link), *graph_);
             edge_map_.erase(link);
         }
@@ -403,22 +403,22 @@ private:
         nncc::vector<int> selected_nodes;
         selected_nodes.resize(static_cast<size_t>(num_selected));
         ImNodes::GetSelectedNodes(selected_nodes.data());
-        for (const auto& node_id : selected_nodes) {
+        for (const auto& node_id: selected_nodes) {
             auto vertex = vertex_map_[node_id];
             const auto& node = (*graph_)[vertex];
 
             nncc::vector<int> attribute_ids;
             attribute_ids.reserve(node.inputs.size() + node.outputs.size() + node.settings.size());
-            for (const auto& [name, attribute] : node.inputs_by_name) {
+            for (const auto& [name, attribute]: node.inputs_by_name) {
                 attribute_ids.push_back(attribute.id);
             }
-            for (const auto& [name, attribute] : node.outputs_by_name) {
+            for (const auto& [name, attribute]: node.outputs_by_name) {
                 attribute_ids.push_back(attribute.id);
             }
-            for (const auto& [name, attribute] : node.settings_by_name) {
+            for (const auto& [name, attribute]: node.settings_by_name) {
                 attribute_ids.push_back(attribute.id);
             }
-            for (const auto& id : attribute_ids) {
+            for (const auto& id: attribute_ids) {
                 attribute_map_.erase(id);
             }
 
@@ -437,7 +437,7 @@ private:
         ImNodes::GetSelectedNodes(selected_node_ids.data());
 
         nncc::vector<ComputeNode*> selected_nodes;
-        for (const auto& node_id : selected_node_ids) {
+        for (const auto& node_id: selected_node_ids) {
             selected_nodes.push_back(&(*graph_)[node_id]);
         }
 

@@ -17,7 +17,7 @@
 
 inline bool checkAvailTransientBuffers(uint32_t _numVertices, const bgfx::VertexLayout& _layout, uint32_t _numIndices) {
     return _numVertices == bgfx::getAvailTransientVertexBuffer(_numVertices, _layout)
-        && (0 == _numIndices || _numIndices == bgfx::getAvailTransientIndexBuffer(_numIndices));
+           && (0 == _numIndices || _numIndices == bgfx::getAvailTransientIndexBuffer(_numIndices));
 }
 
 std::unordered_map<nncc::input::Key, ImGuiKey_> MakeKeyTranslationTable() {
@@ -140,10 +140,10 @@ struct FontRangeMerge {
 };
 
 static FontRangeMerge s_fontRangeMerge[] =
-    {
-        {s_iconsKenneyTtf, sizeof(s_iconsKenneyTtf), {ICON_MIN_KI, ICON_MAX_KI, 0}},
-        {s_iconsFontAwesomeTtf, sizeof(s_iconsFontAwesomeTtf), {ICON_MIN_FA, ICON_MAX_FA, 0}},
-    };
+        {
+                {s_iconsKenneyTtf,      sizeof(s_iconsKenneyTtf),      {ICON_MIN_KI, ICON_MAX_KI, 0}},
+                {s_iconsFontAwesomeTtf, sizeof(s_iconsFontAwesomeTtf), {ICON_MIN_FA, ICON_MAX_FA, 0}},
+        };
 
 static void* memAlloc(size_t _size, void* _userData);
 
@@ -309,22 +309,22 @@ struct OcornutImguiContext {
 
         bx::FileReader reader;
         m_program = bgfx::createProgram(
-            nncc::engine::LoadShader(&reader, "vs_ocornut_imgui"),
-            nncc::engine::LoadShader(&reader, "fs_ocornut_imgui"), true
+                nncc::engine::LoadShader(&reader, "vs_ocornut_imgui"),
+                nncc::engine::LoadShader(&reader, "fs_ocornut_imgui"), true
         );
 
         u_imageLodEnabled = bgfx::createUniform("u_imageLodEnabled", bgfx::UniformType::Vec4);
         m_imageProgram = bgfx::createProgram(
-            nncc::engine::LoadShader(&reader, "vs_imgui_image"),
-            nncc::engine::LoadShader(&reader, "fs_imgui_image"), true
+                nncc::engine::LoadShader(&reader, "vs_imgui_image"),
+                nncc::engine::LoadShader(&reader, "fs_imgui_image"), true
         );
 
         m_layout
-            .begin()
-            .add(bgfx::Attrib::Position, 2, bgfx::AttribType::Float)
-            .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
-            .add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true)
-            .end();
+                .begin()
+                .add(bgfx::Attrib::Position, 2, bgfx::AttribType::Float)
+                .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
+                .add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true)
+                .end();
 
         s_tex = bgfx::createUniform("s_tex", bgfx::UniformType::Sampler);
 
@@ -358,8 +358,8 @@ struct OcornutImguiContext {
         io.Fonts->GetTexDataAsRGBA32(&data, &width, &height);
 
         m_texture = bgfx::createTexture2D(
-            (uint16_t) width, (uint16_t) height, false, 1, bgfx::TextureFormat::BGRA8, 0,
-            bgfx::copy(data, width * height * 4)
+                (uint16_t) width, (uint16_t) height, false, 1, bgfx::TextureFormat::BGRA8, 0,
+                bgfx::copy(data, width * height * 4)
         );
     }
 
@@ -391,8 +391,8 @@ struct OcornutImguiContext {
     }
 
     void beginFrame(
-        int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, int _width, int _height, int _inputChar,
-        bgfx::ViewId _viewId
+            int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, int _width, int _height, int _inputChar,
+            bgfx::ViewId _viewId
     ) {
         using namespace nncc::input;
 
@@ -432,19 +432,19 @@ struct OcornutImguiContext {
         io.AddKeyEvent(ImGuiKey_ModAlt, 0 != (modifiers & (Modifier::LeftAlt | Modifier::RightAlt)));
         io.AddKeyEvent(ImGuiKey_ModSuper, 0 != (modifiers & (Modifier::LeftMeta | Modifier::RightMeta)));
 
-        for (const auto& key : key_state.pressed_keys) {
+        for (const auto& key: key_state.pressed_keys) {
             if (!previous_pressed_keys.contains(key)) {
                 io.AddKeyEvent(key_table[key], true);
             }
         }
-        for (const auto& key : previous_pressed_keys) {
+        for (const auto& key: previous_pressed_keys) {
             if (!key_state.pressed_keys.contains(key)) {
                 io.AddKeyEvent(key_table[key], false);
             }
         }
         previous_pressed_keys = key_state.pressed_keys;
 
-        for (const auto& codepoint : nncc::context::Context::Get().input.input_characters) {
+        for (const auto& codepoint: nncc::context::Context::Get().input.input_characters) {
             io.AddInputCharacter(codepoint);
         }
 
@@ -532,7 +532,9 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4505); // error C4505: '' : unreferenced local
 #define STBTT_free(_ptr, _userData) memFree(_ptr, _userData)
 
 #define STB_RECT_PACK_IMPLEMENTATION
+
 #include <stb/stb_rect_pack.h>
 
 #define STB_TRUETYPE_IMPLEMENTATION
+
 #include <stb/stb_truetype.h>

@@ -12,7 +12,8 @@ struct Image {
     Image() = default;
 
     Image(const std::shared_ptr<uint8_t>& image, int width, int height, int channels) :
-        buffer(image.get(), image.get() + width * height * channels), width(width), height(height), channels(channels) {
+            buffer(image.get(), image.get() + width * height * channels), width(width), height(height),
+            channels(channels) {
     }
 
     [[nodiscard]] int Size() const {

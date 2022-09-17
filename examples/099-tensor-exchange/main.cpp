@@ -62,8 +62,10 @@ int Loop() {
                         uint16_t(window.framebuffer_width),
                         uint16_t(window.framebuffer_height)
         );
+        ImGuizmo::BeginFrame();
+
         if (ImGui::BeginMainMenuBar()) {
-            if (ImGui::BeginMenu("Tools")) {
+            if (ImGui::BeginMenu("View")) {
                 ImGui::MenuItem("Python Interpreter", nullptr);
                 ImGui::EndMenu();
             }
@@ -75,7 +77,7 @@ int Loop() {
 
         ImGui::SetNextWindowPos(ImVec2(1250.0f * window.scale, 50.0f * window.scale), ImGuiCond_FirstUseEver);
         ImGui::SetNextWindowSize(ImVec2(320.0f * window.scale, 600.0f * window.scale), ImGuiCond_FirstUseEver);
-        ImGui::Begin("Compute nodes context");
+        ImGui::Begin("Inspector");
         auto selected_nodes = compute_node_editor.GetSelectedNodes();
         if (ImGui::Button("Evaluate graph")) {
             compute_node_editor.GetGraph().Evaluate(&context.registry);
@@ -96,6 +98,8 @@ int Loop() {
         auto aspect_ratio = static_cast<float>(window.width) / static_cast<float>(window.height);
         camera.SetProjectionMatrix(60.0f, aspect_ratio, 0.01f, 1000.0f);
         camera.Update(timer.Timedelta(), context.input.mouse_state, context.input.key_state, ImGui::MouseOverArea());
+        context.view = camera.GetViewMatrix();
+        context.projection = camera.GetProjectionMatrix();
         context.rendering.Update(context,
                                  camera.GetViewMatrix(),
                                  camera.GetProjectionMatrix(),

@@ -17,14 +17,14 @@ void RenderingSystem::Update(nncc::context::Context& context,
 
     auto view = cregistry.view<Material, Mesh, math::Transform>();
     std::map<const bgfx::ProgramHandle*, nncc::vector<entt::entity>> entities_by_shader;
-    for (auto entity : view) {
+    for (auto entity: view) {
         const auto& [material, mesh, transform] = view.get(entity);
         entities_by_shader[&material.shader].push_back(entity);
     }
-    for (const auto& [shader, entities] : entities_by_shader) {
+    for (const auto& [shader, entities]: entities_by_shader) {
         renderer_.Prepare(*shader);
 
-        for (const auto& entity : entities) {
+        for (const auto& entity: entities) {
             const auto& [material, mesh, transform] = view.get(entity);
             renderer_.Add(mesh, material, transform);
         }

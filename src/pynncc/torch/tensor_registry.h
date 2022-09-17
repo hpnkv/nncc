@@ -12,6 +12,7 @@
 #include <nncc/common/types.h>
 #include <nncc/context/context.h>
 #include <nncc/gui/gui.h>
+#include <nncc/gui/guizmo.h>
 #include <nncc/gui/nodes/graph.h>
 #include <nncc/rendering/renderer.h>
 #include <nncc/rendering/primitives.h>
@@ -38,10 +39,10 @@ bgfx::TextureFormat::Enum GetTextureFormatFromChannelsAndDtype(int64_t channels,
 class TensorWithPointer {
 public:
     TensorWithPointer(
-        const nncc::string& manager_handle,
-        const nncc::string& filename,
-        torch::Dtype dtype,
-        const nncc::vector<int64_t>& dims
+            const nncc::string& manager_handle,
+            const nncc::string& filename,
+            torch::Dtype dtype,
+            const nncc::vector<int64_t>& dims
     );
 
     const torch::Tensor& operator*() const {
@@ -145,7 +146,7 @@ public:
             ImGui::LabelText("", "Shared tensors");
             if (ImGui::BeginListBox("##label")) {
                 auto named_tensors = cregistry.view<Name, TensorWithPointer>();
-                for (auto entity : named_tensors) {
+                for (auto entity: named_tensors) {
                     const auto& [name, tensor_container] = named_tensors.get(entity);
                     auto is_selected = selected_name_ == name.value;
                     if (ImGui::Selectable(name.value.c_str(), is_selected)) {
@@ -185,10 +186,14 @@ public:
                     ImGui::Text("%s", fmt::format("{}: callback name", name).c_str());
                     ImGui::InputText(fmt::format("##{}_callback_name", name).c_str(), &control_callback);
                 }
+                if (auto transform = registry.try_get<math::Transform>(selected_tensor_entity)) {
+                    gui::EditWithGuizmo(*context.view, *context.projection, **transform);
+                }
             }
 
-            auto controllable_tensors = registry.view<TensorWithPointer, Name, TensorControl>(entt::exclude<rendering::Mesh>);
-            for (auto&& [entity, tensor, name, control] : controllable_tensors.each()) {
+            auto controllable_tensors = registry.view<TensorWithPointer, Name, TensorControl>(
+                    entt::exclude<rendering::Mesh>);
+            for (auto&& [entity, tensor, name, control]: controllable_tensors.each()) {
                 TensorControlGui(name.value, entity, control.callback_name);
             }
 
@@ -212,37 +217,6 @@ private:
     TensorRegistry& tensors_;
     nncc::string selected_name_;
 };
-
-//nodes::ComputeNode MakeTensorInputOp(const nncc::string& name) {
-//    nodes::ComputeNode node;
-//
-//    node.name = name;
-//    node.type = "TensorInput";
-//
-//    node.AddSetting(nodes::Attribute("name", nodes::AttributeType::String));
-//    node.AddOutput(nodes::Attribute("value", nodes::AttributeType::Tensor));
-//
-//    auto evaluate_fn = [](nodes::ComputeNode* node, entt::registry* registry) {
-//        auto& context = context::Context::Get();
-//        auto* tensor_registry = context.subsystems.Get<TensorRegistry>();
-//        if (tensor_registry == nullptr) {
-//            return nodes::Result{1, "Tensor registry subsystem is not initialised."};
-//        }
-//
-//        tensor_registry->Get();
-//
-//        node->outputs_by_name.at("value").value = node->settings_by_name.at("value").value;
-//        return nodes::Result{0, ""};
-//    };
-//    node.evaluate.connect<evaluate_fn>();
-//
-//    auto render_extended_view_fn = [](nodes::ComputeNode* node) {
-//        ImGui::InputFloat("Value", &node->settings_by_name.at("value").value, 0.1f, 1.0f, "%0.2f");
-//    };
-//    node.render_context_ui.connect<render_extended_view_fn>();
-//
-//    return node;
-//}
 
 }
 

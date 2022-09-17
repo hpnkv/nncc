@@ -60,7 +60,7 @@ void BatchRenderer::Add(bgfx::ViewId view_id,
 
     for (auto i = 0; i < command.index_count; ++i) {
         batch->transient_index_buffer.content[batch->transient_index_buffer.numel + i] =
-            mesh.indices[i] + vertex_index_offset;
+                mesh.indices[i] + vertex_index_offset;
     }
 
     // Push batch command
@@ -83,7 +83,7 @@ void BatchRenderer::Flush() {
     }
 
     bool is_batch = false;
-    for (auto& [batch_id, batch] : batch_groups_) {
+    for (auto& [batch_id, batch]: batch_groups_) {
         if (batch.transient_vertex_buffer.numel == 0) {
             continue;
         }
@@ -116,8 +116,9 @@ void BatchRenderer::Flush() {
                             batch.transient_vertex_buffer.content.data() + vertex_start,
                             sizeof(PosNormUVVertex) * vertex_count);
                 auto ibh =
-                    bgfx::createIndexBuffer(bgfx::makeRef(batch.transient_index_buffer.content.data() + indices_start,
-                                                          sizeof(uint16_t) * indices_count));
+                        bgfx::createIndexBuffer(
+                                bgfx::makeRef(batch.transient_index_buffer.content.data() + indices_start,
+                                              sizeof(uint16_t) * indices_count));
 
                 bgfx::setVertexBuffer(0, &tvb);
                 bgfx::setIndexBuffer(ibh);
@@ -166,7 +167,7 @@ BatchData* BatchRenderer::GetBatchData(const BatchId& batch_id) {
 }
 
 void BatchRenderer::ResetBuffers() {
-    for (auto& [idx, data] : batch_groups_) {
+    for (auto& [idx, data]: batch_groups_) {
         data.transient_vertex_buffer.numel = 0;
         data.transient_index_buffer.numel = 0;
     }

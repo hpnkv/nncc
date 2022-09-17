@@ -17,10 +17,13 @@
 #elif NNCC_PLATFORM_OSX
 #define GLFW_EXPOSE_NATIVE_COCOA
 #endif
+
 #include <GLFW/glfw3native.h>
 
 #if NNCC_PLATFORM_LINUX
+
 #include <nncc/common/X11_undefine_none.h>
+
 #endif
 
 namespace nncc::context {
@@ -43,7 +46,7 @@ struct GLFWWindowWrapper {
         glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);
 #endif
         auto window = glfwCreateWindow(
-            width, height, title.c_str(), monitor, share
+                width, height, title.c_str(), monitor, share
         );
         glfwGetFramebufferSize(window, &framebuffer_width, &framebuffer_height);
 
@@ -73,7 +76,7 @@ struct GLFWWindowWrapper {
 
     void* GetNativeHandle() {
 #if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
-        return (void*)(uintptr_t)glfwGetX11Window(ptr.get());
+        return (void*) (uintptr_t) glfwGetX11Window(ptr.get());
 #elif BX_PLATFORM_OSX
         return glfwGetCocoaWindow(ptr.get());
 #elif BX_PLATFORM_WINDOWS

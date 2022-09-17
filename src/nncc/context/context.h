@@ -9,6 +9,7 @@
 #include <bx/thread.h>
 
 #define ENTT_USE_ATOMIC
+
 #include <entt/entt.hpp>
 
 #include <nncc/input/input.h>
@@ -28,6 +29,7 @@ public:
 
     // We don't want occasional copies
     GlfwWindowingImpl(const GlfwWindowingImpl&) = delete;
+
     void operator=(const GlfwWindowingImpl&) = delete;
 
     static void GLFWErrorCallback(int error, const char* description);
@@ -67,7 +69,7 @@ public:
         nncc::string type_name(typeid(T).name());
         nncc::vector<T*> result;
         result.reserve(subsystems_[type_name].size());
-        for (auto* instance : subsystems_[type_name]) {
+        for (auto* instance: subsystems_[type_name]) {
             result.push_back(static_cast<T*>(instance));
         }
         return result;
@@ -88,6 +90,7 @@ public:
 
     // We don't want occasional copies
     Context(const Context&) = delete;
+
     void operator=(const Context&) = delete;
 
     void Exit();
@@ -128,7 +131,8 @@ public:
         windows_[idx].width = width;
         windows_[idx].height = height;
 
-        glfwGetFramebufferSize(windows_[idx].ptr.get(), &windows_[idx].framebuffer_width, &windows_[idx].framebuffer_height);
+        glfwGetFramebufferSize(windows_[idx].ptr.get(), &windows_[idx].framebuffer_width,
+                               &windows_[idx].framebuffer_height);
     }
 
     entt::registry registry;
@@ -136,6 +140,8 @@ public:
     input::InputSystem input;
     rendering::RenderingSystem rendering;
     SubsystemManager subsystems;
+
+    math::Transform view, projection;
 
 private:
     folly::ProducerConsumerQueue<GlfwMessage> glfw_message_queue_{64};
