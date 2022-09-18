@@ -82,6 +82,7 @@ void TensorRegistry::OnSharedTensorUpdate(const SharedTensorEvent& event) {
 
     entt::entity entity;
     if (!tensors_.contains(event.name)) {
+        context.log_message = fmt::format("CPU tensor: {}. {}, {}", event.name, event.manager_handle, event.filename);
         entity = registry.create();
         registry.emplace<TensorWithPointer>(entity, event.manager_handle, event.filename, event.dtype, event.dims);
         registry.emplace<Name>(entity, event.name);

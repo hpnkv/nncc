@@ -215,12 +215,12 @@ public:
                 TensorControlGui(name.value, entity, control.callback_name);
             }
 
-//            if (ImGui::SmallButton(ICON_FA_STOP_CIRCLE)) {
-//                tensors_.Clear();
-//                selected_name_.clear();
-//            } else if (ImGui::IsItemHovered()) {
-//                ImGui::SetTooltip("Remove all shared tensors");
-//            }
+            if (ImGui::SmallButton(ICON_FA_STOP_CIRCLE)) {
+                tensors_.Clear();
+                selected_tensor_ = entt::null;
+            } else if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("Remove all shared tensors");
+            }
             ImGui::End();
         }
     }

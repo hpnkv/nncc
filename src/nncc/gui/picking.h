@@ -147,6 +147,7 @@ public:
 
         if (mouse_down_ && !mouse_state.buttons[static_cast<int>(input::MouseButton::Left)]) {
             mouse_down_ = false;
+            context.log_message = fmt::format("click at ({:.3f}, {:.3f})", mouseXNDC, mouseYNDC);
             if (!blit_available_frame_ &&
                 (!ImGui::MouseOverArea() || ImGuizmo::IsUsing())) {
                 // Blit and read

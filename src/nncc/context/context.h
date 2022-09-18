@@ -155,6 +155,7 @@ public:
     rendering::RenderingSystem rendering;
     SubsystemManager subsystems;
 
+    nncc::string log_message;
     uint32_t frame_number = 0;
 
 private:

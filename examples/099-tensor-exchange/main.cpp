@@ -9,6 +9,7 @@
 #include <nncc/engine/timer.h>
 #include <nncc/gui/nodes/graph.h>
 #include <nncc/gui/picking.h>
+#include <imgui_internal.h>
 
 using namespace nncc;
 namespace py = pybind11;
@@ -98,6 +99,22 @@ int Loop() {
         ImGui::SetNextWindowSize(ImVec2(800.0f * window.scale, 600.0f * window.scale), ImGuiCond_FirstUseEver);
         compute_node_editor.Update();
 
+        auto viewport = ImGui::GetMainViewport();
+        ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_MenuBar;
+        if (ImGui::BeginViewportSideBar("##MainStatusBar", viewport, ImGuiDir_Down, ImGui::GetFrameHeight(), window_flags)) {
+            if (ImGui::BeginMenuBar()) {
+                ImGui::NextColumn();
+                nncc::string text = context.log_message;
+                auto posX = (ImGui::GetCursorPosX() + ImGui::GetColumnWidth() - ImGui::CalcTextSize(text.c_str()).x
+                            - ImGui::GetScrollX() - 2 * ImGui::GetStyle().ItemSpacing.x);
+                if(posX > ImGui::GetCursorPosX())
+                    ImGui::SetCursorPosX(posX);
+                ImGui::Text("%s", text.c_str());
+                ImGui::EndMenuBar();
+            }
+            ImGui::End();
+        }
+
         imguiEndFrame();
 
         auto aspect_ratio = static_cast<float>(window.width) / static_cast<float>(window.height);
@@ -112,7 +129,6 @@ int Loop() {
         // TODO: make this a subsystem's job
         context.input.input_characters.clear();
 
-        bgfx::setDebug(BGFX_DEBUG_STATS);
         object_picker.Update();
         context.frame_number = bgfx::frame();
         timer.Update();
