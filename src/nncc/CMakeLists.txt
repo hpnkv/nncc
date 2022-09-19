@@ -13,6 +13,7 @@ target_link_libraries(nncc PUBLIC
         CONAN_PKG::folly
         CONAN_PKG::imgui
         CONAN_PKG::double-conversion
+        ${Python_LIBRARIES}
         )
 target_include_directories(nncc PUBLIC
         ${BGFX_DIR}/include ${BX_DIR}/include
@@ -24,6 +25,8 @@ target_include_directories(nncc PUBLIC
         ${NNCC_PROJECT_ROOT}/external/imnodes
         ${CPP_REDIS_INCLUDES}
         ${NNCC_INCLUDES_PRIVATE}
+        ${Python_INCLUDE_DIRS}
+        ${pybind11_INCLUDE_DIR}
         )
 
 # Common: types, utilities, macros
@@ -52,7 +55,6 @@ target_sources(
         nncc PRIVATE
         ${NNCC_GUI_DIR}/imgui_bgfx.cpp
         ${NNCC_GUI_DIR}/imgui_smart_strings.cpp
-        ${NNCC_GUI_DIR}/nodes/graph.cpp
         ${NNCC_GUI_DIR}/guizmo.cpp
         ${NNCC_GUI_DIR}/picking.cpp
         ../../external/ImGuizmo/ImGuizmo/ImGuizmo.cpp
@@ -63,6 +65,13 @@ target_shader(nncc ${NNCC_GUI_DIR}/shaders/fs_ocornut_imgui.sc FRAGMENT)
 target_shader(nncc ${NNCC_GUI_DIR}/shaders/vs_ocornut_imgui.sc VERTEX)
 target_shader(nncc ${NNCC_GUI_DIR}/shaders/picking/fs_picking.sc FRAGMENT)
 target_shader(nncc ${NNCC_GUI_DIR}/shaders/picking/vs_picking.sc VERTEX)
+
+# Compute platform
+set(NNCC_COMPUTE_DIR ${CMAKE_CURRENT_LIST_DIR}/compute)
+target_sources(
+        nncc PRIVATE
+        ${NNCC_COMPUTE_DIR}/graph.cpp
+)
 
 # Input: abstraction for key/mouse/char events, event queue
 set(NNCC_INPUT_DIR ${CMAKE_CURRENT_LIST_DIR}/input)

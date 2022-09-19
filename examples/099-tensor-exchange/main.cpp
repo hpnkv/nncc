@@ -46,7 +46,7 @@ int Loop() {
     engine::Camera camera{eye, at, up};
     context.subsystems.Register(&camera, "current_camera");
 
-    nodes::ComputeNodeEditor compute_node_editor;
+    compute::ComputeNodeEditor compute_node_editor;
 
     // Frame-by-frame loop
     while (true) {

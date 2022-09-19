@@ -7,6 +7,7 @@
 #include <set>
 #include <unordered_map>
 #include <utility>
+#include <variant>
 
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/graph_traits.hpp>
@@ -18,14 +19,13 @@
 #include <nncc/common/utils.h>
 #include <nncc/context/context.h>
 
-namespace nncc::nodes {
+namespace nncc::compute {
 
 enum class AttributeType {
-    Scalar,
+    Float,
     String,
     Tensor,
     Array,
-    List,
     UserDefined,
 
     Count,
@@ -40,7 +40,7 @@ struct Attribute {
     AttributeType type = AttributeType::None;
 
     entt::entity entity = entt::null;
-    float value = 0.0f;
+    std::variant<float, nncc::string> value;
 
     int id;
     static int id_counter;
@@ -80,6 +80,11 @@ struct ComputeNode {
         outputs.push_back(attribute.name);
     }
 
+    template<class T>
+    std::shared_ptr<T> StateAs() {
+        return std::static_pointer_cast<T>(state);
+    }
+
     nncc::string type, name;
 
     int id;
@@ -97,6 +102,8 @@ struct ComputeNode {
 
     nncc::list<nncc::string> outputs;
     std::unordered_map<nncc::string, Attribute> outputs_by_name;
+
+    std::shared_ptr<void> state;
 };
 
 struct ComputeEdge {
@@ -142,7 +149,7 @@ public:
         return graph;
     };
 
-    Graph graph;
+    Graph graph {};
 };
 
 
@@ -159,6 +166,12 @@ public:
             : graph_(), minimap_location_(ImNodesMiniMapLocation_BottomRight) {
         ImNodesIO& io = ImNodes::GetIO();
         io.LinkDetachWithModifierClick.Modifier = &ImGui::GetIO().KeyCtrl;
+
+        auto& context = context::Context::Get();
+        scale_ = context.GetWindow(0).scale;
+
+        ImGui::StyleColorsLight();
+        ImNodes::StyleColorsLight();
     }
 
     void Update() {
@@ -167,7 +180,6 @@ public:
         auto flags = ImGuiWindowFlags_MenuBar;
 
         // The node editor window
-        ImGui::SetNextWindowCollapsed(true, ImGuiCond_FirstUseEver);
         ImGui::Begin("Compute node editor", nullptr, flags);
 
         ShowMenuBar();
@@ -208,6 +220,8 @@ private:
         Attribute* attribute;
         bool is_input = false;
     };
+
+    float scale_ = 1.0f;
 
     ComputeGraph graph_;
     std::unordered_map<int, ComputeGraph::Edge> edge_map_;
@@ -266,7 +280,7 @@ private:
                                 ImNodes::IsEditorHovered() &&
                                 ImGui::IsKeyReleased(ImGuiKey_A);
 
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8.f, 8.f));
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8.f * scale_, 8.f * scale_));
         if (!ImGui::IsAnyItemHovered() && open_popup) {
             ImGui::OpenPopup("Add node");
         }
@@ -302,7 +316,7 @@ private:
             auto vertex = *nodes_current;
             auto& node = (*graph_)[vertex];
 
-            const float node_width = 100.f;
+            const float node_width = 100.f * scale_;
             ImNodes::BeginNode(node.id);
 
             ImNodes::BeginNodeTitleBar();
@@ -316,7 +330,12 @@ private:
 
                 ImGui::SameLine();
                 ImGui::PushItemWidth(node_width - label_width);
-                ImGui::DragFloat("##hidelabel", &input.value, 0.01f);
+                if (std::holds_alternative<float>(input.value)) {
+                    ImGui::DragFloat("##hidelabel", &std::get<float>(input.value), 0.01f);
+                } else if (std::holds_alternative<nncc::string>(input.value)) {
+                    ImGui::TextUnformatted(std::get<nncc::string>(input.value).c_str());
+                }
+
                 ImGui::PopItemWidth();
 
                 ImNodes::EndInputAttribute();
@@ -328,9 +347,19 @@ private:
                 {
                     ImNodes::BeginOutputAttribute(output.id);
                     attribute_map_.insert_or_assign(output.id, AttributeDescriptor{vertex, &output, false});
-                    const float label_width = ImGui::CalcTextSize(output.name.c_str()).x;
+                    nncc::string type;
+                    if (output.type == AttributeType::Float) {
+                        type = "float";
+                    } else if (output.type == AttributeType::String) {
+                        type = "string";
+                    } else if (output.type == AttributeType::UserDefined) {
+                        type = "T";
+                    }
+
+                    nncc::string label = !type.empty() ? fmt::format("{}: {}", output.name, type) : output.name;
+                    const float label_width = ImGui::CalcTextSize(label.c_str()).x;
                     ImGui::Indent(node_width - label_width);
-                    ImGui::TextUnformatted(output.name.c_str());
+                    ImGui::TextUnformatted(label.c_str());
                     ImNodes::EndOutputAttribute();
                 }
             }

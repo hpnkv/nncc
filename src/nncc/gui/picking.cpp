@@ -1,5 +1,3 @@
-#pragma once
-
 #include "picking.h"
 
 namespace nncc::gui {
