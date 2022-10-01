@@ -20,7 +20,7 @@ public:
     ObjectPicker() {
         id_renderer_ = rendering::Renderer(id_view_id_);
 
-        auto& context = context::Context::Get();
+        auto& context = *context::Context::Get();
 
         id_uniform_ = bgfx::createUniform("u_id", bgfx::UniformType::Vec4);
         id_program_ = LoadProgram("vs_picking", "fs_picking");
@@ -54,7 +54,7 @@ public:
     }
 
     void RenderUi() {
-        auto& context = context::Context::Get();
+        auto& context = *context::Context::Get();
         const auto& window = context.GetWindow(0);
 
         ImGui::SetNextWindowPos(
@@ -69,7 +69,7 @@ public:
     }
 
     void Update() {
-        auto& context = context::Context::Get();
+        auto& context = *context::Context::Get();
         const auto& cregistry = context.registry;
         UpdateEntityIds(cregistry);
 

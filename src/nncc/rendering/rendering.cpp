@@ -36,7 +36,7 @@ void RenderingSystem::Update(nncc::context::Context& context,
 int RenderingSystem::Init(uint16_t width, uint16_t height) {
     rendering::PosNormUVVertex::Init();
 
-    auto& context = context::Context::Get();
+    auto& context = *context::Context::Get();
     auto& window = context.GetWindow(0);
 
     bgfx::Init init;

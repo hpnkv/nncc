@@ -1,4 +1,5 @@
 #include "picking.h"
+#include "context.h"
 
 namespace nncc::gui {
 

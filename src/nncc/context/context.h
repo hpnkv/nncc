@@ -4,13 +4,14 @@
 #include <unordered_map>
 #include <deque>
 #include <vector>
+#include <iostream>
 
 #include <bgfx/bgfx.h>
 #include <bx/thread.h>
 #include <fmt/format.h>
+#include <imgui.h>
 
 #define ENTT_USE_ATOMIC
-
 #include <entt/entt.hpp>
 
 #include <nncc/input/input.h>
@@ -23,10 +24,7 @@ class GlfwWindowingImpl {
 public:
     GlfwWindowingImpl() = default;
 
-    static GlfwWindowingImpl& Get() {
-        static GlfwWindowingImpl instance;
-        return instance;
-    }
+    static GlfwWindowingImpl& Get();
 
     // We don't want occasional copies
     GlfwWindowingImpl(const GlfwWindowingImpl&) = delete;
@@ -51,10 +49,7 @@ public:
 class SubsystemManager {
 public:
     template<class T>
-    void Register(T* instance) {
-        nncc::string type_name(fmt::format("__{}", typeid(T).name()));
-        subsystems_[type_name].push_back(static_cast<void*>(instance));
-    }
+    void Register(T* instance);
 
     template<class T>
     void Register(T* instance, const nncc::string& name) {
@@ -93,14 +88,24 @@ private:
     std::unordered_map<nncc::string, nncc::vector<void*>> subsystems_;
 };
 
-class Context {
+
+template<class T>
+void SubsystemManager::Register(T* instance) {
+    nncc::string type_name(fmt::format("__{}", typeid(T).name()));
+    subsystems_[type_name].push_back(static_cast<void*>(instance));
+}
+
+struct ImGuiAllocators {
+    ImGuiMemAllocFunc p_alloc_func;
+    ImGuiMemFreeFunc p_free_func;
+    void* user_data;
+};
+
+class __attribute__((visibility ("default"))) Context {
 public:
     Context() = default;
 
-    static Context& Get() {
-        static Context instance;
-        return instance;
-    }
+    static __attribute__((visibility ("default"))) Context* Get();
 
     // We don't want occasional copies
     Context(const Context&) = delete;
@@ -121,33 +126,17 @@ public:
 
     void DestroyWindow(int16_t idx);
 
-    GLFWwindow* GetGlfwWindow(int16_t window_idx) {
-        return windows_[window_idx].ptr.get();
-    }
+    GLFWwindow* GetGlfwWindow(int16_t window_idx);
 
-    GLFWWindowWrapper& GetWindow(int16_t window_idx) {
-        return windows_[window_idx];
-    }
+    GLFWWindowWrapper& GetWindow(int16_t window_idx);
 
-    int16_t GetWindowIdx(GLFWwindow* window) {
-        return window_indices_.at(window);
-    }
+    int16_t GetWindowIdx(GLFWwindow* window);
 
-    folly::ProducerConsumerQueue<GlfwMessage>& GetMessageQueue() {
-        return glfw_message_queue_;
-    }
+    folly::ProducerConsumerQueue<GlfwMessage>& GetMessageQueue();
 
-    bx::Thread* GetDefaultThread() {
-        return &default_thread_;
-    }
+    bx::Thread* GetDefaultThread();
 
-    void SetWindowSize(int16_t idx, int width, int height) {
-        windows_[idx].width = width;
-        windows_[idx].height = height;
-
-        glfwGetFramebufferSize(windows_[idx].ptr.get(), &windows_[idx].framebuffer_width,
-                               &windows_[idx].framebuffer_height);
-    }
+    void SetWindowSize(int16_t idx, int width, int height);
 
     entt::registry registry;
     entt::dispatcher dispatcher;
@@ -157,8 +146,12 @@ public:
 
     nncc::string log_message;
     uint32_t frame_number = 0;
+    ImGuiContext* imgui_context = nullptr;
+    ImGuiAllocators imgui_allocators;
 
 private:
+    static Context* p_instance;
+
     folly::ProducerConsumerQueue<GlfwMessage> glfw_message_queue_{64};
 
     nncc::vector<GLFWWindowWrapper> windows_;

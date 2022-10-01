@@ -1,13 +1,11 @@
-#include <boost/graph/graphviz.hpp>
 #include <pybind11/embed.h>
 
 #include <pynncc/torch/tensor_registry.h>
 #include <pynncc/torch/shm_communication.h>
 
-#include <nncc/engine/camera.h>
+#include <nncc/compute/graph.h>
 #include <nncc/engine/loop.h>
 #include <nncc/engine/timer.h>
-#include <nncc/gui/nodes/graph.h>
 #include <nncc/gui/picking.h>
 #include <imgui_internal.h>
 
@@ -18,12 +16,14 @@ int Loop() {
     using namespace nncc;
 
     // Get references to the context, ENTT registry and window holder
-    auto& context = context::Context::Get();
+    auto& context = *context::Context::Get();
     auto& window = context.GetWindow(0);
 
     auto object_picker = gui::ObjectPicker();
     context.subsystems.Register(&object_picker);
 
+    ImGui::SetAllocatorFunctions(context.imgui_allocators.p_alloc_func, context.imgui_allocators.p_free_func);
+    ImGui::SetCurrentContext(context.imgui_context);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 4.0f * window.scale);
 
     // Create a thread listening to shared memory handles and a tensor registry

@@ -63,7 +63,7 @@ void GlfwWindowingImpl::MouseButtonCallback(GLFWwindow* window, int32_t button, 
     event->down = action == GLFW_PRESS;
     event->modifiers = mods;
 
-    auto& context = Context::Get();
+    auto& context = *Context::Get();
     auto window_idx = context.GetWindowIdx(window);
     context.input.queue.Push(window_idx, std::move(event));
 }
@@ -73,7 +73,7 @@ void GlfwWindowingImpl::CursorPositionCallback(GLFWwindow* window, double x_pos,
     event->x = static_cast<int32_t>(x_pos);
     event->y = static_cast<int32_t>(y_pos);
 
-    auto& context = Context::Get();
+    auto& context = *Context::Get();
     auto window_idx = context.GetWindowIdx(window);
     context.input.queue.Push(window_idx, std::move(event));
 }
@@ -97,7 +97,7 @@ void GlfwWindowingImpl::KeyCallback(GLFWwindow* window, int32_t glfw_key, int32_
     event->modifiers = mods;
     event->down = action == GLFW_PRESS || action == GLFW_REPEAT;
 
-    auto& context = Context::Get();
+    auto& context = *Context::Get();
     auto window_idx = context.GetWindowIdx(window);
     context.input.queue.Push(window_idx, std::move(event));
 }
@@ -106,7 +106,7 @@ void GlfwWindowingImpl::CharacterCallback(GLFWwindow* window, unsigned int codep
     auto event = std::make_unique<input::CharEvent>();
     event->codepoint = codepoint;
 
-    auto& context = Context::Get();
+    auto& context = *Context::Get();
     auto window_idx = context.GetWindowIdx(window);
     context.input.queue.Push(window_idx, std::move(event));
 }
@@ -117,7 +117,7 @@ void GlfwWindowingImpl::ScrollCallback(GLFWwindow* window, double x_offset, doub
     event->scroll_x = x_offset;
     event->scroll_y = y_offset;
 
-    auto& context = Context::Get();
+    auto& context = *Context::Get();
     auto window_idx = context.GetWindowIdx(window);
     context.input.queue.Push(window_idx, std::move(event));
 }
@@ -126,9 +126,42 @@ void GlfwWindowingImpl::FramebufferSizeCallback(GLFWwindow* window, int width, i
 
 }
 
+GlfwWindowingImpl& GlfwWindowingImpl::Get() {
+    static GlfwWindowingImpl instance;
+    return instance;
+}
+
 void Context::Exit() {
     std::unique_ptr<input::Event> event(new input::ExitEvent);
-    Context::Get().input.queue.Push(0, std::move(event));
+    Context::Get()->input.queue.Push(0, std::move(event));
+}
+
+GLFWwindow* Context::GetGlfwWindow(int16_t window_idx) {
+    return windows_[window_idx].ptr.get();
+}
+
+GLFWWindowWrapper& Context::GetWindow(int16_t window_idx) {
+    return windows_[window_idx];
+}
+
+int16_t Context::GetWindowIdx(GLFWwindow* window) {
+    return window_indices_.at(window);
+}
+
+folly::ProducerConsumerQueue<GlfwMessage>& Context::GetMessageQueue() {
+    return glfw_message_queue_;
+}
+
+bx::Thread* Context::GetDefaultThread() {
+    return &default_thread_;
+}
+
+void Context::SetWindowSize(int16_t idx, int width, int height) {
+    windows_[idx].width = width;
+    windows_[idx].height = height;
+
+    glfwGetFramebufferSize(windows_[idx].ptr.get(), &windows_[idx].framebuffer_width,
+                           &windows_[idx].framebuffer_height);
 }
 
 }
@@ -136,7 +169,7 @@ void Context::Exit() {
 bool nncc::input::InputSystem::ProcessEvents() {
     std::shared_ptr<Event> event;
 
-    auto& context = context::Context::Get();
+    auto& context = *context::Context::Get();
 
     do {
         event = queue.Poll();
@@ -149,7 +182,7 @@ bool nncc::input::InputSystem::ProcessEvents() {
 
         } else if (event->type == EventType::Resize) {
             auto resize_event = std::dynamic_pointer_cast<ResizeEvent>(event);
-            nncc::context::Context::Get().SetWindowSize(event->window_idx,
+            nncc::context::Context::Get()->SetWindowSize(event->window_idx,
                                                         resize_event->width,
                                                         resize_event->height);
 

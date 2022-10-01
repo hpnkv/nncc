@@ -4,6 +4,8 @@ if (APPLE)
     set(CMAKE_OSX_DEPLOYMENT_TARGET "12.3" CACHE STRING "Minimum OS X deployment version")
 endif()
 
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 set(CMAKE_CUDA_ARCHITECTURES OFF)
 set(CMAKE_CUDA_COMPILER /usr/local/cuda/bin/nvcc)
 set(CMAKE_CUDA_STANDARD 14)
@@ -18,6 +20,7 @@ include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup(TARGETS)
 
 # Non-Conan externals
+set(BGFX_LIBRARY_TYPE SHARED)
 add_subdirectory(external/bgfx.cmake)
 add_subdirectory(external/cpp_redis)
 set(CPP_REDIS_INCLUDES ${NNCC_PROJECT_ROOT}/external/cpp_redis/includes ${NNCC_PROJECT_ROOT}/external/cpp_redis/tacopie/includes)

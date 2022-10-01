@@ -2,6 +2,8 @@
 
 #include <imnodes/imnodes.h>
 
+#include <imgui_internal.h>
+
 #include <nncc/context/context.h>
 #include <nncc/engine/camera.h>
 #include <nncc/gui/gui.h>
@@ -10,14 +12,20 @@ namespace nncc::engine {
 
 int LoopThreadFunc(bx::Thread* self, void* args) {
     auto& delegate = *static_cast<ApplicationLoop*>(args);
-    auto& context = context::Context::Get();
+    auto& context = *context::Context::Get();
     auto& window = context.GetWindow(0);
 
     if (context.rendering.Init(window.framebuffer_width, window.framebuffer_height) != 0) {
         return 1;
     }
     float font_size = 18;
-    imguiCreate(font_size, NULL, window.scale);
+
+    if (context.imgui_context == nullptr) {
+        imguiCreate(font_size, NULL, window.scale);
+        context.imgui_context = ImGui::GetCurrentContext();
+        ImGui::GetAllocatorFunctions(&context.imgui_allocators.p_alloc_func, &context.imgui_allocators.p_free_func, &context.imgui_allocators.user_data);
+    }
+
     ImGui::GetStyle().ScaleAllSizes(window.scale);
 
     ImNodes::CreateContext();
@@ -40,7 +48,7 @@ int LoopThreadFunc(bx::Thread* self, void* args) {
 }
 
 int Run(ApplicationLoop* loop) {
-    auto& context = nncc::context::Context::Get();
+    auto& context = *nncc::context::Context::Get();
     if (!context.InitInMainThread()) {
         return 1;
     }
@@ -80,3 +88,12 @@ int Run(ApplicationLoop* loop) {
     return thread->getExitCode();
 }
 }
+
+//__attribute__((constructor))
+//void init(void) {
+//    auto& context = nncc::context::Context::Get();
+//
+//    imguiCreate();
+//    ImGui::SetAllocatorFunctions(context.imgui_allocators.p_alloc_func, context.imgui_allocators.p_free_func);
+//    ImGui::SetCurrentContext(context.imgui_context);
+//}

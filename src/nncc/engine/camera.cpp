@@ -83,6 +83,23 @@ math::Matrix4 Camera::GetViewMatrix() const {
     return result;
 }
 
+Camera::Camera(const bx::Vec3& eye, const bx::Vec3& at, const bx::Vec3& up, const math::Matrix4& projection_matrix)
+    : eye_(eye), at_(at), up_(up), projection_matrix_(projection_matrix) {}
+
+math::Matrix4 Camera::GetProjectionMatrix() const {
+    return projection_matrix_;
+}
+
+void Camera::SetProjectionMatrix(float field_of_view, float aspect, float near, float far) {
+    bx::mtxProj(*projection_matrix_, field_of_view, aspect, near, far, bgfx::getCaps()->homogeneousDepth);
+}
+
+math::Matrix4 Camera::MakeProjectionMatrix(float field_of_view, float aspect, float near, float far) {
+    math::Matrix4 matrix;
+    bx::mtxProj(*matrix, field_of_view, aspect, near, far, bgfx::getCaps()->homogeneousDepth);
+    return matrix;
+}
+
 math::Matrix4 DefaultProjectionMatrix() {
     math::Matrix4 matrix;
     bx::mtxProj(*matrix, 30.0f, 1.0f, 0.01f, 1000.0f, bgfx::getCaps()->homogeneousDepth);

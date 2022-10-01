@@ -31,7 +31,7 @@ auto ConstOpEvaluateFn(ComputeNode* node, entt::registry* registry) {
     auto& state = *node->StateAs<ConstOpState>();
     node->outputs_by_name.at("value").value = state.value;
 
-    auto& context = context::Context::Get();
+    auto& context = *context::Context::Get();
 
     if (state.type == ConstOpState::Type::Generated) {
          py::exec(std::get<nncc::string>(state.value).c_str());
@@ -70,7 +70,7 @@ auto ConstOpRenderFn(ComputeNode* node) {
 
     if (state.type == ConstOpState::Type::Float) {
         if (!std::holds_alternative<float>(state.value)) {
-            state.value = 0.;
+            state.value = 0.0f;
         }
         if (ImGui::InputFloat("##constdouble", &std::get<float>(state.value), 0.01f, 0.1f, "%0.3f", 0)) {
             state.edited = true;

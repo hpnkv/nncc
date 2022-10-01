@@ -167,7 +167,7 @@ public:
         ImNodesIO& io = ImNodes::GetIO();
         io.LinkDetachWithModifierClick.Modifier = &ImGui::GetIO().KeyCtrl;
 
-        auto& context = context::Context::Get();
+        auto& context = *context::Context::Get();
         scale_ = context.GetWindow(0).scale;
 
         ImGui::StyleColorsLight();
@@ -399,7 +399,7 @@ private:
             boost::add_edge(start.vertex, end.vertex, {start.attribute->name, end.attribute->name}, *graph_);
         }
 
-        graph_.Evaluate(&context::Context::Get().registry);
+        graph_.Evaluate(&context::Context::Get()->registry);
     }
 
     void HandleDeletedLinks() {

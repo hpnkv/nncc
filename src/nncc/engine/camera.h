@@ -13,8 +13,7 @@ math::Matrix4 DefaultProjectionMatrix();
 class Camera {
 public:
     Camera(const bx::Vec3& eye, const bx::Vec3& at, const bx::Vec3& up,
-           const math::Matrix4& projection_matrix = DefaultProjectionMatrix())
-            : eye_(eye), at_(at), up_(up), projection_matrix_(projection_matrix) {}
+           const math::Matrix4& projection_matrix = DefaultProjectionMatrix());
 
     void Update(float timedelta,
                 const input::MouseState& mouse_state,
@@ -23,19 +22,11 @@ public:
 
     math::Matrix4 GetViewMatrix() const;
 
-    [[nodiscard]] math::Matrix4 GetProjectionMatrix() const {
-        return projection_matrix_;
-    }
+    [[nodiscard]] math::Matrix4 GetProjectionMatrix() const;
 
-    void SetProjectionMatrix(float field_of_view, float aspect, float near, float far) {
-        bx::mtxProj(*projection_matrix_, field_of_view, aspect, near, far, bgfx::getCaps()->homogeneousDepth);
-    }
+    void SetProjectionMatrix(float field_of_view, float aspect, float near, float far);
 
-    static math::Matrix4 MakeProjectionMatrix(float field_of_view, float aspect, float near, float far) {
-        math::Matrix4 matrix;
-        bx::mtxProj(*matrix, field_of_view, aspect, near, far, bgfx::getCaps()->homogeneousDepth);
-        return matrix;
-    }
+    static math::Matrix4 MakeProjectionMatrix(float field_of_view, float aspect, float near, float far);
 
 private:
     input::MouseState mouse_last_{};

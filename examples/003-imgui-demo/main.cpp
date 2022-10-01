@@ -8422,7 +8422,7 @@ void ImGui::ShowStyleEditor(ImGuiStyle*) {}
 
 int Loop() {
     // Get references to the context, ENTT registry and window holder
-    auto& context = nncc::context::Context::Get();
+    auto& context = *nncc::context::Context::Get();
     auto& window = context.GetWindow(0);
 
     // Create a timer

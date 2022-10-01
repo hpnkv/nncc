@@ -145,9 +145,9 @@ static FontRangeMerge s_fontRangeMerge[] =
                 {s_iconsFontAwesomeTtf, sizeof(s_iconsFontAwesomeTtf), {ICON_MIN_FA, ICON_MAX_FA, 0}},
         };
 
-static void* memAlloc(size_t _size, void* _userData);
+void* memAlloc(size_t _size, void* _userData);
 
-static void memFree(void* _ptr, void* _userData);
+void memFree(void* _ptr, void* _userData);
 
 // Functions
 static const char* ImGui_ImplGlfw_GetClipboardText(void* user_data) {
@@ -424,7 +424,7 @@ struct OcornutImguiContext {
         io.AddMouseWheelEvent(0.0f, (float) (_scroll - m_lastScroll));
         m_lastScroll = _scroll;
 
-        const auto& key_state = nncc::context::Context::Get().input.key_state;
+        const auto& key_state = nncc::context::Context::Get()->input.key_state;
 
         auto modifiers = key_state.modifiers;
         io.AddKeyEvent(ImGuiKey_ModShift, 0 != (modifiers & (Modifier::LeftShift | Modifier::RightShift)));
@@ -444,7 +444,7 @@ struct OcornutImguiContext {
         }
         previous_pressed_keys = key_state.pressed_keys;
 
-        for (const auto& codepoint: nncc::context::Context::Get().input.input_characters) {
+        for (const auto& codepoint: nncc::context::Context::Get()->input.input_characters) {
             io.AddInputCharacter(codepoint);
         }
 
@@ -480,12 +480,12 @@ struct OcornutImguiContext {
 
 static OcornutImguiContext context;
 
-static void* memAlloc(size_t _size, void* _userData) {
+void* memAlloc(size_t _size, void* _userData) {
     BX_UNUSED(_userData);
     return BX_ALLOC(context.m_allocator, _size);
 }
 
-static void memFree(void* _ptr, void* _userData) {
+void memFree(void* _ptr, void* _userData) {
     BX_UNUSED(_userData);
     BX_FREE(context.m_allocator, _ptr);
 }

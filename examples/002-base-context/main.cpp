@@ -24,7 +24,7 @@ entt::entity PlaceUnitPlane(entt::registry* registry, bgfx::ProgramHandle shader
 
 int Loop() {
     // Get references to the context, ENTT registry and window holder
-    auto& context = context::Context::Get();
+    auto& context = *context::Context::Get();
     auto& window = context.GetWindow(0);
 
     auto& registry = context.registry;
