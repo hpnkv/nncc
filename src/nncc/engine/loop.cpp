@@ -18,7 +18,7 @@ int LoopThreadFunc(bx::Thread* self, void* args) {
     if (context.rendering.Init(window.framebuffer_width, window.framebuffer_height) != 0) {
         return 1;
     }
-    float font_size = 18;
+    float font_size = 16;
 
     if (context.imgui_context == nullptr) {
         imguiCreate(font_size, NULL, window.scale);

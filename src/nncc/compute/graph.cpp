@@ -92,10 +92,10 @@ auto ConstOpRenderFn(ComputeNode* node) {
     }
 }
 
-ComputeNode MakeConstOp(const string& name) {
+ComputeNode MakeConstOp(const void*) {
     ComputeNode node;
 
-    node.name = name;
+    node.name = "Const";
     node.type = "Const";
 
     node.AddOutput(Attribute("value", AttributeType::Float));
@@ -122,10 +122,10 @@ auto AddOpRenderFn(ComputeNode* node) {
                       ImGuiInputTextFlags_ReadOnly);
 }
 
-ComputeNode MakeAddOp(const string& name) {
+ComputeNode MakeAddOp(const void*) {
     ComputeNode node;
 
-    node.name = name;
+    node.name = "Add";
     node.type = "Add";
 
     node.AddInput(Attribute("a", AttributeType::UserDefined));
@@ -153,10 +153,10 @@ auto MulOpRenderFn(ComputeNode* node) {
                       ImGuiInputTextFlags_ReadOnly);
 }
 
-ComputeNode MakeMulOp(const string& name) {
+ComputeNode MakeMulOp(const void*) {
     ComputeNode node;
 
-    node.name = name;
+    node.name = "Multiply";
     node.type = "Mul";
 
     node.AddInput(Attribute("a", AttributeType::UserDefined));

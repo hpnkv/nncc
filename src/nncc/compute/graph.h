@@ -153,11 +153,24 @@ public:
 };
 
 
-ComputeNode MakeConstOp(const nncc::string& name);
+ComputeNode MakeConstOp(const void* _ = nullptr);
 
-ComputeNode MakeAddOp(const nncc::string& name);
+ComputeNode MakeAddOp(const void* _ = nullptr);
 
-ComputeNode MakeMulOp(const nncc::string& name);
+ComputeNode MakeMulOp(const void* _ = nullptr);
+
+
+struct ComputeEditorAddMenuItem {
+    ComputeEditorAddMenuItem(const nncc::string& _label, ComputeNode(*constructor)(const void*)) : label(_label) {
+        ctor.connect(constructor);
+    }
+
+    ComputeEditorAddMenuItem(const nncc::string& _label, const nncc::vector<std::shared_ptr<ComputeEditorAddMenuItem>>& _children) : label(_label), children(_children) {}
+
+    nncc::string label;
+    nncc::vector<std::shared_ptr<ComputeEditorAddMenuItem>> children;
+    entt::delegate<ComputeNode()> ctor;
+};
 
 
 class ComputeNodeEditor {
@@ -170,8 +183,8 @@ public:
         auto& context = *context::Context::Get();
         scale_ = context.GetWindow(0).scale;
 
-        ImGui::StyleColorsLight();
-        ImNodes::StyleColorsLight();
+        ImGui::StyleColorsDark();
+        ImNodes::StyleColorsDark();
     }
 
     void Update() {
@@ -186,8 +199,8 @@ public:
 
         ImGui::TextUnformatted("Edit the color of the output color window using nodes.");
         ImGui::Columns(2);
-        ImGui::TextUnformatted("A -- add node");
-        ImGui::TextUnformatted("X -- delete selected node or link");
+        ImGui::TextUnformatted("[A] Add node");
+        ImGui::TextUnformatted("[X] Delete selected node or link");
         ImGui::NextColumn();
         ImGui::Columns(1);
 
@@ -214,12 +227,18 @@ public:
         return graph_;
     }
 
+    void RegisterMenuItem(const std::shared_ptr<ComputeEditorAddMenuItem>& item) {
+        menu_.push_back(item);
+    }
+
 private:
     struct AttributeDescriptor {
         ComputeGraph::Vertex vertex;
         Attribute* attribute;
         bool is_input = false;
     };
+
+    nncc::vector<std::shared_ptr<ComputeEditorAddMenuItem>> menu_;
 
     float scale_ = 1.0f;
 
@@ -275,6 +294,23 @@ private:
         }
     }
 
+    void RenderAddMenu(const std::shared_ptr<ComputeEditorAddMenuItem>& item, const ImVec2& click_pos) {
+        if (item->children.empty()) {
+            if (ImGui::MenuItem(item->label.c_str())) {
+                auto node = item->ctor();
+                graph_.AddNode(node);
+                ImNodes::SetNodeScreenSpacePos(node.id, click_pos);
+            }
+            return;
+        }
+        if (ImGui::BeginMenu(item->label.c_str())) {
+            for (const auto& child : item->children) {
+                RenderAddMenu(child, click_pos);
+            }
+            ImGui::EndMenu();
+        }
+    }
+
     void HandleNewNodes() {
         const bool open_popup = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows) &&
                                 ImNodes::IsEditorHovered() &&
@@ -287,25 +323,9 @@ private:
 
         if (ImGui::BeginPopup("Add node")) {
             const ImVec2 click_pos = ImGui::GetMousePosOnOpeningCurrentPopup();
-
-            if (ImGui::MenuItem("Add")) {
-                auto node = MakeAddOp("Add");
-                graph_.AddNode(node);
-                ImNodes::SetNodeScreenSpacePos(node.id, click_pos);
+            for (const auto& item: menu_) {
+                RenderAddMenu(item, click_pos);
             }
-
-            if (ImGui::MenuItem("Multiply")) {
-                auto node = MakeMulOp("Multiply");
-                graph_.AddNode(node);
-                ImNodes::SetNodeScreenSpacePos(node.id, click_pos);
-            }
-
-            if (ImGui::MenuItem("Constant")) {
-                auto node = MakeConstOp("Constant");
-                graph_.AddNode(node);
-                ImNodes::SetNodeScreenSpacePos(node.id, click_pos);
-            }
-
             ImGui::EndPopup();
         }
         ImGui::PopStyleVar();
@@ -322,7 +342,8 @@ private:
             ImNodes::BeginNodeTitleBar();
             ImGui::TextUnformatted(node.name.c_str());
             ImNodes::EndNodeTitleBar();
-            for (auto& [name, input]: node.inputs_by_name) {
+            for (auto& name: node.inputs) {
+                auto& input = node.inputs_by_name.at(name);
                 ImNodes::BeginInputAttribute(input.id);
                 attribute_map_.insert_or_assign(input.id, AttributeDescriptor{vertex, &input, true});
                 const float label_width = ImGui::CalcTextSize(input.name.c_str()).x;
@@ -331,7 +352,7 @@ private:
                 ImGui::SameLine();
                 ImGui::PushItemWidth(node_width - label_width);
                 if (std::holds_alternative<float>(input.value)) {
-                    ImGui::DragFloat("##hidelabel", &std::get<float>(input.value), 0.01f);
+                    ImGui::TextUnformatted(fmt::format("{:.4g}", std::get<float>(input.value)).c_str());
                 } else if (std::holds_alternative<nncc::string>(input.value)) {
                     ImGui::TextUnformatted(std::get<nncc::string>(input.value).c_str());
                 }
@@ -343,8 +364,9 @@ private:
 
             ImGui::Spacing();
 
-            for (auto& [name, output]: node.outputs_by_name) {
+            for (auto& name: node.outputs) {
                 {
+                    auto& output = node.outputs_by_name.at(name);
                     ImNodes::BeginOutputAttribute(output.id);
                     attribute_map_.insert_or_assign(output.id, AttributeDescriptor{vertex, &output, false});
                     nncc::string type;

@@ -47,6 +47,15 @@ int Loop() {
     context.subsystems.Register(&camera, "current_camera");
 
     compute::ComputeNodeEditor compute_node_editor;
+    auto menu_group = std::make_shared<compute::ComputeEditorAddMenuItem>(
+        "Algebra",
+        nncc::vector<std::shared_ptr<compute::ComputeEditorAddMenuItem>>{
+            std::make_shared<compute::ComputeEditorAddMenuItem>("Add", &compute::MakeAddOp),
+            std::make_shared<compute::ComputeEditorAddMenuItem>("Mul", &compute::MakeMulOp),
+            std::make_shared<compute::ComputeEditorAddMenuItem>("Const", &compute::MakeConstOp),
+        }
+    );
+    compute_node_editor.RegisterMenuItem(menu_group);
 
     // Frame-by-frame loop
     while (true) {

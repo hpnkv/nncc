@@ -8425,6 +8425,9 @@ int Loop() {
     auto& context = *nncc::context::Context::Get();
     auto& window = context.GetWindow(0);
 
+    ImGui::SetAllocatorFunctions(context.imgui_allocators.p_alloc_func, context.imgui_allocators.p_free_func);
+    ImGui::SetCurrentContext(context.imgui_context);
+
     // Create a timer
     nncc::engine::Timer timer;
 
