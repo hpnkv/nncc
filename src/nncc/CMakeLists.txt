@@ -34,7 +34,6 @@ target_include_directories(nncc PUBLIC
         ${CPP_REDIS_INCLUDES}
         ${NNCC_INCLUDES_PRIVATE}
         ${Python_INCLUDE_DIRS}
-        ${pybind11_INCLUDE_DIR}
         )
 
 # Common: types, utilities, macros
@@ -87,6 +86,7 @@ set(NNCC_COMPUTE_DIR ${CMAKE_CURRENT_LIST_DIR}/compute)
 target_sources(
         nncc PRIVATE
         ${NNCC_COMPUTE_DIR}/graph.cpp
+        ${NNCC_COMPUTE_DIR}/algebra_ops.cpp
 )
 
 # Math: vector and matrix ops

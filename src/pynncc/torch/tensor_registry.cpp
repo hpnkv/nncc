@@ -213,6 +213,9 @@ void TensorRegistry::Update() {
 }
 
 entt::entity TensorRegistry::Get(const string& name) {
+    if (!tensors_.contains(name)) {
+        return entt::null;
+    }
     return tensors_.at(name);
 }
 

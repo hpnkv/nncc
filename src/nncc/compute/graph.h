@@ -24,8 +24,6 @@ namespace nncc::compute {
 enum class AttributeType {
     Float,
     String,
-    Tensor,
-    Array,
     UserDefined,
 
     Count,
@@ -60,7 +58,7 @@ struct Result {
 struct ComputeNode;
 
 using EvaluateDelegate = entt::delegate<Result(ComputeNode*, entt::registry*)>;
-using RenderDelegate = entt::delegate<void(ComputeNode*)>;
+using RenderDelegate = entt::delegate<bool(ComputeNode*)>;
 
 struct ComputeNode {
     ComputeNode() : id(id_counter++) {};
@@ -68,11 +66,6 @@ struct ComputeNode {
     void AddInput(Attribute attribute) {
         inputs_by_name.insert_or_assign(attribute.name, attribute);
         inputs.push_back(attribute.name);
-    }
-
-    void AddSetting(Attribute attribute) {
-        settings_by_name.insert_or_assign(attribute.name, attribute);
-        settings.push_back(attribute.name);
     }
 
     void AddOutput(Attribute attribute) {
@@ -96,9 +89,6 @@ struct ComputeNode {
 
     nncc::list<nncc::string> inputs;
     std::unordered_map<nncc::string, Attribute> inputs_by_name;
-
-    nncc::list<nncc::string> settings;
-    std::unordered_map<nncc::string, Attribute> settings_by_name;
 
     nncc::list<nncc::string> outputs;
     std::unordered_map<nncc::string, Attribute> outputs_by_name;
@@ -151,13 +141,6 @@ public:
 
     Graph graph {};
 };
-
-
-ComputeNode MakeConstOp(const void* _ = nullptr);
-
-ComputeNode MakeAddOp(const void* _ = nullptr);
-
-ComputeNode MakeMulOp(const void* _ = nullptr);
 
 
 struct ComputeEditorAddMenuItem {
@@ -459,16 +442,17 @@ private:
             const auto& node = (*graph_)[vertex];
 
             nncc::vector<int> attribute_ids;
-            attribute_ids.reserve(node.inputs.size() + node.outputs.size() + node.settings.size());
+//            attribute_ids.reserve(node.inputs.size() + node.outputs.size() + node.settings.size());
+            attribute_ids.reserve(node.inputs.size() + node.outputs.size());
             for (const auto& [name, attribute]: node.inputs_by_name) {
                 attribute_ids.push_back(attribute.id);
             }
             for (const auto& [name, attribute]: node.outputs_by_name) {
                 attribute_ids.push_back(attribute.id);
             }
-            for (const auto& [name, attribute]: node.settings_by_name) {
-                attribute_ids.push_back(attribute.id);
-            }
+//            for (const auto& [name, attribute]: node.settings_by_name) {
+//                attribute_ids.push_back(attribute.id);
+//            }
             for (const auto& id: attribute_ids) {
                 attribute_map_.erase(id);
             }

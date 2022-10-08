@@ -2,8 +2,9 @@
 
 #include <pynncc/torch/tensor_registry.h>
 #include <pynncc/torch/shm_communication.h>
+#include <pynncc/compute/python_nodes.h>
 
-#include <nncc/compute/graph.h>
+#include <nncc/compute/algebra_ops.h>
 #include <nncc/engine/loop.h>
 #include <nncc/engine/timer.h>
 #include <nncc/gui/picking.h>
@@ -47,7 +48,7 @@ int Loop() {
     context.subsystems.Register(&camera, "current_camera");
 
     compute::ComputeNodeEditor compute_node_editor;
-    auto menu_group = std::make_shared<compute::ComputeEditorAddMenuItem>(
+    auto algebra = std::make_shared<compute::ComputeEditorAddMenuItem>(
         "Algebra",
         nncc::vector<std::shared_ptr<compute::ComputeEditorAddMenuItem>>{
             std::make_shared<compute::ComputeEditorAddMenuItem>("Add", &compute::MakeAddOp),
@@ -55,7 +56,15 @@ int Loop() {
             std::make_shared<compute::ComputeEditorAddMenuItem>("Const", &compute::MakeConstOp),
         }
     );
-    compute_node_editor.RegisterMenuItem(menu_group);
+    compute_node_editor.RegisterMenuItem(algebra);
+    auto python = std::make_shared<compute::ComputeEditorAddMenuItem>(
+        "Python",
+        nncc::vector<std::shared_ptr<compute::ComputeEditorAddMenuItem>>{
+            std::make_shared<compute::ComputeEditorAddMenuItem>("Python Code", &compute::MakePythonCodeOp),
+            std::make_shared<compute::ComputeEditorAddMenuItem>("Get Shared Tensor", &compute::MakeGetSharedTensorOp),
+        }
+    );
+    compute_node_editor.RegisterMenuItem(python);
 
     // Frame-by-frame loop
     while (true) {
@@ -97,9 +106,11 @@ int Loop() {
         if (ImGui::Button("Evaluate graph")) {
             compute_node_editor.GetGraph().Evaluate(&context.registry);
         }
-        if (selected_nodes.size() == 1) {
-            if (selected_nodes[0]->render_context_ui) {
-                selected_nodes[0]->render_context_ui(selected_nodes[0]);
+        for (auto node : selected_nodes) {
+            if (node->render_context_ui) {
+                if (node->render_context_ui(node)) {
+                    compute_node_editor.GetGraph().Evaluate(&context.registry);
+                }
             }
         }
         ImGui::End();

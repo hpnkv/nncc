@@ -8449,8 +8449,8 @@ int Loop() {
                         context.input.mouse_state.y,
                         context.input.mouse_state.GetImGuiPressedMouseButtons(),
                         context.input.mouse_state.scroll_y,
-                        uint16_t(window.width),
-                        uint16_t(window.height)
+                        uint16_t(window.framebuffer_width),
+                        uint16_t(window.framebuffer_height)
         );
         ImGui::ShowDemoWindow();
         imguiEndFrame();
@@ -8461,8 +8461,8 @@ int Loop() {
         context.rendering.Update(context,
                                  camera.GetViewMatrix(),
                                  camera.GetProjectionMatrix(),
-                                 window.width,
-                                 window.height);
+                                 window.framebuffer_width,
+                                 window.framebuffer_height);
 
         // TODO: make this a subsystem's job
         context.input.input_characters.clear();

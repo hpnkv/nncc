@@ -6,11 +6,11 @@ pybind11_add_module(
 add_library(
         pynncc SHARED
         module.cpp
+        ${NNCC_PROJECT_ROOT}/src/pynncc/compute/python_nodes.cpp
         ${NNCC_PROJECT_ROOT}/src/pynncc/torch/tensor_registry.cpp
         ${NNCC_PROJECT_ROOT}/src/pynncc/torch/shm_communication.cpp
         ${TORCH_SRC_ROOT}/torch/lib/libshm/core.cpp
 )
-#set_target_properties(pynncc PROPERTIES CXX_VISIBILITY_PRESET hidden)
 
 message(Python_INCLUDE_DIRS ${Python_INCLUDE_DIRS})
 
