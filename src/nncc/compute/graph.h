@@ -17,38 +17,26 @@
 
 #include <nncc/common/types.h>
 #include <nncc/common/utils.h>
+#include <nncc/compute/types.h>
 #include <nncc/context/context.h>
 
 namespace nncc::compute {
 
-enum class AttributeType {
-    Float,
-    String,
-    UserDefined,
-
-    Count,
-    None
-};
-
 struct Attribute {
-    Attribute(nncc::string _name, const AttributeType& _type)
-            : id(id_counter++), name(std::move(_name)), type(_type) {}
+    Attribute(nncc::string _name, const nncc::vector<nncc::string>& _accepted_types)
+            : id(id_counter++), name(std::move(_name)), accepted_types(_accepted_types) {}
 
     nncc::string name = "";
-    AttributeType type = AttributeType::None;
-
-    entt::entity entity = entt::null;
-    std::variant<float, nncc::string> value;
+    nncc::vector<nncc::string> accepted_types;
+    DataNode data;
 
     int id;
     static int id_counter;
 
     void Feed(const Attribute& other) {
-        value = other.value;
-        entity = other.entity;
+        data = other.data;
     };
 };
-
 
 struct Result {
     int code = -1;
@@ -330,16 +318,13 @@ private:
                 ImNodes::BeginInputAttribute(input.id);
                 attribute_map_.insert_or_assign(input.id, AttributeDescriptor{vertex, &input, true});
                 const float label_width = ImGui::CalcTextSize(input.name.c_str()).x;
-                ImGui::TextUnformatted(input.name.c_str());
+                nncc::string type = input.data.type;
+                nncc::string label = !type.empty() ? fmt::format("{}: {}", input.name, type) : input.name;
+                ImGui::TextUnformatted(label.c_str());
 
                 ImGui::SameLine();
                 ImGui::PushItemWidth(node_width - label_width);
-                if (std::holds_alternative<float>(input.value)) {
-                    ImGui::TextUnformatted(fmt::format("{:.4g}", std::get<float>(input.value)).c_str());
-                } else if (std::holds_alternative<nncc::string>(input.value)) {
-                    ImGui::TextUnformatted(std::get<nncc::string>(input.value).c_str());
-                }
-
+                ImGui::TextUnformatted("preview");
                 ImGui::PopItemWidth();
 
                 ImNodes::EndInputAttribute();
@@ -352,15 +337,7 @@ private:
                     auto& output = node.outputs_by_name.at(name);
                     ImNodes::BeginOutputAttribute(output.id);
                     attribute_map_.insert_or_assign(output.id, AttributeDescriptor{vertex, &output, false});
-                    nncc::string type;
-                    if (output.type == AttributeType::Float) {
-                        type = "float";
-                    } else if (output.type == AttributeType::String) {
-                        type = "string";
-                    } else if (output.type == AttributeType::UserDefined) {
-                        type = "T";
-                    }
-
+                    nncc::string type = output.data.type;
                     nncc::string label = !type.empty() ? fmt::format("{}: {}", output.name, type) : output.name;
                     const float label_width = ImGui::CalcTextSize(label.c_str()).x;
                     ImGui::Indent(node_width - label_width);

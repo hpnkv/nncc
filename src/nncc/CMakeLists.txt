@@ -86,6 +86,7 @@ set(NNCC_COMPUTE_DIR ${CMAKE_CURRENT_LIST_DIR}/compute)
 target_sources(
         nncc PRIVATE
         ${NNCC_COMPUTE_DIR}/graph.cpp
+        ${NNCC_COMPUTE_DIR}/types.cpp
         ${NNCC_COMPUTE_DIR}/algebra_ops.cpp
 )
 

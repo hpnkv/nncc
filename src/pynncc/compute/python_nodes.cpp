@@ -33,7 +33,7 @@ ComputeNode MakePythonCodeOp(const void* _) {
     node.name = "Python code";
     node.type = "PythonCode";
 
-    node.AddOutput(Attribute("value", AttributeType::UserDefined));
+    node.AddOutput(Attribute("value", {"Any"}));
 
     node.evaluate.connect<&PythonCodeOpEvaluateFn>();
     node.render_context_ui.connect<&PythonCodeOpRenderFn>();

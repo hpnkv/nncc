@@ -22,6 +22,9 @@ const char* ConstOpState::options[] = {"Float", "String"};
 auto ConstOpEvaluateFn(ComputeNode* node, entt::registry* registry) {
     auto& state = *node->StateAs<ConstOpState>();
     auto& context = *context::Context::Get();
+    if (state.type == ConstOpState::Type::Float) {
+        node->outputs_by_name.at("value").data = DataNode::C
+    }
     node->outputs_by_name.at("value").value = state.value;
     return Result{0, ""};
 }
@@ -75,7 +78,7 @@ ComputeNode MakeConstOp(const void*) {
     node.name = "Const";
     node.type = "Const";
 
-    node.AddOutput(Attribute("value", AttributeType::Float));
+    node.AddOutput(Attribute("value", {"Float", "String"}));
 
     node.evaluate.connect<&ConstOpEvaluateFn>();
     node.render_context_ui.connect<&ConstOpRenderFn>();
@@ -86,8 +89,8 @@ ComputeNode MakeConstOp(const void*) {
 }
 
 auto AddOpEvaluateFn(ComputeNode* node, entt::registry* registry) {
-    auto a = node->inputs_by_name.at("a").value;
-    auto b = node->inputs_by_name.at("b").value;
+    auto a = node->inputs_by_name.at("a").data;
+    auto b = node->inputs_by_name.at("b").data;
 
     node->outputs_by_name.at("result").value = std::get<float>(a) + std::get<float>(b);
 
@@ -138,10 +141,10 @@ ComputeNode MakeMulOp(const void*) {
     node.name = "Multiply";
     node.type = "Mul";
 
-    node.AddInput(Attribute("a", AttributeType::UserDefined));
-    node.AddInput(Attribute("b", AttributeType::UserDefined));
+    node.AddInput(Attribute("a", {"Float"}));
+    node.AddInput(Attribute("b", {"Float"}));
 
-    node.AddOutput(Attribute("result", AttributeType::UserDefined));
+    node.AddOutput(Attribute("result", {"Float"}));
 
     node.evaluate.connect<&MulOpEvaluateFn>();
     node.render_context_ui.connect<&MulOpRenderFn>();
