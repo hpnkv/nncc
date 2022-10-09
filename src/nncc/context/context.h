@@ -4,7 +4,6 @@
 #include <unordered_map>
 #include <deque>
 #include <vector>
-#include <iostream>
 
 #include <bgfx/bgfx.h>
 #include <bx/thread.h>

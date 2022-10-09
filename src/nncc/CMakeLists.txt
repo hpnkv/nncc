@@ -1,13 +1,6 @@
 include(${NNCC_PROJECT_ROOT}/cmake/target_shader.cmake)
 
-# Context: singleton for basic systems
-set(NNCC_CONTEXT_DIR ${CMAKE_CURRENT_LIST_DIR}/context)
-add_library(nncc-context SHARED ${NNCC_CONTEXT_DIR}/context_instance.cpp)
-target_include_directories(nncc-context PUBLIC ${NNCC_PROJECT_ROOT}/include ${CMAKE_CURRENT_LIST_DIR}/.. ${CONAN_INCLUDE_DIRS_ENTT} ${NNCC_PROJECT_ROOT}/external/stb)
-target_link_libraries(nncc-context PUBLIC bx bgfx CONAN_PKG::glfw CONAN_PKG::folly CONAN_PKG::imgui)
-
 add_library(nncc SHARED ${NNCC_PROJECT_ROOT}/external/imnodes/imnodes/imnodes.cpp)
-#set_target_properties(nncc PROPERTIES CXX_VISIBILITY_PRESET hidden)
 
 set(NNCC_INCLUDES_PRIVATE ${NNCC_PROJECT_ROOT}/include ${CMAKE_CURRENT_LIST_DIR}/..)
 set(NNCC_INCLUDES_PRIVATE ${NNCC_INCLUDES_PRIVATE} PARENT_SCOPE)
@@ -21,7 +14,6 @@ target_link_libraries(nncc PUBLIC
         CONAN_PKG::imgui
         CONAN_PKG::double-conversion
         ${Python_LIBRARIES}
-        nncc-context
         )
 target_include_directories(nncc PUBLIC
         ${BGFX_DIR}/include ${BX_DIR}/include

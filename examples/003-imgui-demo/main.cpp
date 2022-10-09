@@ -8428,6 +8428,10 @@ int Loop() {
     ImGui::SetAllocatorFunctions(context.imgui_allocators.p_alloc_func, context.imgui_allocators.p_free_func);
     ImGui::SetCurrentContext(context.imgui_context);
 
+    ImGui::SetAllocatorFunctions(context.imgui_allocators.p_alloc_func, context.imgui_allocators.p_free_func);
+    ImGui::SetCurrentContext(context.imgui_context);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 4.0f * window.scale);
+
     // Create a timer
     nncc::engine::Timer timer;
 

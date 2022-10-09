@@ -164,6 +164,13 @@ void Context::SetWindowSize(int16_t idx, int width, int height) {
                            &windows_[idx].framebuffer_height);
 }
 
+//static nncc::context::Context context;
+
+Context* Context::Get() {
+    static Context instance;
+    return &instance;
+}
+
 }
 
 bool nncc::input::InputSystem::ProcessEvents() {
