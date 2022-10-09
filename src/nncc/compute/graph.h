@@ -17,6 +17,7 @@
 
 #include <nncc/common/types.h>
 #include <nncc/common/utils.h>
+#include <nncc/compute/types.h>
 #include <nncc/context/context.h>
 
 namespace nncc::compute {
@@ -48,6 +49,9 @@ struct Attribute {
         entity = other.entity;
     };
 };
+
+
+AttributeType AttributeTypeFromString(const nncc::string& type);
 
 
 struct Result {
@@ -123,8 +127,10 @@ public:
             for (auto [current, end] = boost::adjacent_vertices(vertex, graph); current != end; ++current) {
                 auto edge = boost::edge(vertex, *current, graph).first;
 
-                auto source = boost::source(edge, graph), target = boost::target(edge, graph);
-                auto from = graph[edge].from_output, to = graph[edge].to_input;
+                auto source = boost::source(edge, graph);
+                auto target = boost::target(edge, graph);
+                auto from = graph[edge].from_output;
+                auto to = graph[edge].to_input;
 
                 graph[target].inputs_by_name.at(to).Feed(graph[source].outputs_by_name.at(from));
             }

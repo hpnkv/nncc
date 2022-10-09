@@ -14,6 +14,8 @@ using namespace nncc;
 namespace py = pybind11;
 
 int Loop() {
+    py::scoped_interpreter guard{};
+
     using namespace nncc;
 
     // Get references to the context, ENTT registry and window holder
@@ -161,8 +163,6 @@ int Loop() {
 }
 
 int main() {
-    py::scoped_interpreter guard{};
-
     nncc::engine::ApplicationLoop loop;
     loop.connect<&Loop>();
     return nncc::engine::Run(&loop);

@@ -8,12 +8,17 @@ namespace py = pybind11;
 
 namespace nncc::compute {
 
-const char* kPythonGeneratorCode = R"(def generate(node):
+const char* kPythonGeneratorCode = R"(NNCC_INPUTS = [("a", "Float"), ("b", "Float")]
+NNCC_OUTPUTS = [("result", "Float")]
+
+def generate(node):
     return 0)";
 
 
 struct PythonCodeOpState {
     nncc::string code{kPythonGeneratorCode};
+    nncc::vector<std::tuple<nncc::string, nncc::string>> requested_inputs;
+    nncc::vector<std::tuple<nncc::string, nncc::string>> requested_outputs;
 };
 
 struct GetSharedTensorOpState {
