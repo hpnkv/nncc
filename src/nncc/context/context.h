@@ -15,6 +15,7 @@
 
 #include <nncc/input/input.h>
 #include <nncc/context/glfw_utils.h>
+#include <nncc/engine/timer.h>
 #include <nncc/rendering/rendering.h>
 
 namespace nncc::context {
@@ -131,15 +132,15 @@ public:
 
     int16_t GetWindowIdx(GLFWwindow* window);
 
-    folly::ProducerConsumerQueue<GlfwMessage>& GetMessageQueue();
-
     bx::Thread* GetDefaultThread();
 
     void SetWindowSize(int16_t idx, int width, int height);
 
     entt::registry registry;
     entt::dispatcher dispatcher;
+
     input::InputSystem input;
+    engine::Timer timer;
     rendering::RenderingSystem rendering;
     SubsystemManager subsystems;
 
@@ -149,10 +150,6 @@ public:
     ImGuiAllocators imgui_allocators;
 
 private:
-    static Context* p_instance;
-
-    folly::ProducerConsumerQueue<GlfwMessage> glfw_message_queue_{64};
-
     nncc::vector<GLFWWindowWrapper> windows_;
     std::unordered_map<GLFWwindow*, int16_t> window_indices_;
 

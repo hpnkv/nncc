@@ -58,6 +58,7 @@ target_sources(
         nncc PRIVATE
         ${NNCC_ENGINE_DIR}/camera.cpp
         ${NNCC_ENGINE_DIR}/loop.cpp
+        ${NNCC_ENGINE_DIR}/timer.cpp
 )
 
 # GUI: ImGui+bgfx, derived controls

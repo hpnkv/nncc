@@ -6,6 +6,7 @@
 #include <pynncc/compute/pytorch_nodes.h>
 
 #include <nncc/compute/algebra_ops.h>
+//#include <nncc/debug/bgfx_stats.h>
 #include <nncc/engine/loop.h>
 #include <nncc/engine/timer.h>
 #include <nncc/gui/gui.h>
@@ -83,7 +84,7 @@ int Loop() {
         }
 
         context.dispatcher.update();
-//        tensors.Update();
+        tensors.Update();
 
         bgfx::touch(0);
 
@@ -113,9 +114,8 @@ int Loop() {
             if(posX > ImGui::GetCursorPosX())
                 ImGui::SetCursorPosX(posX);
             if (ImGui::MenuItem(ICON_FA_WINDOW_MAXIMIZE)) {
-                context::GlfwMessage glfw_fullscreen_message;
-                glfw_fullscreen_message.type = context::GlfwMessageType::ToggleFullscreen;
-                context.GetMessageQueue().write(glfw_fullscreen_message);
+                auto event = context::GlfwEvent(context::GlfwEventType::ToggleFullscreen, context.GetGlfwWindow(0));
+                context.dispatcher.enqueue(event);
             }
             ImGui::EndMainMenuBar();
         }

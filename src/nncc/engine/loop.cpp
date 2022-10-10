@@ -36,15 +36,30 @@ int LoopThreadFunc(bx::Thread* self, void* args) {
     imguiDestroy();
     context.rendering.Destroy();
 
-    context::GlfwMessage glfw_exit_message;
-    glfw_exit_message.type = context::GlfwMessageType::Destroy;
-    context.GetMessageQueue().write(glfw_exit_message);
+    auto exit_event = context::GlfwEvent(context::GlfwEventType::Destroy, context.GetGlfwWindow(0));
+    context.dispatcher.enqueue(exit_event);
 
     bgfx::destroy(rendering::Material::default_texture);
     bgfx::shutdown();
     delegate.reset();
 
     return result;
+}
+
+void ProcessWindowingEvents(const context::GlfwEvent& event) {
+    static bool fullscreen = false;
+
+    if (event.type == nncc::context::GlfwEventType::Destroy) {
+        glfwSetWindowShouldClose(event.window, true);
+    } else if (event.type == nncc::context::GlfwEventType::ToggleFullscreen) {
+
+#if NNCC_PLATFORM_OSX
+        ToggleFullscreenCocoa(glfwGetCocoaWindow(event.window));
+        fullscreen = !fullscreen;
+#else
+        context.log_message = "This button only works on macOS yet.";
+#endif
+    }
 }
 
 int Run(ApplicationLoop* loop) {
@@ -56,12 +71,10 @@ int Run(ApplicationLoop* loop) {
     auto& window = context.GetWindow(0);
     auto glfw_main_window = context.GetGlfwWindow(0);
 
+    context.dispatcher.sink<context::GlfwEvent>().connect<&ProcessWindowingEvents>();
+
     auto thread = context.GetDefaultThread();
     thread->init(&LoopThreadFunc, static_cast<void*>(loop), 0, "main_loop");
-
-    int saved_width, saved_height;
-    int xpos, ypos;
-    bool fullscreen = false;
 
     while (!glfwWindowShouldClose(glfw_main_window)) {
         glfwWaitEventsTimeout(1. / 60);
@@ -77,29 +90,6 @@ int Run(ApplicationLoop* loop) {
             context.input.queue.Push(0, std::move(event));
         }
 
-        nncc::context::GlfwMessage message;
-        while (context.GetMessageQueue().read(message)) {
-            if (message.type == nncc::context::GlfwMessageType::Destroy) {
-                glfwSetWindowShouldClose(glfw_main_window, true);
-            } else if (message.type == nncc::context::GlfwMessageType::ToggleFullscreen) {
-
-#if NNCC_PLATFORM_OSX
-                ToggleFullscreenCocoa(glfwGetCocoaWindow(glfw_main_window));
-                fullscreen = !fullscreen;
-#else
-                const auto monitor = glfwGetPrimaryMonitor();
-                if (!fullscreen) {
-                    saved_width = width;
-                    saved_height = height;
-                    glfwGetWindowPos(glfw_main_window, &xpos, &ypos);
-                    const auto video_mode = glfwGetVideoMode(monitor);
-                    glfwSetWindowMonitor(glfw_main_window, monitor, 0, 0, 2 * video_mode->width, 2 * video_mode->height, video_mode->refreshRate);
-                } else {
-                    glfwSetWindowMonitor(glfw_main_window, NULL, xpos, ypos, saved_width, saved_height, 0);
-                }
-#endif
-            }
-        }
         bgfx::renderFrame();
     }
 
@@ -109,12 +99,3 @@ int Run(ApplicationLoop* loop) {
     return thread->getExitCode();
 }
 }
-
-//__attribute__((constructor))
-//void init(void) {
-//    auto& context = nncc::context::Context::Get();
-//
-//    imguiCreate();
-//    ImGui::SetAllocatorFunctions(context.imgui_allocators.p_alloc_func, context.imgui_allocators.p_free_func);
-//    ImGui::SetCurrentContext(context.imgui_context);
-//}

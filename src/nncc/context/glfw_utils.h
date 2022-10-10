@@ -98,7 +98,7 @@ struct GLFWWindowWrapper {
 };
 
 
-enum class GlfwMessageType {
+enum class GlfwEventType {
     Create,
     Destroy,
     SetTitle,
@@ -109,19 +109,21 @@ enum class GlfwMessageType {
     MouseLock
 };
 
-struct GlfwMessage {
-    GlfwMessageType type;
+struct GlfwEvent {
+    GlfwEvent(const GlfwEventType& type, GLFWwindow* window) : type(type), window(window) {}
 
-    int32_t x;
-    int32_t y;
+    GlfwEventType type;
+    GLFWwindow* window;
 
-    uint32_t width;
-    uint32_t height;
-    uint32_t flags;
-    bool value;
+    int32_t x = 0;
+    int32_t y = 0;
+
+    uint32_t width = 0;
+    uint32_t height = 0;
+    uint32_t flags = 0;
+    bool value = false;
 
     nncc::string title;
-    int16_t idx;
 };
 
 }

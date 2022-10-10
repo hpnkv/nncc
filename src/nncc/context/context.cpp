@@ -148,10 +148,6 @@ int16_t Context::GetWindowIdx(GLFWwindow* window) {
     return window_indices_.at(window);
 }
 
-folly::ProducerConsumerQueue<GlfwMessage>& Context::GetMessageQueue() {
-    return glfw_message_queue_;
-}
-
 bx::Thread* Context::GetDefaultThread() {
     return &default_thread_;
 }
