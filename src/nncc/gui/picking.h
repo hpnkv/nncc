@@ -53,21 +53,6 @@ public:
         bgfx::setViewClear(id_view_id_, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x000000ff, 1.0f, 0);
     }
 
-    void RenderUi() {
-        auto& context = *context::Context::Get();
-        const auto& window = context.GetWindow(0);
-
-        ImGui::SetNextWindowPos(
-                ImVec2(window.width - window.width / 5.0f - 10.0f, 10.0f), ImGuiCond_FirstUseEver
-        );
-        ImGui::SetNextWindowSize(
-                ImVec2(window.width / 5.0f, window.height / 2.0f), ImGuiCond_FirstUseEver
-        );
-        ImGui::Begin("Settings");
-        ImGui::Image(picking_render_target_, ImVec2(window.width / 5.0f - 16.0f, window.width / 5.0f - 16.0f));
-        ImGui::End();
-    }
-
     void Update() {
         auto& context = *context::Context::Get();
         const auto& cregistry = context.registry;

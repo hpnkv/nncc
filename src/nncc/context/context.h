@@ -136,6 +136,12 @@ public:
 
     void SetWindowSize(int16_t idx, int width, int height);
 
+    bool ShouldExit() const;
+
+    void HandleExitEvent(const input::ExitEvent& event) {
+        should_exit = true;
+    }
+
     entt::registry registry;
     entt::dispatcher dispatcher;
 
@@ -150,6 +156,7 @@ public:
     ImGuiAllocators imgui_allocators;
 
 private:
+    bool should_exit = false;
     nncc::vector<GLFWWindowWrapper> windows_;
     std::unordered_map<GLFWwindow*, int16_t> window_indices_;
 

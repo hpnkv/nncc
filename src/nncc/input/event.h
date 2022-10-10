@@ -10,32 +10,19 @@
 
 namespace nncc::input {
 
-enum class EventType {
-    Exit,
-    MouseButton,
-    MouseMove,
-    MouseScroll,
-    Key,
-    Resize,
-    Char,
+enum class MouseEventType {
+    Button,
+    Move,
+    Scroll,
 
     Count,
     None
 };
 
 
-struct Event {
-    explicit Event(const EventType& _type = EventType::None) : type(_type) {}
-
-    virtual ~Event() = default;
-
+struct MouseEvent {
     int16_t window_idx = 0;
-    EventType type;
-};
-
-
-struct MouseEvent : public Event {
-    explicit MouseEvent(const EventType& _type = EventType::MouseMove) : Event(_type) {}
+    MouseEventType type = MouseEventType::None;
 
     int32_t x = 0;
     int32_t y = 0;
@@ -52,8 +39,8 @@ struct MouseEvent : public Event {
 };
 
 
-struct KeyEvent : public Event {
-    KeyEvent() : Event(EventType::Key) {}
+struct KeyEvent {
+    int16_t window_idx = 0;
 
     Key key = Key::None;
     int modifiers = 0;
@@ -61,35 +48,20 @@ struct KeyEvent : public Event {
 };
 
 
-struct CharEvent : public Event {
-    CharEvent() : Event(EventType::Char) {}
-
+struct CharEvent {
+    int16_t window_idx = 0;
     unsigned int codepoint = 0;
 };
 
 
-struct ResizeEvent : public Event {
-    ResizeEvent() : Event(EventType::Resize) {}
-
+struct ResizeEvent {
+    int16_t window_idx = 0;
     int width = 0, height = 0;
 };
 
 
-struct ExitEvent : public Event {
-    ExitEvent() : Event(EventType::Exit) {}
-};
-
-
-class EventQueue {
-public:
-    EventQueue() = default;
-
-    std::unique_ptr<Event> Poll();
-
-    void Push(int16_t window, std::unique_ptr<Event> event);
-
-private:
-    folly::ProducerConsumerQueue<std::unique_ptr<Event>> queue_{128};
+struct ExitEvent {
+    int16_t window_idx = 0;
 };
 
 }

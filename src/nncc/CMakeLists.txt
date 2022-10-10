@@ -48,8 +48,7 @@ target_sources(
 set(NNCC_INPUT_DIR ${CMAKE_CURRENT_LIST_DIR}/input)
 target_sources(
         nncc PRIVATE
-        ${NNCC_INPUT_DIR}/event.cpp
-        ${NNCC_INPUT_DIR}/hid.cpp
+        ${NNCC_INPUT_DIR}/input.cpp
 )
 
 # Engine: basic loop for rendering, navigation, GUI, timer, subsystems

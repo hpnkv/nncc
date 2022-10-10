@@ -72,6 +72,7 @@ int Run(ApplicationLoop* loop) {
     auto glfw_main_window = context.GetGlfwWindow(0);
 
     context.dispatcher.sink<context::GlfwEvent>().connect<&ProcessWindowingEvents>();
+    context.dispatcher.sink<input::ExitEvent>().connect<&context::Context::HandleExitEvent>(context);
 
     auto thread = context.GetDefaultThread();
     thread->init(&LoopThreadFunc, static_cast<void*>(loop), 0, "main_loop");
@@ -83,11 +84,12 @@ int Run(ApplicationLoop* loop) {
         int width, height;
         glfwGetWindowSize(glfw_main_window, &width, &height);
         if (width != window.width || height != window.height) {
-            auto event = std::make_unique<input::ResizeEvent>();
-            event->width = width;
-            event->height = height;
+            input::ResizeEvent event;
+            event.window_idx = 0;
+            event.width = width;
+            event.height = height;
 
-            context.input.queue.Push(0, std::move(event));
+            context.dispatcher.enqueue(event);
         }
 
         bgfx::renderFrame();

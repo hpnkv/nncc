@@ -7,6 +7,7 @@ namespace nncc::context {
 
 bool Context::InitInMainThread() {
     InitWindowing(&GlfwWindowingImpl::GLFWErrorCallback);
+    input.Init();
 
     // this init happens prior to RenderingSystem.InitInMainThread() to indicate BGFX that
     // we will use a separate rendering thread.
@@ -56,26 +57,30 @@ void GlfwWindowingImpl::MouseButtonCallback(GLFWwindow* window, int32_t button, 
     double x_pos, y_pos;
     glfwGetCursorPos(window, &x_pos, &y_pos);
 
-    auto event = std::make_unique<input::MouseEvent>(input::EventType::MouseButton);
-    event->x = static_cast<int32_t>(x_pos);
-    event->y = static_cast<int32_t>(y_pos);
-    event->button = input::translateGlfwMouseButton(button);
-    event->down = action == GLFW_PRESS;
-    event->modifiers = mods;
-
     auto& context = *Context::Get();
-    auto window_idx = context.GetWindowIdx(window);
-    context.input.queue.Push(window_idx, std::move(event));
+
+    input::MouseEvent event;
+    event.x = static_cast<int32_t>(x_pos);
+    event.y = static_cast<int32_t>(y_pos);
+    event.button = input::translateGlfwMouseButton(button);
+    event.down = action == GLFW_PRESS;
+    event.modifiers = mods;
+    event.window_idx = context.GetWindowIdx(window);
+    event.type = input::MouseEventType::Button;
+
+    context.dispatcher.enqueue(event);
 }
 
 void GlfwWindowingImpl::CursorPositionCallback(GLFWwindow* window, double x_pos, double y_pos) {
-    auto event = std::make_unique<input::MouseEvent>(input::EventType::MouseMove);
-    event->x = static_cast<int32_t>(x_pos);
-    event->y = static_cast<int32_t>(y_pos);
-
     auto& context = *Context::Get();
-    auto window_idx = context.GetWindowIdx(window);
-    context.input.queue.Push(window_idx, std::move(event));
+
+    input::MouseEvent event;
+    event.x = static_cast<int32_t>(x_pos);
+    event.y = static_cast<int32_t>(y_pos);
+    event.window_idx = context.GetWindowIdx(window);
+    event.type = input::MouseEventType::Move;
+
+    context.dispatcher.enqueue(event);
 }
 
 const auto glfw_key_translation_table = input::GlfwKeyTranslationTable();
@@ -92,34 +97,38 @@ void GlfwWindowingImpl::KeyCallback(GLFWwindow* window, int32_t glfw_key, int32_
     }
     auto key = glfw_key_translation_table.at(glfw_key);
 
-    auto event = std::make_unique<input::KeyEvent>();
-    event->key = key;
-    event->modifiers = mods;
-    event->down = action == GLFW_PRESS || action == GLFW_REPEAT;
-
     auto& context = *Context::Get();
-    auto window_idx = context.GetWindowIdx(window);
-    context.input.queue.Push(window_idx, std::move(event));
+
+    input::KeyEvent event;
+    event.key = key;
+    event.modifiers = mods;
+    event.down = action == GLFW_PRESS || action == GLFW_REPEAT;
+    event.window_idx = context.GetWindowIdx(window);
+
+    context.dispatcher.enqueue(event);
 }
 
 void GlfwWindowingImpl::CharacterCallback(GLFWwindow* window, unsigned int codepoint) {
-    auto event = std::make_unique<input::CharEvent>();
-    event->codepoint = codepoint;
-
     auto& context = *Context::Get();
-    auto window_idx = context.GetWindowIdx(window);
-    context.input.queue.Push(window_idx, std::move(event));
+
+    input::CharEvent event;
+    event.codepoint = codepoint;
+    event.window_idx = context.GetWindowIdx(window);
+
+    context.dispatcher.enqueue(event);
 }
 
 void GlfwWindowingImpl::ScrollCallback(GLFWwindow* window, double x_offset, double y_offset) {
-    auto event = std::make_unique<input::MouseEvent>(input::EventType::MouseScroll);
-
-    event->scroll_x = x_offset;
-    event->scroll_y = y_offset;
-
     auto& context = *Context::Get();
-    auto window_idx = context.GetWindowIdx(window);
-    context.input.queue.Push(window_idx, std::move(event));
+
+    input::MouseEvent event;
+    event.type = input::MouseEventType::Scroll;
+    event.window_idx = context.GetWindowIdx(window);
+
+    event.scroll_x = x_offset;
+    event.scroll_y = y_offset;
+
+    context.dispatcher.enqueue(event);
 }
 
 void GlfwWindowingImpl::FramebufferSizeCallback(GLFWwindow* window, int width, int height) {
@@ -132,8 +141,9 @@ GlfwWindowingImpl& GlfwWindowingImpl::Get() {
 }
 
 void Context::Exit() {
-    std::unique_ptr<input::Event> event(new input::ExitEvent);
-    Context::Get()->input.queue.Push(0, std::move(event));
+    input::ExitEvent event;
+    event.window_idx = 0;
+    dispatcher.enqueue(event);
 }
 
 GLFWwindow* Context::GetGlfwWindow(int16_t window_idx) {
@@ -160,80 +170,13 @@ void Context::SetWindowSize(int16_t idx, int width, int height) {
                            &windows_[idx].framebuffer_height);
 }
 
-//static nncc::context::Context context;
-
 Context* Context::Get() {
     static Context instance;
     return &instance;
 }
 
+bool Context::ShouldExit() const {
+    return should_exit;
 }
 
-bool nncc::input::InputSystem::ProcessEvents() {
-    std::shared_ptr<Event> event;
-
-    auto& context = *context::Context::Get();
-
-    do {
-        event = queue.Poll();
-        if (event == nullptr) {
-            break;
-        }
-
-        if (event->type == EventType::Exit) {
-            return true;
-
-        } else if (event->type == EventType::Resize) {
-            auto resize_event = std::dynamic_pointer_cast<ResizeEvent>(event);
-            nncc::context::Context::Get()->SetWindowSize(event->window_idx,
-                                                        resize_event->width,
-                                                        resize_event->height);
-
-            const auto& window = context.GetWindow(event->window_idx);
-
-            bgfx::reset(window.framebuffer_width, window.framebuffer_height, BGFX_RESET_VSYNC | BGFX_RESET_HIDPI);
-            bgfx::setViewRect(0, 0, 0, bgfx::BackbufferRatio::Equal);
-
-        } else if (event->type == EventType::MouseButton) {
-            auto btn_event = std::dynamic_pointer_cast<MouseEvent>(event);
-
-            mouse_state.x = btn_event->x;
-            mouse_state.y = btn_event->y;
-            mouse_state.buttons[static_cast<int>(btn_event->button)] = btn_event->down;
-            key_state.modifiers = btn_event->modifiers;
-
-        } else if (event->type == EventType::MouseMove) {
-            auto move_event = std::dynamic_pointer_cast<MouseEvent>(event);
-
-            mouse_state.x = move_event->x;
-            mouse_state.y = move_event->y;
-
-        } else if (event->type == EventType::MouseScroll) {
-            auto scroll_event = std::dynamic_pointer_cast<MouseEvent>(event);
-
-            mouse_state.scroll_x += scroll_event->scroll_x;
-            mouse_state.scroll_y += scroll_event->scroll_y;
-
-        } else if (event->type == EventType::Key) {
-            auto key_event = std::dynamic_pointer_cast<KeyEvent>(event);
-            key_state.modifiers = key_event->modifiers;
-
-            auto key = key_event->key;
-            if (key_event->down) {
-                key_state.pressed_keys.insert(key);
-            } else if (key_state.pressed_keys.contains(key)) {
-                key_state.pressed_keys.erase(key);
-            }
-
-        } else if (event->type == EventType::Char) {
-            auto char_event = std::dynamic_pointer_cast<CharEvent>(event);
-            input_characters.push_back(char_event->codepoint);
-
-        } else {
-            std::cerr << "unknown event type " << static_cast<int>(event->type) << std::endl;
-        }
-
-    } while (event != nullptr);
-
-    return false;
 }

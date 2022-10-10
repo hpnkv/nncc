@@ -77,7 +77,7 @@ int Loop() {
 
     // Frame-by-frame loop
     while (true) {
-        if (auto should_exit = context.input.ProcessEvents(); should_exit) {
+        if (context.ShouldExit()) {
             bgfx::touch(0);
             bgfx::frame();
             break;
@@ -174,8 +174,8 @@ int Loop() {
                                  window.framebuffer_width,
                                  window.framebuffer_height);
 
-        // TODO: make this a subsystem's job
-        context.input.input_characters.clear();
+//        // TODO: make this a subsystem's job
+//        context.input.input_characters.clear();
 
         object_picker.Update();
         context.frame_number = bgfx::frame();

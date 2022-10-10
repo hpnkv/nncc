@@ -27,6 +27,10 @@ int Loop() {
     auto& context = *context::Context::Get();
     auto& window = context.GetWindow(0);
 
+    ImGui::SetAllocatorFunctions(context.imgui_allocators.p_alloc_func, context.imgui_allocators.p_free_func);
+    ImGui::SetCurrentContext(context.imgui_context);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 4.0f * window.scale);
+
     auto& registry = context.registry;
     const auto& cregistry = context.registry;
 
@@ -55,8 +59,8 @@ int Loop() {
                         context.input.mouse_state.y,
                         context.input.mouse_state.GetImGuiPressedMouseButtons(),
                         context.input.mouse_state.z,
-                        uint16_t(window.width),
-                        uint16_t(window.height)
+                        uint16_t(window.framebuffer_width),
+                        uint16_t(window.framebuffer_height)
         );
 
         if (ImGui::BeginMainMenuBar()) {
@@ -78,8 +82,8 @@ int Loop() {
         context.rendering.Update(context,
                                  camera.GetViewMatrix(),
                                  camera.GetProjectionMatrix(),
-                                 window.width,
-                                 window.height);
+                                 window.framebuffer_width,
+                                 window.framebuffer_height);
 
         // TODO: make this a subsystem's job
         context.input.input_characters.clear();
