@@ -18,7 +18,7 @@ int LoopThreadFunc(bx::Thread* self, void* args) {
     if (context.rendering.Init(window.framebuffer_width, window.framebuffer_height) != 0) {
         return 1;
     }
-    float font_size = 16;
+    float font_size = 18;
 
     if (context.imgui_context == nullptr) {
         imguiCreate(font_size, NULL, window.scale);
@@ -59,6 +59,10 @@ int Run(ApplicationLoop* loop) {
     auto thread = context.GetDefaultThread();
     thread->init(&LoopThreadFunc, static_cast<void*>(loop), 0, "main_loop");
 
+    int saved_width, saved_height;
+    int xpos, ypos;
+    bool fullscreen = false;
+
     while (!glfwWindowShouldClose(glfw_main_window)) {
         glfwWaitEventsTimeout(1. / 60);
 
@@ -77,6 +81,23 @@ int Run(ApplicationLoop* loop) {
         while (context.GetMessageQueue().read(message)) {
             if (message.type == nncc::context::GlfwMessageType::Destroy) {
                 glfwSetWindowShouldClose(glfw_main_window, true);
+            } else if (message.type == nncc::context::GlfwMessageType::ToggleFullscreen) {
+
+#if NNCC_PLATFORM_OSX
+                ToggleFullscreenCocoa(glfwGetCocoaWindow(glfw_main_window));
+                fullscreen = !fullscreen;
+#else
+                const auto monitor = glfwGetPrimaryMonitor();
+                if (!fullscreen) {
+                    saved_width = width;
+                    saved_height = height;
+                    glfwGetWindowPos(glfw_main_window, &xpos, &ypos);
+                    const auto video_mode = glfwGetVideoMode(monitor);
+                    glfwSetWindowMonitor(glfw_main_window, monitor, 0, 0, 2 * video_mode->width, 2 * video_mode->height, video_mode->refreshRate);
+                } else {
+                    glfwSetWindowMonitor(glfw_main_window, NULL, xpos, ypos, saved_width, saved_height, 0);
+                }
+#endif
             }
         }
         bgfx::renderFrame();

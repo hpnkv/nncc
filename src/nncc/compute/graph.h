@@ -309,7 +309,7 @@ private:
     void HandleNewNodes() {
         const bool open_popup = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows) &&
                                 ImNodes::IsEditorHovered() &&
-                                ImGui::IsKeyReleased(ImGuiKey_A);
+                                (ImGui::IsKeyReleased(ImGuiKey_A) || ImGui::IsMouseClicked(ImGuiMouseButton_Right));
 
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8.f * scale_, 8.f * scale_));
         if (!ImGui::IsAnyItemHovered() && open_popup) {

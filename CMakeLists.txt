@@ -13,7 +13,6 @@ endif()
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup(TARGETS)
 
-
 # Non-Conan externals
 set(BGFX_LIBRARY_TYPE SHARED)
 add_subdirectory(external/bgfx.cmake)

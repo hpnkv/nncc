@@ -1,4 +1,5 @@
 add_executable(099-tensor-exchange main.cpp)
+set_property(TARGET 099-tensor-exchange PROPERTY LINK_DEPENDS_NO_SHARED ON)
 
 find_package(Torch REQUIRED)
 

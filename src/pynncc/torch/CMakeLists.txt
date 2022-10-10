@@ -32,6 +32,10 @@ add_library(
         ${NNCC_PROJECT_ROOT}/src/pynncc/compute/pytorch_nodes.cpp
         ${TORCH_SRC_ROOT}/torch/lib/libshm/core.cpp
 )
+set_property(TARGET nncc_pytorch PROPERTY LINK_DEPENDS_NO_SHARED ON)
+#set_property(TARGET nncc_pytorch PROPERTY CXX_VISIBILITY_PRESET hidden)
+#set_property(TARGET nncc_pytorch PROPERTY VISIBILITY_INLINES_HIDDEN ON)
+
 target_link_libraries(nncc_pytorch PRIVATE nncc_python ${TORCH_LIBRARIES} cpp_redis)
 target_link_libraries(nncc_pytorch INTERFACE ${TORCH_LIBRARIES})
 target_link_libraries(nncc_pytorch PRIVATE "${TORCH_BUILD_ROOT}/lib/libonnx.a" "${TORCH_BUILD_ROOT}/lib/libonnx_proto.a")

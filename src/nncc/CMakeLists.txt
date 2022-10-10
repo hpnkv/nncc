@@ -2,6 +2,10 @@ include(${NNCC_PROJECT_ROOT}/cmake/target_shader.cmake)
 
 add_library(nncc SHARED ${NNCC_PROJECT_ROOT}/external/imnodes/imnodes/imnodes.cpp)
 
+set_property(TARGET nncc PROPERTY LINK_DEPENDS_NO_SHARED ON)
+#set_property(TARGET nncc PROPERTY CXX_VISIBILITY_PRESET hidden)
+#set_property(TARGET nncc PROPERTY VISIBILITY_INLINES_HIDDEN ON)
+
 set(NNCC_INCLUDES_PRIVATE ${NNCC_PROJECT_ROOT}/include ${CMAKE_CURRENT_LIST_DIR}/..)
 set(NNCC_INCLUDES_PRIVATE ${NNCC_INCLUDES_PRIVATE} PARENT_SCOPE)
 set(NNCC_INCLUDES ${NNCC_INCLUDES_PRIVATE})
@@ -84,6 +88,11 @@ target_sources(
 # Math: vector and matrix ops
 set(NNCC_MATH_DIR ${CMAKE_CURRENT_LIST_DIR}/math)
 target_sources(nncc PRIVATE ${NNCC_MATH_DIR}/types.cpp)
+
+if (APPLE)
+    # macOS: platform-specific code for window handling etc.
+    target_sources(nncc PRIVATE ${NNCC_CONTEXT_DIR}/macos.mm)
+endif()
 
 # Rendering subsystem
 set(NNCC_RENDERING_DIR ${CMAKE_CURRENT_LIST_DIR}/rendering)

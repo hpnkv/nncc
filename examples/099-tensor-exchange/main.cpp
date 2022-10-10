@@ -72,6 +72,8 @@ int Loop() {
     );
     compute_node_editor.RegisterMenuItem(python);
 
+    bool show_imgui_demo = false;
+
     // Frame-by-frame loop
     while (true) {
         if (auto should_exit = context.input.ProcessEvents(); should_exit) {
@@ -99,10 +101,30 @@ int Loop() {
                 ImGui::MenuItem("Python Interpreter", nullptr);
                 ImGui::EndMenu();
             }
+            if (ImGui::BeginMenu("Debug")) {
+                if (ImGui::MenuItem("Show ImGui Demo", nullptr, show_imgui_demo)) {
+                    show_imgui_demo = !show_imgui_demo;
+                }
+                ImGui::EndMenu();
+            }
+            ImGui::NextColumn();
+            auto posX = (ImGui::GetCursorPosX() + ImGui::GetColumnWidth() - ImGui::CalcTextSize("M").x
+                - ImGui::GetScrollX() - 2 * ImGui::GetStyle().ItemSpacing.x);
+            if(posX > ImGui::GetCursorPosX())
+                ImGui::SetCursorPosX(posX);
+            if (ImGui::MenuItem(ICON_FA_WINDOW_MAXIMIZE)) {
+                context::GlfwMessage glfw_fullscreen_message;
+                glfw_fullscreen_message.type = context::GlfwMessageType::ToggleFullscreen;
+                context.GetMessageQueue().write(glfw_fullscreen_message);
+            }
             ImGui::EndMainMenuBar();
         }
         for (const auto& gui_piece: gui_pieces) {
             gui_piece.render();
+        }
+
+        if (show_imgui_demo) {
+            ImGui::ShowDemoWindow();
         }
 
         ImGui::SetNextWindowPos(ImVec2(1250.0f * window.scale, 50.0f * window.scale), ImGuiCond_FirstUseEver);

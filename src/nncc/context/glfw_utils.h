@@ -26,6 +26,10 @@
 
 #endif
 
+#if NNCC_PLATFORM_OSX
+void ToggleFullscreenCocoa(void* window);
+#endif
+
 namespace nncc::context {
 
 struct GLFWWindowDeleter {
