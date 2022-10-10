@@ -1,6 +1,8 @@
 add_executable(099-tensor-exchange main.cpp)
 
-target_link_libraries(099-tensor-exchange PRIVATE nncc nncc_python)
+find_package(Torch REQUIRED)
+
+target_link_libraries(099-tensor-exchange PRIVATE nncc nncc_python nncc_pytorch)
 target_include_directories(099-tensor-exchange PRIVATE ${NNCC_INCLUDES} ${TORCH_ALL_INCLUDES})
 
 if (IOS OR WIN32)

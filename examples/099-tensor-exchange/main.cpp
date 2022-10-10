@@ -1,8 +1,9 @@
 #include <pybind11/embed.h>
 
-//#include <pynncc/torch/tensor_registry.h>
-//#include <pynncc/torch/shm_communication.h>
+#include <pynncc/torch/tensor_registry.h>
+#include <pynncc/torch/shm_communication.h>
 #include <pynncc/compute/python_nodes.h>
+#include <pynncc/compute/pytorch_nodes.h>
 
 #include <nncc/compute/algebra_ops.h>
 #include <nncc/engine/loop.h>
@@ -32,17 +33,17 @@ int Loop() {
 
     nncc::python::init();
 
-//    // Create a thread listening to shared memory handles and a tensor registry
-//    bx::Thread tensor_update_listener_;
-//    tensor_update_listener_.init(&python::StartSharedTensorRedisLoop, static_cast<void*>(&context.dispatcher), 0,
-//                                 "tensor_updates");
-//    python::TensorRegistry tensors;
-//    tensors.Init(&context.dispatcher);
+    // Create a thread listening to shared memory handles and a tensor registry
+    bx::Thread tensor_update_listener_;
+    tensor_update_listener_.init(&python::StartSharedTensorRedisLoop, static_cast<void*>(&context.dispatcher), 0,
+                                 "tensor_updates");
+    python::TensorRegistry tensors;
+    tensors.Init(&context.dispatcher);
 
     // OOP GUI elements (tensor picker in this case)
     nncc::vector<gui::GuiPiece> gui_pieces;
-//    auto tensor_picker = python::SharedTensorPicker(&tensors);
-//    gui_pieces.push_back(tensor_picker.GetGuiPiece());
+    auto tensor_picker = python::SharedTensorPicker(&tensors);
+    gui_pieces.push_back(tensor_picker.GetGuiPiece());
 
     // Create a timer
     engine::Timer timer;
@@ -66,7 +67,7 @@ int Loop() {
         "Python",
         nncc::vector<std::shared_ptr<compute::ComputeEditorAddMenuItem>>{
             std::make_shared<compute::ComputeEditorAddMenuItem>("Python Code", &compute::MakePythonCodeOp),
-//            std::make_shared<compute::ComputeEditorAddMenuItem>("Get Shared Tensor", &compute::MakeGetSharedTensorOp),
+            std::make_shared<compute::ComputeEditorAddMenuItem>("Get Shared Tensor", &compute::MakeGetSharedTensorOp),
         }
     );
     compute_node_editor.RegisterMenuItem(python);
@@ -161,7 +162,7 @@ int Loop() {
 
     object_picker.Destroy();
 
-//    python::StopSharedTensorRedisLoop(python::kRedisQueueName);
+    python::StopSharedTensorRedisLoop(python::kRedisQueueName);
     return 0;
 }
 

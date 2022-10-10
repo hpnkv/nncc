@@ -29,11 +29,14 @@ add_library(
         nncc_pytorch SHARED
         ${NNCC_PROJECT_ROOT}/src/pynncc/torch/tensor_registry.cpp
         ${NNCC_PROJECT_ROOT}/src/pynncc/torch/shm_communication.cpp
+        ${NNCC_PROJECT_ROOT}/src/pynncc/compute/pytorch_nodes.cpp
         ${TORCH_SRC_ROOT}/torch/lib/libshm/core.cpp
 )
-target_link_libraries(nncc_pytorch PRIVATE pynncc ${TORCH_LIBRARIES})
+target_link_libraries(nncc_pytorch PRIVATE nncc_python ${TORCH_LIBRARIES} cpp_redis)
+target_link_libraries(nncc_pytorch INTERFACE ${TORCH_LIBRARIES})
+target_link_libraries(nncc_pytorch PRIVATE "${TORCH_BUILD_ROOT}/lib/libonnx.a" "${TORCH_BUILD_ROOT}/lib/libonnx_proto.a")
 target_include_directories(
-        nncc_pytorch INTERFACE
+        nncc_pytorch PUBLIC
         ${Python_INCLUDE_DIRS}
         ${TORCH_ALL_INCLUDES}
         ${TORCH_SRC_ROOT}/torch/lib # provides "libshm/libshm.h"
