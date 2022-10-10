@@ -33,7 +33,13 @@ enum class AttributeType {
 
 struct Attribute {
     Attribute(nncc::string _name, const AttributeType& _type)
-            : id(id_counter++), name(std::move(_name)), type(_type) {}
+            : id(id_counter++), name(std::move(_name)), type(_type) {
+        if (type == AttributeType::Float) {
+            value = 0.0f;
+        } else if (type == AttributeType::String) {
+            value = "";
+        }
+    }
 
     nncc::string name = "";
     AttributeType type = AttributeType::None;
@@ -321,6 +327,8 @@ private:
     }
 
     void RenderNodes() {
+        attribute_map_.clear();
+
         for (auto [nodes_current, nodes_end] = boost::vertices(*graph_); nodes_current != nodes_end; ++nodes_current) {
             auto vertex = *nodes_current;
             auto& node = (*graph_)[vertex];
@@ -335,17 +343,22 @@ private:
                 auto& input = node.inputs_by_name.at(name);
                 ImNodes::BeginInputAttribute(input.id);
                 attribute_map_.insert_or_assign(input.id, AttributeDescriptor{vertex, &input, true});
-                const float label_width = ImGui::CalcTextSize(input.name.c_str()).x;
-                ImGui::TextUnformatted(input.name.c_str());
+
+                nncc::string type;
+                if (input.type == AttributeType::Float) {
+                    type = "float";
+                } else if (input.type == AttributeType::String) {
+                    type = "string";
+                } else if (input.type == AttributeType::UserDefined) {
+                    type = "T";
+                }
+
+                auto label = !type.empty() ? fmt::format("{}: {}", input.name, type) : input.name;
+                const float label_width = ImGui::CalcTextSize(label.c_str()).x;
+                ImGui::TextUnformatted(label.c_str());
 
                 ImGui::SameLine();
                 ImGui::PushItemWidth(node_width - label_width);
-                if (std::holds_alternative<float>(input.value)) {
-                    ImGui::TextUnformatted(fmt::format("{:.4g}", std::get<float>(input.value)).c_str());
-                } else if (std::holds_alternative<nncc::string>(input.value)) {
-                    ImGui::TextUnformatted(std::get<nncc::string>(input.value).c_str());
-                }
-
                 ImGui::PopItemWidth();
 
                 ImNodes::EndInputAttribute();

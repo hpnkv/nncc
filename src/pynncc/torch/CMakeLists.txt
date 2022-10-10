@@ -38,3 +38,13 @@ target_include_directories(
         ${TORCH_ALL_INCLUDES}
         ${TORCH_SRC_ROOT}/torch/lib # provides "libshm/libshm.h"
 )
+
+if (APPLE)
+    target_link_libraries(nncc_pytorch PUBLIC
+            "-framework Accelerate"
+            "-framework AppKit"
+            "-framework Metal"
+            "-framework MetalPerformanceShaders"
+            "-framework MetalPerformanceShadersGraph"
+            )
+endif ()

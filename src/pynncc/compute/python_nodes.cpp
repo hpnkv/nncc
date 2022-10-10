@@ -8,7 +8,8 @@ auto PythonCodeOpEvaluateFn(ComputeNode* node, entt::registry* registry) {
     auto& state = *node->StateAs<PythonCodeOpState>();
     auto& context = *context::Context::Get();
 
-    auto result = std::string(py::str(py::eval("generate(None)")));
+    state.globals["NNCC_NODE_INTERFACE"] = MakeNodeInterface(node);
+    auto result = std::string(py::str(py::globals()["process"](state.globals["NNCC_NODE_INTERFACE"])));
     context.log_message = result;
 
     return Result{0, ""};
@@ -30,10 +31,10 @@ void PythonCodeOpUpdateInputsOutputs(ComputeNode* node) {
     }
 
     py::list outputs = py::eval("NNCC_OUTPUTS");
-    for (auto it = inputs.begin(); it != inputs.end(); ++it) {
+    for (auto it = outputs.begin(); it != outputs.end(); ++it) {
         auto name = it->attr("__getitem__")(0).cast<std::string>();
         auto type = it->attr("__getitem__")(1).cast<std::string>();
-        required_inputs.emplace_back(name, type);
+        required_outputs.emplace_back(name, type);
     }
 
     nncc::list<nncc::string> new_inputs, new_outputs;
@@ -52,7 +53,7 @@ void PythonCodeOpUpdateInputsOutputs(ComputeNode* node) {
         new_outputs.push_back(name);
         auto attr_type = AttributeTypeFromString(type);
         if (node->outputs_by_name.contains(name) && node->outputs_by_name.at(name).type == attr_type) {
-            new_outputs_by_name.insert_or_assign(name, std::move(node->inputs_by_name.at(name)));
+            new_outputs_by_name.insert_or_assign(name, std::move(node->outputs_by_name.at(name)));
             continue;
         }
         new_outputs_by_name.insert_or_assign(name, Attribute(name, attr_type));
@@ -85,12 +86,35 @@ ComputeNode MakePythonCodeOp(const void* _) {
 
     node.state = std::make_shared<PythonCodeOpState>();
 
+    py::exec(kPythonBootstrapCode);
     PythonCodeOpUpdateInputsOutputs(&node);
 
     node.evaluate.connect<&PythonCodeOpEvaluateFn>();
     node.render_context_ui.connect<&PythonCodeOpRenderFn>();
 
     return node;
+}
+
+py::handle MakeNodeInterface(ComputeNode* node) {
+    py::dict inputs, outputs;
+
+    for (const auto& [name, input] : node->inputs_by_name) {
+        if (input.type == AttributeType::Float) {
+            inputs[name.c_str()] = py::float_(std::get<float>(input.value));
+        } else if (input.type == AttributeType::String) {
+            inputs[name.c_str()] = py::str(std::get<nncc::string>(input.value).toStdString());
+        } else {
+            throw std::runtime_error("Only floats and strings are implemented now.");
+        }
+    }
+
+    for (const auto& output_name : node->outputs) {
+        outputs[output_name.c_str()] = py::none();
+    }
+
+    auto interface = py::globals()["NNCCNode"](inputs, outputs);
+    interface.inc_ref();
+    return interface;
 }
 
 }
