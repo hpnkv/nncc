@@ -44,6 +44,6 @@ ComputeNode MakePythonCodeOp(const void* _ = nullptr);
 
 namespace nncc::python {
 
-void init();
+void Init();
 
 }

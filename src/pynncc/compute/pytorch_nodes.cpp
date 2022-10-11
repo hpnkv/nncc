@@ -1,4 +1,4 @@
-#include <nncc/gui/imgui_bgfx.h>
+#include <nncc/gui/imgui/imgui_bgfx.h>
 
 #include <pynncc/compute/pytorch_nodes.h>
 #include <pynncc/torch/tensor_registry.h>

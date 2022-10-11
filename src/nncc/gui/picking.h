@@ -4,7 +4,7 @@
 
 #include <nncc/context/context.h>
 #include <nncc/engine/camera.h>
-#include <nncc/gui/imgui_bgfx.h>
+#include <nncc/gui/imgui/imgui_bgfx.h>
 #include <nncc/rendering/surface.h>
 #include <nncc/rendering/renderer.h>
 

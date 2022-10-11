@@ -16,7 +16,6 @@
 #include <imnodes/imnodes.h>
 
 #include <nncc/common/types.h>
-#include <nncc/common/utils.h>
 #include <nncc/compute/types.h>
 #include <nncc/context/context.h>
 

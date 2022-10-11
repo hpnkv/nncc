@@ -6,6 +6,7 @@
 
 #include <nncc/context/context.h>
 #include <nncc/engine/camera.h>
+#include <nncc/engine/events.h>
 #include <nncc/gui/gui.h>
 
 namespace nncc::engine {

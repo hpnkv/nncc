@@ -10,7 +10,6 @@
 #include <bgfx/bgfx.h>
 
 #include <nncc/common/types.h>
-#include <nncc/common/utils.h>
 
 namespace nncc::rendering {
 

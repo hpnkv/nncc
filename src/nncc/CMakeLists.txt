@@ -64,8 +64,8 @@ target_sources(
 set(NNCC_GUI_DIR ${CMAKE_CURRENT_LIST_DIR}/gui)
 target_sources(
         nncc PRIVATE
-        ${NNCC_GUI_DIR}/imgui_bgfx.cpp
-        ${NNCC_GUI_DIR}/imgui_smart_strings.cpp
+        ${NNCC_GUI_DIR}/imgui/imgui_bgfx.cpp
+        ${NNCC_GUI_DIR}/imgui/imgui_smart_strings.cpp
         ${NNCC_GUI_DIR}/guizmo.cpp
         ${NNCC_GUI_DIR}/picking.cpp
         ../../external/ImGuizmo/ImGuizmo/ImGuizmo.cpp

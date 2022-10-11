@@ -32,7 +32,7 @@ int Loop() {
     ImGui::SetCurrentContext(context.imgui_context);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 4.0f * window.scale);
 
-    nncc::python::init();
+    nncc::python::Init();
 
     // Create a thread listening to shared memory handles and a tensor registry
     bx::Thread tensor_update_listener_;
@@ -174,10 +174,11 @@ int Loop() {
                                  window.framebuffer_width,
                                  window.framebuffer_height);
 
-//        // TODO: make this a subsystem's job
-//        context.input.input_characters.clear();
-
         object_picker.Update();
+
+        // TODO: make this a subsystem's job
+        context.input.input_characters.clear();
+
         context.frame_number = bgfx::frame();
         timer.Update();
     }

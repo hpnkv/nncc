@@ -10,10 +10,10 @@
 
 #include "imgui_bgfx.h"
 
-#include "./fonts/roboto_regular.ttf.h"
-#include "./fonts/robotomono_regular.ttf.h"
-#include "./fonts/icons_kenney.ttf.h"
-#include "./fonts/icons_font_awesome.ttf.h"
+#include "../fonts/roboto_regular.ttf.h"
+#include "../fonts/robotomono_regular.ttf.h"
+#include "../fonts/icons_kenney.ttf.h"
+#include "../fonts/icons_font_awesome.ttf.h"
 
 inline bool checkAvailTransientBuffers(uint32_t _numVertices, const bgfx::VertexLayout& _layout, uint32_t _numIndices) {
     return _numVertices == bgfx::getAvailTransientVertexBuffer(_numVertices, _layout)
