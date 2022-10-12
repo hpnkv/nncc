@@ -14,3 +14,15 @@
 #    define RevertToNone (int)X11None
 #  endif
 #endif
+
+#ifdef Bool
+#  undef Bool
+#endif
+
+#ifdef Complex
+#  undef Complex
+#endif
+
+#ifdef Success
+#  undef Success
+#endif

@@ -19,7 +19,7 @@
 
 #if BX_PLATFORM_LINUX
 
-#include <nncc/common/X11_undefine_none.h>
+#include <nncc/common/undefine_X11_macros.h>
 
 #endif
 

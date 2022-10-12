@@ -58,7 +58,7 @@ void ProcessWindowingEvents(const context::GlfwEvent& event) {
         ToggleFullscreenCocoa(glfwGetCocoaWindow(event.window));
         fullscreen = !fullscreen;
 #else
-        context.log_message = "This button only works on macOS yet.";
+        context::Context::Get()->log_message = "This button only works on macOS yet.";
 #endif
     }
 }
