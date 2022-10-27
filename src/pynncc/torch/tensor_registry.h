@@ -6,6 +6,7 @@
 #include <torch/torch.h>
 
 #include <nncc/common/types.h>
+#include <nncc/rpc/redis_communicator.h>
 #include <nncc/engine/camera.h>
 #include <nncc/gui/gui.h>
 
@@ -82,6 +83,8 @@ public:
 
     void OnSharedTensorControl(const TensorControlEvent& event);
 
+    static void OnSharedTensorMessage(const rpc::RedisMessageEvent& event);
+
     void Update();
 
     entt::entity Get(const nncc::string& name);
@@ -111,6 +114,9 @@ public:
     gui::GuiPiece GetGuiPiece();
 
 private:
+    // TODO: remove from here
+    nncc::string prompt_;
+
     TensorRegistry& tensors_;
     entt::entity selected_tensor_ = entt::null;
     engine::Camera* camera_ = nullptr;

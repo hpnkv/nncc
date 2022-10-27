@@ -28,7 +28,6 @@ set(TORCH_ALL_INCLUDES ${TORCH_INSTALL_ROOT}/include ${TORCH_INSTALL_ROOT}/inclu
 add_library(
         nncc_pytorch SHARED
         ${NNCC_PROJECT_ROOT}/src/pynncc/torch/tensor_registry.cpp
-        ${NNCC_PROJECT_ROOT}/src/pynncc/torch/shm_communication.cpp
         ${NNCC_PROJECT_ROOT}/src/pynncc/compute/pytorch_nodes.cpp
         ${TORCH_SRC_ROOT}/torch/lib/libshm/core.cpp
 )

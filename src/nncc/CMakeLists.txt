@@ -18,11 +18,13 @@ target_link_libraries(nncc PUBLIC
         CONAN_PKG::imgui
         CONAN_PKG::double-conversion
         ${Python_LIBRARIES}
+        cpp_redis
         )
 target_include_directories(nncc PUBLIC
         ${BGFX_DIR}/include ${BX_DIR}/include
         ${CONAN_INCLUDE_DIRS_ENTT}
         ${CONAN_INCLUDE_DIRS_GLFW}
+        ${NNCC_PROJECT_ROOT}/external/loguru
         ${NNCC_PROJECT_ROOT}/external/stb
         ${NNCC_PROJECT_ROOT}/external/IconFontCppHeaders
         ${NNCC_PROJECT_ROOT}/external/ImGuizmo
@@ -34,7 +36,7 @@ target_include_directories(nncc PUBLIC
 
 # Common: types, utilities, macros
 set(NNCC_COMMON_DIR ${CMAKE_CURRENT_LIST_DIR}/common)
-target_sources(nncc PRIVATE ${NNCC_COMMON_DIR}/image.cpp)
+target_sources(nncc PRIVATE ${NNCC_COMMON_DIR}/image.cpp ${NNCC_COMMON_DIR}/loguru.cpp)
 
 # Context: singleton for basic systems
 set(NNCC_CONTEXT_DIR ${CMAKE_CURRENT_LIST_DIR}/context)
@@ -83,6 +85,13 @@ target_sources(
         nncc PRIVATE
         ${NNCC_COMPUTE_DIR}/graph.cpp
         ${NNCC_COMPUTE_DIR}/algebra_ops.cpp
+)
+
+# Compute platform
+set(NNCC_RPC_DIR ${CMAKE_CURRENT_LIST_DIR}/rpc)
+target_sources(
+        nncc PRIVATE
+        ${NNCC_RPC_DIR}/redis_communicator.cpp
 )
 
 # Math: vector and matrix ops

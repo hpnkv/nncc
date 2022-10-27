@@ -1,9 +1,9 @@
 #include <pybind11/embed.h>
 
 #include <pynncc/torch/tensor_registry.h>
-#include <pynncc/torch/shm_communication.h>
 #include <pynncc/compute/python_nodes.h>
 #include <pynncc/compute/pytorch_nodes.h>
+#include <pynncc/compute/variable_manager.h>
 
 #include <nncc/compute/algebra_ops.h>
 //#include <nncc/debug/bgfx_stats.h>
@@ -25,8 +25,8 @@ int Loop() {
     auto& context = *context::Context::Get();
     auto& window = context.GetWindow(0);
 
-    auto object_picker = gui::ObjectPicker();
-    context.subsystems.Register(&object_picker);
+//    auto object_picker = gui::ObjectPicker();
+//    context.subsystems.Register(&object_picker);
 
     ImGui::SetAllocatorFunctions(context.imgui_allocators.p_alloc_func, context.imgui_allocators.p_free_func);
     ImGui::SetCurrentContext(context.imgui_context);
@@ -34,12 +34,17 @@ int Loop() {
 
     nncc::python::Init();
 
-    // Create a thread listening to shared memory handles and a tensor registry
-    bx::Thread tensor_update_listener_;
-    tensor_update_listener_.init(&python::StartSharedTensorRedisLoop, static_cast<void*>(&context.dispatcher), 0,
-                                 "tensor_updates");
+    context.communicator.Init();
+//     Create a thread listening to shared memory handles and a tensor registry
+//    bx::Thread tensor_update_listener_;
+//    tensor_update_listener_.init(&python::StartSharedTensorRedisLoop, static_cast<void*>(&context.dispatcher), 0,
+//                                 "tensor_updates");
     python::TensorRegistry tensors;
     tensors.Init(&context.dispatcher);
+
+    python::VariableManager vars(&context.communicator, &context.dispatcher);
+    context.subsystems.Register(&vars);
+    vars.Init();
 
     // OOP GUI elements (tensor picker in this case)
     nncc::vector<gui::GuiPiece> gui_pieces;
@@ -109,13 +114,16 @@ int Loop() {
                 ImGui::EndMenu();
             }
             ImGui::NextColumn();
-            auto posX = (ImGui::GetCursorPosX() + ImGui::GetColumnWidth() - ImGui::CalcTextSize("M").x
+            auto posX = (ImGui::GetCursorPosX() + ImGui::GetColumnWidth() - ImGui::CalcTextSize("MM").x
                 - ImGui::GetScrollX() - 2 * ImGui::GetStyle().ItemSpacing.x);
             if(posX > ImGui::GetCursorPosX())
                 ImGui::SetCursorPosX(posX);
             if (ImGui::MenuItem(ICON_FA_WINDOW_MAXIMIZE)) {
                 auto event = context::GlfwEvent(context::GlfwEventType::ToggleFullscreen, context.GetGlfwWindow(0));
                 context.dispatcher.enqueue(event);
+            }
+            if (ImGui::MenuItem(ICON_FA_CROSS)) {
+                context.communicator.Stop();
             }
             ImGui::EndMainMenuBar();
         }
@@ -174,7 +182,12 @@ int Loop() {
                                  window.framebuffer_width,
                                  window.framebuffer_height);
 
-        object_picker.Update();
+//        object_picker.Update();
+
+        // TODO: untie this from the rendering loop
+        if (context.frame_number % 20 == 0) {
+            vars.PushUpdates();
+        }
 
         // TODO: make this a subsystem's job
         context.input.input_characters.clear();
@@ -183,9 +196,9 @@ int Loop() {
         timer.Update();
     }
 
-    object_picker.Destroy();
+    context.communicator.Destroy();
 
-    python::StopSharedTensorRedisLoop(python::kRedisQueueName);
+//    object_picker.Destroy();
     return 0;
 }
 

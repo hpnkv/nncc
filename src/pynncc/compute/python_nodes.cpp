@@ -1,6 +1,7 @@
 #include "python_nodes.h"
 
 #include <nncc/gui/imgui/imgui_folly.h>
+#include <pynncc/compute/variable_manager.h>
 
 namespace nncc::compute {
 

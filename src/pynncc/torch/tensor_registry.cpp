@@ -1,26 +1,17 @@
 #include "tensor_registry.h"
 
-#include <libshm/libshm.h>
-#include <torch/torch.h>
-
-#include <iostream>
 #include <numeric>
 #include <unordered_set>
 
-
-
-
 #include <fmt/format.h>
-
+#include <libshm/libshm.h>
+#include <torch/torch.h>
 
 #include <nncc/context/context.h>
-#include <nncc/gui/gui.h>
 #include <nncc/gui/guizmo.h>
-#include <nncc/compute/graph.h>
-#include <nncc/rendering/renderer.h>
 #include <nncc/rendering/primitives.h>
-#include <nncc/engine/camera.h>
-#include "nncc/gui/picking.h"
+#include <nncc/gui/picking.h>
+#include <pynncc/compute/variable_manager.h>
 
 namespace nncc::python {
 
@@ -194,9 +185,16 @@ void TensorRegistry::Clear() {
 }
 
 void TensorRegistry::Init(entt::dispatcher* dispatcher) {
-    context::Context::Get()->subsystems.Register(this);
-    dispatcher->sink<SharedTensorEvent>().connect<&TensorRegistry::OnSharedTensorUpdate>(*this);
-    dispatcher->sink<TensorControlEvent>().connect<&TensorRegistry::OnSharedTensorControl>(*this);
+    auto context = context::Context::Get();
+    context->subsystems.Register(this);
+
+    rpc::RedisCommunicator::DelegateType delegate;
+    delegate.connect<&TensorRegistry::OnSharedTensorMessage>();
+    context->communicator.RegisterDelegate("share_tensor", delegate);
+
+    context->dispatcher.sink<SharedTensorEvent>().connect<&TensorRegistry::OnSharedTensorUpdate>(*this);
+    context->dispatcher.sink<TensorControlEvent>().connect<&TensorRegistry::OnSharedTensorControl>(*this);
+
     redis_.connect();
 }
 
@@ -225,6 +223,36 @@ bool TensorRegistry::Contains(const string& name) {
 
 bool TensorRegistry::Contains(entt::entity entity) {
     return names_.contains(entity);
+}
+
+void TensorRegistry::OnSharedTensorMessage(const rpc::RedisMessageEvent& event) {
+    nncc::string name, manager_handle, filename, dtype_string, dims_string;
+    folly::split("::", event.payload, name, manager_handle, filename, dtype_string, dims_string);
+
+    torch::Dtype dtype;
+    if (dtype_string == "uint8") {
+        dtype = torch::kUInt8;
+    } else if (dtype_string == "float32") {
+        dtype = torch::kFloat32;
+    } else if (dtype_string == "int32") {
+        dtype = torch::kInt32;
+    } else {
+//                success = false;
+        return;
+    }
+
+    nncc::vector<int64_t> dims;
+    folly::split(",", dims_string, dims);
+
+    SharedTensorEvent share_event;
+    share_event.name = name;
+    share_event.manager_handle = manager_handle;
+    share_event.filename = filename;
+    share_event.dtype = dtype;
+    share_event.dims = dims;
+
+    auto context = context::Context::Get();
+    context->dispatcher.enqueue(share_event);
 }
 
 TensorWithPointer::TensorWithPointer(const string& manager_handle,
@@ -276,7 +304,7 @@ void SharedTensorPicker::Render() {
 
     const auto& scale = context.GetWindow(0).scale;
 
-    auto object_picker = context.subsystems.Get<gui::ObjectPicker>();
+//    auto object_picker = context.subsystems.Get<gui::ObjectPicker>();
     bgfx::TextureHandle texture{bgfx::kInvalidHandle};
 
     ImGui::SetNextWindowPos(ImVec2(50.0f * scale, 50.0f * scale), ImGuiCond_FirstUseEver);
@@ -292,12 +320,13 @@ void SharedTensorPicker::Render() {
                 const auto& [name, tensor_container] = named_tensors.get(entity);
                 if (ImGui::Selectable(name.value.c_str(), entity == selected_tensor_)) {
                     clicked_tensor = entity;
-                    object_picker->SetPickedObject(clicked_tensor);
+//                    object_picker->SetPickedObject(clicked_tensor);
                 }
             }
 
             // if explicit click was made, select corresponding tensor, otherwise select object from picker (not necessarily a tensor)
-            auto new_selected_tensor = (clicked_tensor != entt::null) ? clicked_tensor : object_picker->GetPickedObject();
+//            auto new_selected_tensor = (clicked_tensor != entt::null) ? clicked_tensor : object_picker->GetPickedObject();
+            auto new_selected_tensor = entt::null;
             // check if that is a tensor, otherwise clear the selection
             if(!named_tensors.contains(new_selected_tensor)) {
                 new_selected_tensor = entt::null;
@@ -317,6 +346,20 @@ void SharedTensorPicker::Render() {
                 }
             }
             ImGui::EndListBox();
+        }
+
+        {
+            auto vars = context.subsystems.Get<VariableManager>();
+
+            auto& source_class = vars->Get<nncc::string>("source_class", "a photo of a person");
+            if (ImGui::InputText("Source class", &source_class)) {
+                vars->AddUpdate(1, "source_class", source_class);
+            }
+
+            auto& prompt = vars->Get<nncc::string>("prompt", "a photo of an ordinary person");
+            if (ImGui::InputText("Target class", &prompt)) {
+                vars->AddUpdate(1, "prompt", prompt);
+            }
         }
 
         if (!tensors_.Contains(selected_tensor_)) {

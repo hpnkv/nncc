@@ -16,6 +16,7 @@
 #include <nncc/input/input.h>
 #include <nncc/context/glfw_utils.h>
 #include <nncc/engine/timer.h>
+#include <nncc/rpc/redis_communicator.h>
 #include <nncc/rendering/rendering.h>
 
 namespace nncc::context {
@@ -148,6 +149,7 @@ public:
     input::InputSystem input;
     engine::Timer timer;
     rendering::RenderingSystem rendering;
+    rpc::RedisCommunicator communicator;
     SubsystemManager subsystems;
 
     nncc::string log_message;
