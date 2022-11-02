@@ -31,6 +31,7 @@ class NNCCStorage:
         self.redis = redis.Redis(host='localhost', port=6379, db=0)
         self.storage = dict()
         self.vars = dict()
+        self.action_requests = set()
         self.handles = dict()
 
     def submit_tensor(self, name: str, tensor: torch.Tensor, overwrite: bool = False):
@@ -102,6 +103,11 @@ def busywaiting_nncc_request_listener(storage):
                 value = float(value)
 
             storage.vars[name] = value
+
+        if value.startswith("action_request"):
+            parts = value.split("::")
+            name = parts[1]
+            receiver_id = int(parts[2])
 
         if value == "stop::":
             break

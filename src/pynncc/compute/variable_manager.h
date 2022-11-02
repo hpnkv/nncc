@@ -89,6 +89,14 @@ public:
         return std::get<T>(vars_.at(name));
     }
 
+    template <typename T>
+    T& Get(const nncc::string& name, const std::optional<float>& value = std::nullopt) {
+        if (!vars_.contains(name)) {
+            vars_[name] = *value;
+        }
+        return std::get<T>(vars_.at(name));
+    }
+
 private:
     rpc::RedisCommunicator* communicator_;
     entt::dispatcher* dispatcher_;

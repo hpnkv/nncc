@@ -128,6 +128,7 @@ void RedisCommunicator::ClearNNCCState() {
 
 void RedisCommunicator::Destroy() {
     stop_requested_ = true;
+    sync_cv_.notify_one();
 }
 
 int RedisCommunicatorListen(bx::Thread* thread, void* _self) {

@@ -348,19 +348,7 @@ void SharedTensorPicker::Render() {
             ImGui::EndListBox();
         }
 
-        {
-            auto vars = context.subsystems.Get<VariableManager>();
-
-            auto& source_class = vars->Get<nncc::string>("source_class", "a photo of a person");
-            if (ImGui::InputText("Source class", &source_class)) {
-                vars->AddUpdate(1, "source_class", source_class);
-            }
-
-            auto& prompt = vars->Get<nncc::string>("prompt", "a photo of an ordinary person");
-            if (ImGui::InputText("Target class", &prompt)) {
-                vars->AddUpdate(1, "prompt", prompt);
-            }
-        }
+        ImGui::LabelText("", "Face Styles by Text Prompt v0.1.0");
 
         if (!tensors_.Contains(selected_tensor_)) {
             selected_tensor_ = entt::null;

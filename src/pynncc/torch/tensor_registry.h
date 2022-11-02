@@ -70,6 +70,25 @@ struct SharedTensorEvent {
     nncc::vector<int64_t> dims;
 };
 
+struct ManagedStringRequestedEvent {
+    nncc::string name;
+    nncc::string value;
+};
+
+struct ManagedStringChangedEvent {
+    nncc::string name;
+    nncc::string value;
+};
+
+class ManagedVariableRegistry {
+public:
+    ManagedVariableRegistry() = default;
+
+    void Init(entt::dispatcher* dispatcher);
+
+    void OnStringRequested(const ManagedStringRequestedEvent& event);
+};
+
 
 class TensorRegistry {
 public:
